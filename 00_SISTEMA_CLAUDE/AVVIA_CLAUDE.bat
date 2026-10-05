@@ -1,7 +1,16 @@
 @echo off
 title Avvio Claude Code con OmniRoute
-rem Cartella del progetto = la cartella sopra a questo file (es. "Anime Edit S")
+rem Cartella del progetto = la cartella sopra a questo file (AnimeEdits)
 for %%I in ("%~dp0..") do set "PROGETTO=%%~fI"
+
+rem Impostazioni per usare i modelli gratuiti tramite OmniRoute (valgono solo per questa finestra)
+set "ANTHROPIC_BASE_URL=http://127.0.0.1:20128"
+set "ANTHROPIC_MODEL=free-coding"
+set "ANTHROPIC_DEFAULT_OPUS_MODEL=free-coding"
+set "ANTHROPIC_DEFAULT_SONNET_MODEL=free-coding"
+set "ANTHROPIC_DEFAULT_HAIKU_MODEL=free-coding"
+if defined OMNIROUTE_TOKEN set "ANTHROPIC_AUTH_TOKEN=%OMNIROUTE_TOKEN%"
+if not defined ANTHROPIC_AUTH_TOKEN set "ANTHROPIC_AUTH_TOKEN=omniroute-locale"
 
 rem 1) OmniRoute e' gia' acceso? Allora salta direttamente a Claude Code
 call :controlla_porta
@@ -25,8 +34,8 @@ rem Qualche secondo in piu' per lasciarlo finire di caricare
 timeout /t 3 /nobreak >nul
 
 :avvia_claude
-echo Avvio Claude Code in "%PROGETTO%"...
-start "Claude Code" /D "%PROGETTO%" powershell -NoExit -Command "claude"
+echo Avvio Claude Code (Claude-PowerShell) in "%PROGETTO%"...
+start "Claude-PowerShell" /D "%PROGETTO%" powershell -NoExit -Command "claude --append-system-prompt 'Sei la sessione Claude-PowerShell del progetto AnimeEdits (vedi COLLABORAZIONE.md).'"
 exit /b 0
 
 :errore

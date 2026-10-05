@@ -1,18 +1,18 @@
 # Sistema Claude — Leggimi
 
-Questa cartella serve a usare **Claude Code gratis** (tramite OmniRoute) e a farlo collaborare con **Claude dell'app desktop**. I file dei reel restano fuori, nella cartella del progetto: qui c'è solo il "sistema".
+Questa cartella contiene la parte **tecnica**: come usare **Claude Code gratis** (tramite OmniRoute) dentro il progetto. Le regole di collaborazione tra i due Claude restano quelle di ieri, nei file della cartella del progetto.
 
 ```
-Anime Edit S\                        ← cartella del progetto (reel, video, materiali)
-├── CLAUDE.md                        ← collega Claude Code alle sue istruzioni (vedi punto 6)
-└── 00_SISTEMA_CLAUDE\               ← questa cartella
-    ├── LEGGIMI.md                   ← questa guida
-    ├── AVVIA_CLAUDE.bat             ← avvio con doppio clic
-    ├── ISTRUZIONI_CLAUDE_CODE.md    ← regole per Claude Code (esecutore)
-    ├── ISTRUZIONI_CLAUDE_DESKTOP.md ← regole per Claude desktop (pianificatore)
-    └── comunicazione\
-        ├── PIANO.md                 ← lo scrive solo Claude desktop
-        └── REPORT.md                ← lo scrive solo Claude Code
+AnimeEdits\
+├── CLAUDE.md               ← Claude Code lo legge da solo all'avvio: carica COLLABORAZIONE.md
+├── COLLABORAZIONE.md       ← ruoli e regole (con la nuova sezione "Modelli e costi")
+├── COMPITI.md              ← bacheca dei compiti
+├── COMUNICAZIONI.md        ← registro tra le due sessioni
+├── METODO.md, guida-stile.md
+├── clip\, reel\, musica\, analisi\, render\, REEL FINITI\, ...
+└── 00_SISTEMA_CLAUDE\      ← questa cartella
+    ├── LEGGIMI.md          ← questa guida
+    └── AVVIA_CLAUDE.bat    ← avvio di Claude-PowerShell con doppio clic
 ```
 
 ---
@@ -23,14 +23,14 @@ Anime Edit S\                        ← cartella del progetto (reel, video, mat
 Apri **`AVVIA_CLAUDE.bat`**. Fa tutto da solo:
 1. accende OmniRoute in una finestra (se è già acceso, lo salta);
 2. aspetta che sia pronto;
-3. apre Claude Code nella cartella del progetto.
+3. apre Claude Code nella cartella del progetto, già impostato sui modelli gratuiti e con il nome **Claude-PowerShell**, così sa che ruolo ha.
 
 **Collegamento sul Desktop:** tasto destro su `AVVIA_CLAUDE.bat` → *Mostra altre opzioni* → *Invia a* → *Desktop (crea collegamento)*.
 Usa il **collegamento**, non copiare il file: se lo copi altrove, non trova più la cartella del progetto.
 
 ### A mano
 1. Apri un PowerShell **normale** (non amministratore) e scrivi `omniroute`. Lascia la finestra aperta.
-2. Apri un secondo PowerShell normale, entra nella cartella del progetto con `cd` e scrivi `claude`.
+2. Apri un secondo PowerShell normale, entra nella cartella del progetto (`cd $HOME\Desktop\AnimeEdits`) e scrivi `claude`. Poi digli: *"Sei Claude-PowerShell"*.
 
 **L'ordine è sempre lo stesso: prima OmniRoute, poi Claude Code.** Se OmniRoute è chiuso, Claude Code non risponde.
 
@@ -56,6 +56,7 @@ Strategia **Priorità**: usa il primo modello e passa al successivo solo se quel
 |---|---|---|
 | `%USERPROFILE%\.claude\settings.json` | I modelli di Claude Code puntati su `free-coding` | Contenuto qui sotto |
 | Variabili d'ambiente di Windows | `ANTHROPIC_BASE_URL` (indirizzo di OmniRoute) e `ANTHROPIC_AUTH_TOKEN` | Sono impostate in Windows, non nel file sopra |
+| `00_SISTEMA_CLAUDE\AVVIA_CLAUDE.bat` | Le stesse impostazioni di OmniRoute e dei modelli, valide solo per la finestra che apre | Così Claude-PowerShell funziona anche se un giorno togli le impostazioni globali |
 | `%USERPROFILE%\.omniroute\.env` | `OMNIROUTE_SERVER_HOST=127.0.0.1` (OmniRoute raggiungibile solo da questo PC) e `STORAGE_ENCRYPTION_KEY` | **Non modificare e non mostrare la chiave**: protegge le chiavi API salvate in OmniRoute |
 
 Contenuto di `settings.json`, utile se un giorno va ripristinato:
@@ -127,39 +128,42 @@ Quando una quota gratuita finisce, il servizio rifiuta le richieste. **Nessun ad
 | Scritta gialla `"free-coding" isn't described…` | Claude Code non conosce il nome della combo | Innocua, ignorala |
 | Avvisi gialli `STORAGE_ENCRYPTION_KEY … is ignored` all'avvio di OmniRoute | Ci sono due file `.env` | Innocui, ignorali |
 | `AVVIA_CLAUDE.bat` dice "OmniRoute non risponde" | OmniRoute non è partito | Leggi l'errore nella finestra "OmniRoute" |
+| Claude Code non conosce le regole del progetto | Manca `CLAUDE.md` nella cartella del progetto, oppure è stato avviato da un'altra cartella | Controlla che `CLAUDE.md` sia in AnimeEdits e avvia con `AVVIA_CLAUDE.bat` |
 
 ---
 
-## 6. Collaborazione tra Claude desktop e Claude Code
+## 6. Collaborazione tra Claude-App e Claude-PowerShell
 
-- **Claude desktop** (abbonamento) **pianifica e controlla**. Le sue regole sono in `ISTRUZIONI_CLAUDE_DESKTOP.md`.
-- **Claude Code** (modelli gratuiti) **esegue**. Le sue regole sono in `ISTRUZIONI_CLAUDE_CODE.md`.
-- Si parlano tramite due file in `comunicazione\`:
-  - `PIANO.md`: lo scrive solo Claude desktop;
-  - `REPORT.md`: lo scrive solo Claude Code.
+Il sistema è quello creato ieri, descritto in `COLLABORAZIONE.md`:
+- **Claude-App** (scheda Code dell'app desktop, abbonamento Claude): il regista. Fa le scelte creative, le sceneggiature e i controlli finali.
+- **Claude-PowerShell** (avviato con `AVVIA_CLAUDE.bat`, modelli gratuiti): fa i lavori lunghi e meccanici, come analisi, cataloghi, sottotitoli e render.
+- **`COMPITI.md`** è la bacheca dei compiti. **`COMUNICAZIONI.md`** è il registro: si scrive solo in fondo, una riga per messaggio.
 
-Così il lavoro pesante consuma modelli gratuiti e la quota dell'abbonamento dura di più.
+Novità di oggi:
+- **`CLAUDE.md`**: Claude Code lo legge da solo all'avvio, quindi conosce subito le regole di `COLLABORAZIONE.md` senza che tu debba dirglielo.
+- **`COLLABORAZIONE.md`**: nuova sezione **"Modelli e costi"**, con le regole per lavorare con i modelli gratuiti.
+- **`COMUNICAZIONI.md`**: una riga che avvisa le due sessioni del cambio. Ricorda anche che la sessione di ieri si è fermata a metà di C1 e che il controllo automatico di C5 non è più attivo.
 
-### Come si usa
-1. **App desktop**, dopo averle dato accesso alla cartella del progetto:
-   *"Leggi `00_SISTEMA_CLAUDE/ISTRUZIONI_CLAUDE_DESKTOP.md`, poi scrivi in PIANO.md il piano per: …"*
-2. **Claude Code:** *"Esegui il prossimo compito del piano"*.
-3. **App desktop:** *"Leggi REPORT.md, controlla il lavoro e prepara il passo successivo"*.
-
-Nel piano c'è già un **Compito 1 di prova**: Claude Code fa solo un elenco dei file, senza modificare niente. Serve a verificare che il sistema funzioni.
-
-### Collegare le istruzioni a Claude Code
-Claude Code legge da solo il file `CLAUDE.md` della cartella in cui viene avviato. Nel `CLAUDE.md` della cartella del progetto deve esserci questa riga:
-```
-@00_SISTEMA_CLAUDE/ISTRUZIONI_CLAUDE_CODE.md
-```
-Se `CLAUDE.md` esiste già, aggiungi la riga in fondo senza cancellare il resto.
+### Frasi utili
+- A **Claude-PowerShell**: *"Leggi le ultime righe di COMUNICAZIONI.md e riprendi i tuoi compiti in COMPITI.md"*.
+- A **Claude-App**: *"Leggi COMUNICAZIONI.md e dimmi a che punto siamo"*, oppure *"Scrivi in COMPITI.md un nuovo compito per Claude-PowerShell: …"*.
 
 ---
 
-## 7. Idee per dopo
+## 7. Da verificare: l'app desktop
+
+Alcune impostazioni per OmniRoute sono **globali**: le variabili d'ambiente di Windows e `settings.json`. L'app desktop le legge, quindi potrebbe succedere che anche **Claude-App** passi da OmniRoute, usando i modelli gratuiti invece di Claude, oppure che dia errore sul modello `free-coding`.
+
+**Controllo:** nell'app desktop apri la scheda **Code**, apri una sessione su AnimeEdits e scrivi *"dimmi in una riga che modello sei"*.
+- Risponde **Claude**, oppure dice che hai raggiunto il **limite dell'abbonamento**: va tutto bene, Claude-App usa davvero Claude.
+- Risponde **Gemini** o un altro modello, oppure dà un errore sul modello: le impostazioni globali vanno tolte. `AVVIA_CLAUDE.bat` contiene già tutto quello che serve a Claude-PowerShell. Fatti guidare da Claude per toglierle.
+
+---
+
+## 8. Idee per dopo
 
 - **Mistral** (piano gratuito "Experiment", modello **Devstral**): da aggiungere alla combo per avere più quota. Nel piano gratuito Mistral può usare i tuoi dati per addestrare i modelli.
-- **Ordine "qualità":** mettere Kimi K3 e DeepSeek V4 Pro prima dei Gemini. Sono più bravi nel codice, ma più lenti.
+- **Ordine "qualità":** mettere Kimi K3 e DeepSeek V4 Pro prima dei Gemini. Sono più bravi nel codice, ma più lenti. Attenzione: per i compiti con le immagini, come il catalogo C2, serve un modello che le veda, e Gemini le vede.
+- **Controllo automatico dei reel nuovi (C5):** si può riattivare, ma ogni controllo consuma quota gratuita. Meglio chiederlo a mano ogni tanto.
 - **Crediti per sessioni cloud:** 94 USD inclusi nel piano, scadono il **5 novembre 2026** (claude.ai → Impostazioni → Utilizzo). Valgono solo per le sessioni cloud di Claude Code (claude.ai/code) e non consumano la quota dell'abbonamento.
 - **Sicurezza:** non condividere screenshot che mostrano chiavi API (`sk-…`, `gsk_…`) o il file `.env`.
