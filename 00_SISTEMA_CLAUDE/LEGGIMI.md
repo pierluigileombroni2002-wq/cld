@@ -43,12 +43,14 @@ Claude Code → OmniRoute (solo su questo PC, `127.0.0.1:20128`) → combo **`fr
 
 | # | Modello | Provider |
 |---|---|---|
-| 1 | Gemini 3.8 Flash | Google AI Studio |
-| 2 | Gemini 3.7 Flash | Google AI Studio |
-| 3 | Kimi K3 | NVIDIA NIM |
-| 4 | DeepSeek V4 Pro 0813 | NVIDIA NIM |
+| 1 | Gemini 3.1 Flash Lite | Google AI Studio |
+| 2 | Gemini 3.8 Flash | Google AI Studio |
+| 3 | Gemini 3.7 Flash | Google AI Studio |
+| 4 | Nemotron 3 Super 120B A12B | NVIDIA NIM |
 
 Strategia **Priorità**: usa il primo modello e passa al successivo solo se quello dà errore o finisce la quota.
+
+Flash Lite è al primo posto perché è il Gemini meno affollato: il 3.8 e il 3.7 sono più bravi, ma spesso sono sovraccarichi (errore 503). Tutti e tre i Gemini vedono le immagini. Nemotron probabilmente no, ma è l'ultima riserva.
 
 ### I file di configurazione
 
@@ -77,7 +79,7 @@ Contenuto di `settings.json`, utile se un giorno va ripristinato:
 | Provider | Stato | Perché |
 |---|---|---|
 | Gemini (Google AI Studio) | Acceso, nella combo | Gratuito |
-| NVIDIA NIM | Acceso, nella combo | Gratuito, ha i modelli più forti |
+| NVIDIA NIM | Acceso, nella combo | Gratuito. Molti modelli della sua lista però non funzionano più (vedi punto 5) |
 | Groq | Acceso, **fuori** dalla combo | Gratuito, ma rifiuta le richieste grandi di Claude Code (circa 6.000 token al minuto) |
 | Claude Code (OAuth) | **Spento** | Userebbe la quota dell'abbonamento, la stessa dell'app desktop |
 | Kimi (Moonshot) | **Spento** | API a pagamento |
@@ -111,7 +113,7 @@ Quando una quota gratuita finisce, il servizio rifiuta le richieste. **Nessun ad
 
 ## 4. Limiti da sapere
 
-- **Ogni richiesta di Claude Code pesa circa 33.000 token** (istruzioni e strumenti), anche per un semplice "ciao". Ogni azione, come leggere un file o eseguire un comando, è una nuova richiesta. Le quote gratuite si consumano in fretta.
+- **Ogni richiesta di Claude Code pesa circa 40.000 token** (istruzioni e strumenti), anche per un semplice "ciao". Ogni azione, come leggere un file o eseguire un comando, è una nuova richiesta. Le quote gratuite si consumano in fretta.
 - Le quote giornaliere di Gemini si azzerano **alle 9:00 ora italiana**.
 - I modelli gratuiti sono **meno capaci di Claude**: funzionano meglio con compiti piccoli e chiari.
 - **Modalità auto:** con i modelli gratuiti è più prudente la modalità normale, che chiede conferma prima di modificare file o eseguire comandi. In Claude Code premi **Shift+Tab** finché non sparisce la scritta "auto mode on".
@@ -122,13 +124,27 @@ Quando una quota gratuita finisce, il servizio rifiuta le richieste. **Nessun ad
 
 | Cosa vedi | Causa probabile | Cosa fare |
 |---|---|---|
+| `API Error: This model is currently experiencing high demand…` | Il modello Gemini è sovraccarico per qualche minuto (errore 503 di Google) | Riprova dopo un po'. Se succede sempre, controlla i modelli con il test (qui sotto) |
 | `API error · Retrying…` | OmniRoute è spento, oppure la quota è finita | Controlla la finestra di OmniRoute. Poi guarda **Richieste recenti** nella dashboard (http://localhost:20128) |
 | `/status` mostra `claude-opus-…` | `settings.json` non è stato letto o è stato cambiato | Ricontrolla `settings.json` (punto 2) e riavvia Claude Code |
 | Risposte lente (30–60 secondi) | Il primo modello fallisce e OmniRoute passa al successivo | Ogni tanto è normale. Se succede sempre, guarda **Request Logs** in OmniRoute |
 | Scritta gialla `"free-coding" isn't described…` | Claude Code non conosce il nome della combo | Innocua, ignorala |
 | Avvisi gialli `STORAGE_ENCRYPTION_KEY … is ignored` all'avvio di OmniRoute | Ci sono due file `.env` | Innocui, ignorali |
 | `AVVIA_CLAUDE.bat` dice "OmniRoute non risponde" | OmniRoute non è partito | Leggi l'errore nella finestra "OmniRoute" |
+| Risposte che arrivano dopo 2–4 minuti | Un modello della combo non risponde in tempo (errore 504) | Fai il test (qui sotto) e togli quel modello dalla combo |
 | Claude Code non conosce le regole del progetto | Manca `CLAUDE.md` nella cartella del progetto, oppure è stato avviato da un'altra cartella | Controlla che `CLAUDE.md` sia in AnimeEdits e avvia con `AVVIA_CLAUDE.bat` |
+
+### Controllare i modelli della combo
+In OmniRoute vai su **Combinazioni** e clicca il pulsante **▷** sulla scheda di `free-coding`. Il test prova ogni modello:
+
+| Risultato | Significato | Cosa fare |
+|---|---|---|
+| **OK** | Funziona | Tienilo |
+| **503** | Sovraccarico momentaneo | Tienilo, è temporaneo |
+| **410** | Il modello non esiste più sul provider | Toglilo dalla combo |
+| **504** (dopo circa 110 secondi) | Non risponde mai in tempo | Toglilo dalla combo |
+
+Modelli NVIDIA già scartati il 5 ottobre 2026: Kimi K3 e Gemma 4 31B (504), DeepSeek V4 Pro, DeepSeek V4 Flash e GPT OSS 120B (410).
 
 ---
 
@@ -162,8 +178,9 @@ Alcune impostazioni per OmniRoute sono **globali**: le variabili d'ambiente di W
 
 ## 8. Idee per dopo
 
-- **Mistral** (piano gratuito "Experiment", modello **Devstral**): da aggiungere alla combo per avere più quota. Nel piano gratuito Mistral può usare i tuoi dati per addestrare i modelli.
-- **Ordine "qualità":** mettere Kimi K3 e DeepSeek V4 Pro prima dei Gemini. Sono più bravi nel codice, ma più lenti. Attenzione: per i compiti con le immagini, come il catalogo C2, serve un modello che le veda, e Gemini le vede.
+- **Mistral:** escluso. Oggi la chiave API si ottiene solo con un piano a pagamento.
+- **Altri modelli NVIDIA:** si possono provare aggiungendoli alla combo e facendo il test (▷). Tieni solo quelli che risultano OK.
+- **Compiti con le immagini** (per esempio il catalogo C2): servono i modelli Gemini, che vedono le immagini.
 - **Controllo automatico dei reel nuovi (C5):** si può riattivare, ma ogni controllo consuma quota gratuita. Meglio chiederlo a mano ogni tanto.
 - **Crediti per sessioni cloud:** 94 USD inclusi nel piano, scadono il **5 novembre 2026** (claude.ai → Impostazioni → Utilizzo). Valgono solo per le sessioni cloud di Claude Code (claude.ai/code) e non consumano la quota dell'abbonamento.
 - **Sicurezza:** non condividere screenshot che mostrano chiavi API (`sk-…`, `gsk_…`) o il file `.env`.
