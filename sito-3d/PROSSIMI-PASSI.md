@@ -12,6 +12,35 @@ Promemoria per la prossima sessione (vale anche se si apre una chat nuova).
      Descrivere l'oggetto (es. "Pelton turbine runner, bronze, studio lighting") o caricare una foto, poi esportare in `.glb`.
 2. **Scegliere il logo**: `logo/ufficiale/logo-eri.svg` (fedele all'originale) oppure `logo/ufficiale/logo-eri-v2.svg` (rifinito). Poi va messo nel sito al posto del logo provvisorio "Isoipse".
 
+## Servizi reali di ERI (da usare nel sito)
+
+1. Screening preliminare vincolistico
+2. Realizzazione primo layout
+3. Micrositing ed Energy Assessment
+4. Validazione dati anemologici e reportistica
+5. Sopralluoghi e incontri con i proprietari terrieri
+6. Ricerca tecnologica wind turbine / moduli fotovoltaici
+7. Attività di Project Development Management
+8. Gestione portali per richiesta di connessione elettrica e GSE
+9. Predisposizione budget di costruzione e individuazione di potenziali fornitori e subappaltatori
+10. Attività di procurement e realizzazione contratti di acquisto
+11. Asset management
+12. Attività di project management in fase di costruzione
+13. Studi di efficientamento energetico
+
+Già presenti nel sito di prova: studio del territorio dalle particelle alle aree idonee, verifica vincoli,
+iter autorizzativo (PAS, Autorizzazione Unica, VIA) fino al Ready to Build.
+
+**Da chiarire:** i punti 3, 4 e 6 riguardano l'eolico (micrositing, dati anemologici, wind turbine).
+Se l'eolico esce dalla scena 3D, va deciso se tenerlo almeno nei testi dei servizi.
+
+Idea di struttura: i servizi seguono la vita del progetto.
+Sviluppo (1–6) → Autorizzazione e connessione (8, PAS/AU/VIA) → Costruzione (9, 10, 12) → Esercizio (11, 13), con 7 trasversale.
+
+## Asset già scaricati
+
+In `sito-3d/asset/` (vedi `LEGGIMI.md`): 3 cieli HDRI e texture PBR 2K (terreno, campo, cemento, metallo), tutti CC0.
+
 ## Direzione per la versione "al massimo"
 
 - **Molto probabile: togliere l'eolico.** Il sito si concentra su tre tecnologie:
