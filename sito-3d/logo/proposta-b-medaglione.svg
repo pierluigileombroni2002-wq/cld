@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img" aria-label="ERI Energie Rinnovabili Italia">
+<defs>
+  <linearGradient id="b-metal" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#FFFFFF"/><stop offset=".45" stop-color="#C9D0D4"/>
+    <stop offset=".55" stop-color="#8E979C"/><stop offset="1" stop-color="#E4E8EA"/>
+  </linearGradient>
+  <filter id="b-shadow" x="-30%" y="-30%" width="160%" height="160%">
+    <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#000" flood-opacity=".7"/>
+  </filter>
+  <filter id="b-glow" x="-50%" y="-50%" width="200%" height="200%">
+    <feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <linearGradient id="b-ring" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F2F4F5"/><stop offset=".35" stop-color="#7D868B"/><stop offset=".6" stop-color="#D9DEE0"/><stop offset="1" stop-color="#4E565A"/></linearGradient>
+  <radialGradient id="b-disc" cx=".4" cy=".3" r=".9"><stop offset="0" stop-color="#2A2F33"/><stop offset="1" stop-color="#07090A"/></radialGradient>
+  <radialGradient id="b-sun" cx=".5" cy=".35" r=".7"><stop offset="0" stop-color="#FFE9A3"/><stop offset=".55" stop-color="#F7B731"/><stop offset="1" stop-color="#D9661A"/></radialGradient>
+  <linearGradient id="b-h1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9BD14A"/><stop offset="1" stop-color="#2E8B4A"/></linearGradient>
+  <linearGradient id="b-h2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2FA866"/><stop offset="1" stop-color="#0E4A2C"/></linearGradient>
+  <clipPath id="b-clip"><circle cx="200" cy="100" r="66"/></clipPath></defs><g filter="url(#b-shadow)"><circle cx="200" cy="100" r="76" fill="url(#b-ring)"/><circle cx="200" cy="100" r="70" fill="#050607"/><circle cx="200" cy="100" r="67" fill="url(#b-disc)"/></g>
+  <g clip-path="url(#b-clip)"><line x1="168.05" y1="106.37" x2="149.26" y2="99.53" stroke="#1f7a4d" stroke-width="3.5" stroke-linecap="round"/><line x1="173.03" y1="97.3" x2="157.16" y2="85.13" stroke="#369e58" stroke-width="3.5" stroke-linecap="round"/><line x1="180.5" y1="90.15" x2="169.03" y2="73.77" stroke="#65b84e" stroke-width="3.5" stroke-linecap="round"/><line x1="189.78" y1="85.57" x2="183.76" y2="66.5" stroke="#9bcb3e" stroke-width="3.5" stroke-linecap="round"/><line x1="200" y1="84" x2="200" y2="64" stroke="#c9d93a" stroke-width="3.5" stroke-linecap="round"/><line x1="210.22" y1="85.57" x2="216.24" y2="66.5" stroke="#ecca33" stroke-width="3.5" stroke-linecap="round"/><line x1="219.5" y1="90.15" x2="230.97" y2="73.77" stroke="#f6b62a" stroke-width="3.5" stroke-linecap="round"/><line x1="226.97" y1="97.3" x2="242.84" y2="85.13" stroke="#f49f23" stroke-width="3.5" stroke-linecap="round"/><line x1="231.95" y1="106.37" x2="250.74" y2="99.53" stroke="#f08a24" stroke-width="3.5" stroke-linecap="round"/><circle cx="200" cy="124" r="26" fill="url(#b-sun)" filter="url(#b-glow)"/>
+  <path d="M120 132 C160 112 210 118 280 136 L280 180 L120 180 Z" fill="url(#b-h1)"/>
+  <path d="M120 146 C170 128 230 140 280 128 L280 180 L120 180 Z" fill="url(#b-h2)"/>
+  <path d="M120 146 C170 128 230 140 280 128" fill="none" stroke="#fff" stroke-opacity=".25" stroke-width="1"/></g>
+  <ellipse cx="185" cy="58" rx="40" ry="14" fill="#fff" opacity=".05"/>
+  <text x="200" y="230" text-anchor="middle" font-family="Marcellus, Cinzel, serif" font-weight="400" font-size="50" letter-spacing="16" fill="url(#b-metal)" filter="url(#b-shadow)">ERI</text>
+  <text x="200" y="256" text-anchor="middle" font-family="Jost, Futura, sans-serif" font-weight="400" font-size="10.5" letter-spacing="4.2" fill="#9AA5AB">ENERGIE RINNOVABILI ITALIA</text>
+</svg>
