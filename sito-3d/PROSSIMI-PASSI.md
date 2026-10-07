@@ -31,8 +31,7 @@ Promemoria per la prossima sessione (vale anche se si apre una chat nuova).
 Già presenti nel sito di prova: studio del territorio dalle particelle alle aree idonee, verifica vincoli,
 iter autorizzativo (PAS, Autorizzazione Unica, VIA) fino al Ready to Build.
 
-**Da chiarire:** i punti 3, 4 e 6 riguardano l'eolico (micrositing, dati anemologici, wind turbine).
-Se l'eolico esce dalla scena 3D, va deciso se tenerlo almeno nei testi dei servizi.
+**Deciso:** niente eolico. Esclusi dal sito i punti 3 e 4; il punto 6 vale solo per moduli FV e turbine idrauliche.
 
 Idea di struttura: i servizi seguono la vita del progetto.
 Sviluppo (1–6) → Autorizzazione e connessione (8, PAS/AU/VIA) → Costruzione (9, 10, 12) → Esercizio (11, 13), con 7 trasversale.
@@ -43,7 +42,7 @@ In `sito-3d/asset/` (vedi `LEGGIMI.md`): 3 cieli HDRI e texture PBR 2K (terreno,
 
 ## Direzione per la versione "al massimo"
 
-- **Molto probabile: togliere l'eolico.** Il sito si concentra su tre tecnologie:
+- **Deciso: niente eolico.** Il sito si concentra su tre tecnologie:
   fotovoltaico, agrivoltaico, idroelettrico (Kaplan, Francis, Pelton). Meno cose, fatte meglio.
 - Strada consigliata: **ibrida**. Parti chiave in render cinematografico (Blender, sequenza di fotogrammi
   guidata dallo scroll), il resto in tempo reale con Three.js potenziato (modelli PBR, luci "cotte", post-produzione).
