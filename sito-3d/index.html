@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ERI Energie Rinnovabili</title>
+<meta name="description" content="Dalla particella catastale al Ready to Build: studio del territorio, vincoli, PAS, Autorizzazione Unica e VIA.">
+
+<!-- Caratteri: Bodoni Moda (titoli), Jost (testo), IBM Plex Mono (dati tecnici) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=IBM+Plex+Mono:wght@400&family=Jost:wght@300;400;500&display=swap">
+<link rel="stylesheet" href="style.css">
+
+<!-- GSAP + ScrollTrigger: le animazioni legate allo scroll -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+<!-- Three.js: diciamo al browser dove trovare "three" e i suoi moduli aggiuntivi -->
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+
+<!-- La tela su cui Three.js disegna la scena 3D: resta fissa dietro a tutto -->
+<canvas id="scena" aria-hidden="true"></canvas>
+<div class="velo" aria-hidden="true"></div>
+<div class="grana" aria-hidden="true"></div>
+
+<!-- Introduzione: il logo si disegna, poi si apre la scena -->
+<div class="intro" aria-hidden="true">
+  <img src="logo/simbolo-eri.svg" alt="">
+</div>
+
+<!-- Intestazione fissa -->
+<header class="testata">
+  <a class="marchio" href="#inizio" aria-label="ERI, torna all'inizio">
+    <img src="logo/simbolo-eri.svg" alt="">
+    <span>ERI</span>
+  </a>
+  <nav>
+    <a href="#territorio">Metodo</a>
+    <a href="#servizi">Servizi</a>
+    <a href="#chi-siamo">Chi siamo</a>
+    <a class="bottone" href="#contatti">Parliamo del progetto</a>
+  </nav>
+</header>
+
+<!-- Indice laterale delle tappe (si accende la tappa attiva) -->
+<ol class="tappe" aria-label="Tappe">
+  <li data-i="1">Territorio</li>
+  <li data-i="2">Vincoli</li>
+  <li data-i="3">Iter</li>
+  <li data-i="4">Fotovoltaico</li>
+  <li data-i="5">Eolico</li>
+  <li data-i="6">Idroelettrico</li>
+</ol>
+
+<!-- Strumento in basso: coordinate e quota della camera, come su una carta tecnica -->
+<div class="hud" aria-hidden="true">
+  <span id="hud-coord">41°53′N · 12°29′E</span>
+  <span id="hud-quota">quota 0 m</span>
+  <span>scala 1:2.000</span>
+</div>
+
+<!-- Etichette agganciate a punti del terreno 3D -->
+<div class="etichette" aria-hidden="true">
+  <div class="etichetta" id="et-vincolo">Vincolo paesaggistico<small>D.Lgs. 42/2004</small></div>
+  <div class="etichetta" id="et-fiume">Fascia di rispetto fluviale<small>150 m dalle sponde</small></div>
+  <div class="etichetta verde" id="et-idonea">Area idonea<small>pendenza &lt; 5% · nessun vincolo</small></div>
+  <div class="etichetta oro" id="et-sito">Fg. 27 · P.lle 112–118<small>superficie 9,6 ha</small></div>
+  <div class="etichetta oro" id="et-fv">Fotovoltaico<small>tracker monoassiali est-ovest</small></div>
+  <div class="etichetta verde" id="et-agri">Agrivoltaico<small>tracker a 4,5 m sopra le colture</small></div>
+  <div class="etichetta" id="et-eolico">Parco eolico sul crinale<small>4 aerogeneratori</small></div>
+  <div class="etichetta acqua" id="et-kaplan">Kaplan<small>salto basso · grande portata</small></div>
+  <div class="etichetta acqua" id="et-francis">Francis<small>salto medio · portata media</small></div>
+  <div class="etichetta acqua" id="et-pelton">Pelton<small>salto alto · piccola portata</small></div>
+</div>
+
+<main>
+  <!-- LA STORIA: ogni "passo" è alto uno schermo; scorrendo, la scena 3D cambia -->
+  <section class="storia">
+
+    <div class="passo eroe" id="inizio">
+      <div class="testo">
+        <p class="occhiello">Energie Rinnovabili Italia</p>
+        <h1>Dalla particella<br><em>al Ready to Build.</em></h1>
+        <p class="lead">Studiamo il territorio, verifichiamo i vincoli e seguiamo l'intero iter autorizzativo. Il cliente riceve un progetto pronto da costruire.</p>
+        <p class="scorri"><span></span>Scorri</p>
+      </div>
+    </div>
+
+    <div class="passo" id="territorio">
+      <div class="pannello">
+        <p class="occhiello">01 · Territorio</p>
+        <h2>Studio del territorio</h2>
+        <p>Partiamo dalle particelle catastali. Incrociamo morfologia, accessi, rete elettrica e destinazione urbanistica per capire dove un impianto ha senso.</p>
+        <ul class="chip"><li>Fogli e particelle</li><li>Morfologia</li><li>Connessione alla rete</li></ul>
+      </div>
+    </div>
+
+    <div class="passo destra" id="vincoli">
+      <div class="pannello">
+        <p class="occhiello">02 · Vincoli e aree idonee</p>
+        <h2>Verifica dei vincoli</h2>
+        <p>Controlliamo vincoli paesaggistici, idrogeologici, archeologici e ambientali. Restano le aree idonee: quelle dove si può davvero costruire.</p>
+        <ul class="legenda">
+          <li><i class="l-verde"></i>Area idonea</li>
+          <li><i class="l-rosso"></i>Area vincolata</li>
+          <li><i class="l-acqua"></i>Corso d'acqua</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="passo" id="iter">
+      <div class="pannello">
+        <p class="occhiello">03 · Iter autorizzativo</p>
+        <h2>PAS, Autorizzazione Unica, VIA</h2>
+        <p>Prepariamo il progetto e seguiamo ogni procedimento con enti e conferenze dei servizi, fino al titolo autorizzativo.</p>
+        <ol class="iter">
+          <li><b>PAS</b><span>Procedura abilitativa semplificata</span></li>
+          <li><b>AU</b><span>Autorizzazione Unica</span></li>
+          <li><b>VIA</b><span>Valutazione di impatto ambientale</span></li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="passo destra" id="ready">
+      <div class="pannello">
+        <p class="occhiello">04 · Ready to Build</p>
+        <h2>Fotovoltaico e agrivoltaico</h2>
+        <p>Il progetto autorizzato diventa impianto. I pannelli stanno su tracker che ruotano da est a ovest e seguono il sole durante il giorno.</p>
+        <p>Nell'agrivoltaico i tracker sono rialzati: sotto si continua a coltivare.</p>
+        <p class="dato">Tracker monoassiali · asse nord-sud</p>
+      </div>
+    </div>
+
+    <div class="passo" id="eolico">
+      <div class="pannello">
+        <p class="occhiello">Tecnologie · Eolico</p>
+        <h2>Il vento del crinale</h2>
+        <p>Analisi anemologica, distanze dalle case e studio dell'impatto visivo, per parchi eolici che reggono l'istruttoria.</p>
+      </div>
+    </div>
+
+    <div class="passo destra" id="idroelettrico">
+      <div class="pannello">
+        <p class="occhiello">Tecnologie · Idroelettrico</p>
+        <h2>La turbina giusta per ogni salto</h2>
+        <p>Tre turbine idrauliche. Nella scena, l'altezza della colonna d'acqua è il salto e la sua larghezza è la portata.</p>
+        <dl class="turbine">
+          <dt>Kaplan</dt><dd>Grandi portate, salti bassi<span>fino a circa 40 m · fiumi e traverse</span></dd>
+          <dt>Francis</dt><dd>Portate e salti medi<span>circa 40–400 m · dighe e bacini</span></dd>
+          <dt>Pelton</dt><dd>Piccole portate, salti alti<span>oltre 300 m · condotte forzate in montagna</span></dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="passo finale">
+      <div class="testo">
+        <p class="occhiello">Un solo interlocutore</p>
+        <h2 class="grande">Dall'idea<br><em>al cantiere.</em></h2>
+      </div>
+    </div>
+  </section>
+
+  <!-- CHI SIAMO -->
+  <section class="sezione" id="chi-siamo">
+    <div class="griglia-2">
+      <p class="occhiello">Chi siamo</p>
+      <div>
+        <h2>Sviluppiamo progetti di energia rinnovabile, dal terreno al titolo autorizzativo.</h2>
+        <p>Siamo tecnici del territorio: geologi, ingegneri, urbanisti e consulenti ambientali. Lavoriamo per investitori e produttori che vogliono un progetto solido, con tempi chiari e documenti in ordine.</p>
+        <p>Ogni progetto parte da una domanda semplice: <em>qui si può costruire?</em> Rispondiamo con i dati, particella per particella.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SERVIZI -->
+  <section class="sezione" id="servizi">
+    <p class="occhiello">Servizi</p>
+    <h2>Quattro fasi, un solo percorso</h2>
+    <div class="servizi">
+      <article>
+        <span class="num">01</span>
+        <h3>Analisi territoriale</h3>
+        <p>Ricerca catastale, visure, morfologia, accessi e distanza dal punto di connessione.</p>
+      </article>
+      <article>
+        <span class="num">02</span>
+        <h3>Vincoli e aree idonee</h3>
+        <p>Verifica dei vincoli paesaggistici, idrogeologici, archeologici e ambientali. Mappatura delle aree idonee.</p>
+      </article>
+      <article>
+        <span class="num">03</span>
+        <h3>Iter autorizzativo</h3>
+        <p>PAS, Autorizzazione Unica e VIA. Progetto, relazioni specialistiche e rapporti con gli enti.</p>
+      </article>
+      <article>
+        <span class="num">04</span>
+        <h3>Ready to Build</h3>
+        <p>Progetto autorizzato e cantierabile, con diritti sui terreni e connessione alla rete.</p>
+      </article>
+    </div>
+    <ul class="tecnologie">
+      <li>Fotovoltaico</li><li>Agrivoltaico</li><li>Eolico</li><li>Idroelettrico</li>
+    </ul>
+  </section>
+
+  <!-- CONTATTI (dati di esempio) -->
+  <section class="sezione" id="contatti">
+    <div class="griglia-2">
+      <div>
+        <p class="occhiello">Contatti</p>
+        <h2>Parliamo del tuo terreno o del tuo progetto.</h2>
+        <dl class="recapiti">
+          <dt>Email</dt><dd>info@eri-esempio.it</dd>
+          <dt>Progetti</dt><dd>progetti@eri-esempio.it</dd>
+          <dt>Telefono</dt><dd>+39 000 000 0000</dd>
+        </dl>
+        <p class="nota">Recapiti di esempio. Saranno sostituiti con quelli reali.</p>
+      </div>
+      <form class="modulo" id="modulo">
+        <label for="nome">Nome e azienda</label>
+        <input id="nome" name="nome" autocomplete="name" required>
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" autocomplete="email" required>
+        <label for="messaggio">Comune e superficie del terreno</label>
+        <textarea id="messaggio" name="messaggio" rows="3" placeholder="Es. Viterbo, circa 12 ettari"></textarea>
+        <button type="submit" class="bottone">Invia richiesta</button>
+        <p class="esito" id="esito" role="status"></p>
+      </form>
+    </div>
+  </section>
+
+  <footer class="piede">
+    <span>© 2026 ERI · Energie Rinnovabili Italia</span>
+    <span>Versione di prova</span>
+  </footer>
+</main>
+
+<!-- Il nostro codice 3D. type="module" permette di usare "import" -->
+<script type="module" src="main.js"></script>
+</body>
+</html>
