@@ -6,11 +6,22 @@ Promemoria per la prossima sessione (vale anche se si apre una chat nuova).
 
 1. **Generare i modelli 3D** (file `.glb`) da inserire nella scena al posto delle forme semplici:
    - modulo fotovoltaico su tracker monoassiale
-   - pala eolica (torre, navicella, rotore)
+   - ~~pala eolica~~ → probabilmente l'eolico verrà tolto (vedi sotto)
    - turbina Kaplan, turbina Francis, turbina Pelton
    - Strumenti consigliati, con piani gratuiti limitati: **Meshy**, **Tripo**, **Luma Genie**.
      Descrivere l'oggetto (es. "Pelton turbine runner, bronze, studio lighting") o caricare una foto, poi esportare in `.glb`.
 2. **Scegliere il logo**: `logo/ufficiale/logo-eri.svg` (fedele all'originale) oppure `logo/ufficiale/logo-eri-v2.svg` (rifinito). Poi va messo nel sito al posto del logo provvisorio "Isoipse".
+
+## Direzione per la versione "al massimo"
+
+- **Molto probabile: togliere l'eolico.** Il sito si concentra su tre tecnologie:
+  fotovoltaico, agrivoltaico, idroelettrico (Kaplan, Francis, Pelton). Meno cose, fatte meglio.
+- Strada consigliata: **ibrida**. Parti chiave in render cinematografico (Blender, sequenza di fotogrammi
+  guidata dallo scroll), il resto in tempo reale con Three.js potenziato (modelli PBR, luci "cotte", post-produzione).
+- 4K sì (risoluzione dello schermo), 8K no: inutile sul web e troppo pesante.
+- Idee di animazione: mappa catastale che diventa terreno 3D; tracker in vista esplosa che si monta e segue il sole
+  con ombre vere; ciclo giorno/notte; acqua nella condotta che colpisce la Pelton; turbine in sezione.
+- Compito per Pierluigi: scegliere 2-3 siti di riferimento su awwwards.com (sezione 3D / WebGL).
 
 ## Modelli 3D: da dove prenderli
 
@@ -38,7 +49,7 @@ Promemoria per la prossima sessione (vale anche se si apre una chat nuova).
 
 ## Problemi noti nel sito
 
-- Una pala eolica finisce nel fiume (posizione `[-44, -76]` in `main.js`): spostarla a `[-57, -77]`.
+- Una pala eolica finisce nel fiume (`[-44, -76]` in `main.js`). Si risolve da sé se l'eolico viene tolto.
 - La colonna d'acqua della Kaplan sembra un blocco: renderla più trasparente.
 - I filari verdi dell'agrivoltaico sono troppo accesi.
 - Manca una vera versione per telefono.
