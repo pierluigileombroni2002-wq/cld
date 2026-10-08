@@ -124,7 +124,9 @@ export async function crea(ctx) {
   };
   abilita();
   ctx.eventi.on('riduci', abilita);
-  matchMedia('(pointer: fine)').addEventListener?.('change', abilita);
+  ctx.eventi.on('senza-webgl', abilita);                 // contesto perso: torna il cursore di sistema
+  C.mqFine = matchMedia('(pointer: fine)');               // riferimento tenuto (GC)
+  C.mqFine.addEventListener?.('change', abilita);
   document.addEventListener('pointerleave', () => { C.dentro = false; radice.classList.remove('attivo'); });
   document.addEventListener('pointerenter', () => { C.dentro = true; });
   addEventListener('pointermove', e => { if (e.pointerType !== 'mouse') return; if (!C.dentro) { C.dentro = true; C.ax = e.clientX; C.ay = e.clientY; } }, { passive: true });
@@ -161,7 +163,7 @@ export function aggiorna(ctx, T, t, dt) {
   let testo = '', particella = false, hover = 0;
   if (sullaTela && ctx.camera && C.v) {
     const cam = ctx.camera;
-    C.v.set(x / innerWidth * 2 - 1, -(y / innerHeight) * 2 + 1, 0.5).unproject(cam);
+    C.v.set(x / ctx.vista.w * 2 - 1, -(y / ctx.vista.h) * 2 + 1, 0.5).unproject(cam);   // box reale della tela
     C.o.copy(cam.position); C.v.sub(C.o).normalize();
     const tt = raggioTerreno(C.o.x, C.o.y, C.o.z, C.v.x, C.v.y, C.v.z, Math.min(cam.far, 3000), CUR.passoRay);
     if (tt > 0) {

@@ -166,7 +166,7 @@ function archi(ctx, T, S, sezioni, inSez) {
   if (va !== F.visArchi) { F.visArchi = va; F.gruppoArchi.style.opacity = va; }
   F.archiVisibili = a > 0.05;
   if (a <= 0.001) return;
-  const W = innerWidth, H = innerHeight, gx = P.x, gy = P.y;
+  const W = ctx.vista.w, H = ctx.vista.h, gx = P.x, gy = P.y;
   for (let i = 0; i < F.archi.length; i++) {
     const A = F.archi[i], ax = ARCHI_DA[i][0] * W, ay = ARCHI_DA[i][1] * H;
     // controllo: punto medio spostato in perpendicolare (verso l'alto), freccia proporzionale alla corda

@@ -211,7 +211,9 @@ export const RENDER = {
   gtao: { radius: 0.012, distanceExponent: 1.5, thickness: 0.15, scale: 1.0, samples: 16, distanceFallOff: 1.0, screenSpaceRadius: false },
   gtaoPd: { lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 6, radiusExponent: 1, rings: 2, samples: 16 },
   pellicola: { nitidezza: 0.35, nitidezzaScalaBassa: 0.5, sogliaScalaBassa: 0.9, vignetta: 0.26, spostamentoVignetta: 0.06,
-               grana: 0.028, granaEstremi: 0.01, granaFps: 24, lato: 1 },
+               grana: 0.028, granaEstremi: 0.01, granaFps: 24, lato: 1,
+               granaCiclo: 1024 /* [ARCH] fotogrammi di grana prima che il seme ricominci: precisione float32 nelle sessioni lunghe */ },
+  contestoAttesaMs: 3000,   // contesto WebGL perso: oltre questa attesa la pagina passa alla modalità senza WebGL (§6.12)
 };
 
 // ---------------------------------------------------------------- §6.8 qualità
@@ -228,8 +230,9 @@ export const QUALITA = {
   regexUltra: /RTX|RX [67]\d{3}|Apple M\d (Pro|Max|Ultra)|Arc A7/,
   regexBassa: /Intel|UHD|Iris|Mali|Adreno|PowerVR|SwiftShader|llvmpipe/,
   // §6.8: 90 fotogrammi durante l'intro (main.js lo avvia a 'pronto', sotto il preloader). [ARCH] al massimo
-  // maxS secondi di misura (almeno minimo fotogrammi): sulle GPU lente 90 fotogrammi durerebbero più dell'intro.
-  benchmark: { fotogrammi: 90, T: 1.8, maxS: 2.5, minimo: 12 },
+  // maxS secondi di misura (tempo reale, almeno minimo fotogrammi): sulle GPU lente 90 fotogrammi durerebbero più
+  // dell'intro. Si misura l'inquadratura di T = 0 (K0.0), non K0.1: vedi ARCHITETTURA §12.
+  benchmark: { fotogrammi: 90, maxS: 2.5, minimo: 12 },
   gradiniScala: [1, 0.85, 0.7, 0.6],
   governatore: { media: 0.05, giu: 1.35, tGiu: 1.5, su: 0.8, tSu: 3, intervallo: 4, scrollMax: 50, scrollFermo: 0.3, obiettivoMinMs: 16.7 },
   sezioni: { fps: 30, scala: 0.5 },
@@ -459,7 +462,7 @@ export const IDRO = {
     // estremi della retta dei 10 MW in coordinate mondo (riserva per LineaOro se diagramma.js non registra ancore)
     retta10Mondo: [[-40.546, 61.622, 60], [40.0, 2.984, 60]],
     colonneZ: 64, girantiZ: 70, scalaGiranti: 30,
-    etichetteAssi: { Q: '0,1 1 10 100 1 000 m³/s', H: '1 10 100 1 000 2 000 m' },
+    etichetteAssi: { Q: '0,1 1 10 100 1 000 m³/s', H: '1 10 100 1 000 2 000 m' },   // migliaia con spazio fine (§0)
     didascalia: 'campi indicativi',
   },
 };
@@ -477,18 +480,28 @@ export const TAPPE = [
   { indice: 6, id: 'finale',         nome: '06 Un referente',        durata: 1.5, T0: 17.50, T1: 19.00, mondo: 'pianura', lato: 'sinistra' },
 ];
 // Il mondo cambia ESATTAMENTE a questi T (§4.4, §4.5): VALLE per T ∈ [11,50, 15,50)
-export const CAMBIO_MONDO = { valleDa: 11.50, valleA: 15.50 };
+export const CAMBIO_MONDO = { valleDa: 11.50, valleA: 15.50,
+  // [ARCH] costruzione della VALLE in idle (§6.9): dopo il benchmark e l'intro più un respiro, oppure subito
+  // quando la storia supera costruisciDaT; velo d'attesa al massimo veloAttesaMs (ARCHITETTURA §2)
+  ritardoValleMs: 800, costruisciDaT: 9.0, veloAttesaMs: 3000 };
 
 // Colonna del testo e velo (§4.0)
 // [ARCH] velo .scrim: DESIGN dà 0,82 → 0,62 (22 %) → 0 (44 %), ma a 22–44 % della larghezza c'è ancora la colonna
-// (fino a ~42 %, i titoli H1 fino a 52 %) e sul cielo chiaro il contrasto scendeva a 2:1. Fermate più larghe e
-// più dense dove sta il testo; a sx 0,50 il velo è già 0 (i soggetti stanno a destra di 0,38–0,44, App. C).
+// (fino a ~42 %, i titoli H1 e H2 fino a 54 %) e sul cielo chiaro il contrasto scendeva a 2:1. Fermate più larghe e
+// più dense dove sta il testo; a sx 0,54 il velo è 0 (i soggetti stanno a destra di 0,38–0,44, App. C, dove
+// l'alfa è già ≤ 0,24). I titoli non escono oltre 0,54 della larghezza (stile.css: .battuta h1, h2).
 // Fermate [frazione della larghezza, alfa]: unica fonte per il CSS (ui/testi.js scrive --scrim) e per test.js.
-const SCRIM_FERMATE = [[0, 0.86], [0.26, 0.72], [0.40, 0.34], [0.50, 0]];
+const SCRIM_FERMATE = [[0, 0.86], [0.26, 0.72], [0.40, 0.34], [0.54, 0]];
+// [ARCH] sotto 900 px (§6.12) il velo è verticale, dal basso: DESIGN dà .9 0% → 0 55%; con la colonna in basso alta
+// fino al 60 % dello schermo serve una fermata intermedia (.75 al 30 %) e la fine al 62 %. Frazione dal basso.
+const SCRIM_PICCOLO_FERMATE = [[0, 0.9], [0.30, 0.75], [0.62, 0]];
+const gradiente = (dir, F) => `linear-gradient(${dir}, ${F.map(([f, a]) => `rgba(5,6,7,${a}) ${Math.round(f * 100)}%`).join(', ')})`;
 export const COLONNA = {
   left: 'clamp(24px, 6vw, 112px)', larghezza: 'min(36vw, 600px)', spostamentoY: '-4vh',
   scrimFermate: SCRIM_FERMATE,
-  scrim: `linear-gradient(90deg, ${SCRIM_FERMATE.map(([f, a]) => `rgba(5,6,7,${a}) ${Math.round(f * 100)}%`).join(', ')})`,
+  scrim: gradiente('90deg', SCRIM_FERMATE),
+  scrimPiccoloFermate: SCRIM_PICCOLO_FERMATE,
+  scrimPiccolo: gradiente('0deg', SCRIM_PICCOLO_FERMATE),
   scrimDurataT: 0.04, ombraTesto: '0 2px 24px rgba(5,6,7,.9)',
   limiteSoggetto: 0.38,           // la colonna occupa sx < 0,38 (App. C)
 };
@@ -708,7 +721,10 @@ export const TRACCE = {
   uFronteRealta: [[7.62, 7.88, -1, 300, P2IO]],
   gtao:         [[7.95, 8.10, 0, 0.9], [8.70, 8.85, 0.9, 0.3], [11.32, 11.50, 0.3, 0] /* [ARCH] */, [12.70, 12.85, 0, 0.9], [14.75, 15.00, 0.9, 0] /* [ARCH] */],
   gtaoRaggio:   [[11.50, 11.50, null, 0.004], [15.50, 15.50, null, 0.012]],
-  eroe:         [[7.92, 8.08, 0, 1, 'expo.out'], [8.72, 8.72, null, 0] /* le istanze prendono il posto dell'eroe */],
+  // [ARCH] l'eroe si spegne a 8,77 e non a 8,72 (§6.6): a 8,72 l'istanza k = 0 ha comparsaFV = −0,1 e scala 0, torna
+  // piena solo a comparsa 0,1 (T = 8,72 + 0,26·0,2/1,2 ≈ 8,763). Lo scambio avviene con l'istanza identica all'eroe
+  // montato (esplosione = 0 da 8,60): nessun buco in primo piano. Le istanze restano escluse finché l'eroe è acceso.
+  eroe:         [[7.92, 8.08, 0, 1, 'expo.out'], [8.77, 8.77, null, 0] /* le istanze prendono il posto dell'eroe */],
   esplosione:   [[8.15, 8.60, 1, 0]],         // per pezzo power4.out (calcolo in impianti/tracker.js)
   giraModulo:   [[8.56, 8.66, 0, 1, P2IO]],
   comparsaFV:   [[8.72, 8.98, -0.1, 1.1]],
@@ -758,7 +774,9 @@ export const TRACCE = {
   recinzione:   [[15.72, 15.84, 0, 1]],
   uCantiere:    [[15.72, 15.84, 0, 1]],
   uFronte:      [[16.45, 16.55, 0, 80], [16.56, 16.56, null, -1] /* [ARCH] */],
-  trackerManuale:       [[15.50, 15.50, null, 1], [16.55, 16.55, null, 0]],
+  // [ARCH] manuale fino a 16,60 (non 16,55): il sole arriva alle 16:00 (50,5°/255,5°) solo a 16,60, e lì
+  // angoloTracker vale 38,59° = l'angolo manuale (a 16,55 sarebbe 48,6°: scatto di 10° su tutto il campo)
+  trackerManuale:       [[15.50, 15.50, null, 1], [16.60, 16.60, null, 0]],
   trackerAngoloManuale: [[16.46, 16.55, 0, 38.6, P2IO]],
   uNuvole:      [[15.58, 15.66, 0, 0.25], [16.46, 16.54, 0.25, 0]],
   uNuvoleVel:   [[15.62, 15.62, null, 20], [16.50, 16.50, null, 1]],
@@ -885,7 +903,7 @@ export const HUD = {
   scaleBarraM: [10, 20, 50, 100, 200, 500, 1000, 2000], scalaBarraPx: 120,
   scaleFiniM: [0.05, 0.1, 0.2, 0.5, 1, 2, 5],   // [ARCH] primi piani e macro della valle
   barraLimitiPx: [24, 240],
-  scalaApertura: { T: [0.15, 1.55], testo: ['1:10 000', '1:2 000'] },
+  scalaApertura: { T: [0.15, 1.55], testo: ['1:10 000', '1:2 000'], da: 10000, a: 2000, passo: 500 },
   strumenti: [                       // strumento di tappa per intervallo di T
     { tipo: 'maturita', T: [0, 7.60] },
     { tipo: 'rtb', T: [7.60, 9.15] },   // la maturità si chiude in "● RTB" (7,60)
@@ -903,11 +921,21 @@ export const HUD = {
             spaccato: { file: 3, larghezzaM: 2.4, passoM: 6 }, ombraGrigio: 0.4 },
   idro: { salto: { min: 0, max: 900, px: 140 }, portata: { min: 0.1, max: 1000, px: 220, log: true }, potenza: 'POTENZA ≈10 MW',
           tempo: { T: [12.70, 14.78], testo: 'TEMPO ×1/1000 → ×1/8' },
+          // turbina attiva per intervallo di T (§4.5): fuori dagli intervalli 'tutte' (panoramica e confronto)
+          turbine: [{ k: 'pelton', T: [12.05, 13.55] }, { k: 'francis', T: [13.55, 14.30] }, { k: 'kaplan', T: [14.30, 14.80] }],
+          discesa: [12.05, 12.80],     // SALTO segue la quota della camera (STATO.saltoHud) durante la discesa
+          confrontoT: 14.80,           // dal confronto (4e) le tre parentesi si accendono insieme
+          scala: ['0,1', '1', '10', '100', '1 000'], unitaPortata: 'm³/s',
           legenda: ['altezza = salto', 'linee ∝ portata', 'velocità ∝ √(2gH)'],
           preparazione: 'PREPARAZIONE DELLA VALLE · {p} %' },
   gantt: { mesi: 9, fasi: [{ nome: 'Budget', T: [15.62, 15.62] }, { nome: 'Fornitori', T: [15.66, 15.66] }, { nome: 'Contratti', T: [15.70, 15.70] },
                             { nome: 'Montaggio', T: [15.76, 16.40] }, { nome: 'Collaudo', T: [16.42, 16.52] }],
-           fine: 'SIMULAZIONE · 21 GIUGNO · 16:00' },
+           fine: 'SIMULAZIONE · 21 GIUGNO · 16:00',
+           T: [15.62, 16.50],      // asse dei mesi: dalla prima fase alla fine del montaggio
+           fineT: 16.52,           // compare la nota di fine simulazione
+           // [ARCH] sotto questa larghezza il Gantt (già concluso) lascia il posto alla piastra 5b, che ripete ora e
+           // giornata della simulazione: a 960 px i due strumenti si sovrapporrebbero
+           liberaPiastraPx: 1200 },
 };
 
 // Piastra dati 5b (§4.6) e produzione (App. A) — "simulazione"

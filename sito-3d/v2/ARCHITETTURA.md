@@ -79,9 +79,15 @@ File privati già presenti (regola 0.1): `luce/sole-prova.mjs` (prova con node),
 7. `crea()` della PIANURA nell'ordine `catasto, terreno, fiume, contorno, tracker, agri, cantiere` (GEOMETRIA), poi la UI (`testi, etichette, hud, cursore, lineaOro, finale, indice, servizi, contatti, test`).
 8. **Warm-up della PIANURA**: tutti gli oggetti visibili, poi `compileAsync` (o `compile` se manca `KHR_parallel_shader_compile`), `initTexture` di ogni texture (SHADER). Poi un render completo, con l'ombra aggiornata, per ogni T di `config.WARMUP.pianura` (VERIFICA). Infine si ripristina la visibilità.
 9. Parte il ciclo (`gsap.ticker`, oppure `requestAnimationFrame`). Si salta al T iniziale. `__eri.pronto = true` ed evento `'pronto'`. Con l'intro parte il benchmark della qualità (§12); senza intro main emette subito `'intro-fine'`.
-10. **VALLE in idle** (`requestIdleCallback`): HDRI kloofendal, set `cemento_diga` e `metallo_lamiera`, `crea()` di `valle, pelton, francis, kaplan, acqua, diagramma` (in quest'ordine), `ctx.cielo.cotturaValle()`, warm-up della VALLE. I render di warm-up sono sincroni e il mondo corrente si ridisegna nello stesso task: allo schermo non arriva mai un fotogramma della valle. Poi `ctx.valle.pronta = true` ed evento `'valle-pronta'`. Infine HDRI autumn.
+10. **VALLE in idle** (`requestIdleCallback`), **dopo** il benchmark e dopo `'intro-fine'` più `config.CAMBIO_MONDO.ritardoValleMs` (800 ms): il download (≈ 8 MB), il parse dell'HDRI e i render di warm-up non toccano né la misura né l'uscita dell'intro. Parte prima se la storia supera `CAMBIO_MONDO.costruisciDaT` (9,0) o se si entra nella valle. Passi: HDRI kloofendal, set `cemento_diga` e `metallo_lamiera`, `crea()` di `valle, pelton, francis, kaplan, acqua, diagramma` (in quest'ordine), `ctx.cielo.cotturaValle()`, warm-up della VALLE. Il warm-up è **spezzato**: un render di configurazione per idle callback, ciascuno seguito nello stesso task dal render di ritorno sul mondo corrente, così allo schermo non arriva mai un fotogramma della valle e non ci sono task lunghi. Se qualcuno aspetta la valle (`vaiT`, utente già nella valle) i render si fanno subito. Poi `ctx.valle.pronta = true` ed evento `'valle-pronta'`. Infine HDRI autumn.
 
-Se l'utente entra nella VALLE prima che sia pronta, `ctx.veli.valle = 1` per al massimo 3 s. L'HUD mostra `PREPARAZIONE DELLA VALLE · {ctx.valle.progresso}` e `vaiT` aspetta la costruzione.
+Warm-up e `compileAsync`: la scena forzata (oggetti nascosti resi visibili, mondo cambiato) si ripristina **prima** dell'attesa di `compileAsync`, perché durante l'attesa il ciclo continua a disegnare il mondo corrente.
+
+Se l'utente entra nella VALLE prima che sia pronta, `ctx.veli.valle = 1` per al massimo `CAMBIO_MONDO.veloAttesaMs` (3 s) dall'ingresso (main lo calcola nel passo, non in `cambiaMondo`). L'HUD mostra `PREPARAZIONE DELLA VALLE · {ctx.valle.progresso}` e `vaiT` aspetta la costruzione.
+
+**Contesto WebGL perso**: velo e `html.contesto-perso`; se entro `RENDER.contestoAttesaMs` (3 s) non torna, la pagina passa alla modalità senza WebGL anche se era già partita: main toglie gli stili in linea del ciclo dalle battute, le classi `mirino`, `contesto-perso`, `intro-attiva`, ferma il ciclo, emette `'senza-webgl'` (indice: osservatore delle battute; scroll: Lenis distrutto; cursore: cursore di sistema) e riporta lo scroll sulla battuta o sezione corrente. Se il contesto torna, main forza la mappa d'ombra (`shadowMap.needsUpdate`, `ombre.richiedi()`), le cotture del cielo e ridisegna subito un fotogramma.
+
+**Resize**: accodato a un fotogramma, anche da un `ResizeObserver` sulla tela (la barra di scorrimento che compare o sparisce non manda `resize`) e dal cambio di `devicePixelRatio` (`matchMedia('(resolution: …dppx)')`). Main ricalcola `ctx.dprNativo` e `ctx.vista`, ignora le dimensioni nulle e non fa nulla se dimensioni e DPR non sono cambiati.
 
 **Gruppi del preloader** (`config.CARICAMENTO`, somma 1): FONT 0,05 · CIELO 0,20 · TERRENO 0,25 · GEOMETRIA 0,15 · SHADER 0,25 · VERIFICA 0,10.
 
@@ -95,7 +101,8 @@ Lo stesso oggetto passa a ogni funzione di ogni modulo.
 |---|---|---|---|
 | `THREE`, `config`, `geo` | moduli | main | `config` = tutto `config.js` |
 | `flags` | `{test, debug, T0, q, tm, riduci, piccolo, nowebgl, intro, lenis}` | main | §13; `riduci` cambia a runtime (evento `'riduci'`) |
-| `canvas`, `renderer`, `dprNativo` | | main / pipeline | `dprNativo = min(devicePixelRatio, 2)`, 1 in test |
+| `canvas`, `renderer`, `dprNativo` | | main / pipeline | `dprNativo = min(devicePixelRatio, 2)`, 1 in test; main lo ricalcola al resize e al cambio di risoluzione |
+| `vista` | `{w, h}` | main | px CSS del box **reale** della tela (senza la barra di scorrimento classica): buffer, `camera.aspect`, `proietta`, etichette e cursore usano questo, non `innerWidth` |
 | `pipeline` | §6 | pipeline | |
 | `qualita` | §12 | qualita | `qualita.R` = stato di runtime che il governatore cambia |
 | `scene` | `{pianura: Scene, valle: Scene}` | main | i moduli aggiungono qui i loro oggetti |
@@ -103,7 +110,7 @@ Lo stesso oggetto passa a ogni funzione di ogni modulo.
 | `mondo` | `'pianura' \| 'valle'` | main | mondo attivo |
 | `stato`, `STATO`, `U` | §5 | stato.js | |
 | `tempo` | `{t, dt, T, frame, fps}` | main | `t` in secondi (fisso a 1/60 per fotogramma con `?test=1`) |
-| `regia` | `{target, posizione, d, phi, psi, fov, vicino, lontano, meta, centroOmbra, keyframe, inSosta, mondo}` + `{fovBase, ancora, rollio, volo:{da,a,e}\|null, forzato}` | camera | `target`, `posizione` e `centroOmbra` sono `Vector3`; `fov` è quello effettivo (schermi stretti), `fovBase` quello del keyframe |
+| `regia` | `{target, posizione, d, phi, psi, fov, vicino, lontano, meta, centroOmbra, keyframe, inSosta, mondo}` + `{fovBase, ancora, rollio, volo:{da,a,e}\|null, forzato, inTransizione}` | camera | `target`, `posizione` e `centroOmbra` sono `Vector3`; `fov` è quello effettivo (schermi stretti: lo usa la barra di scala dell'HUD), `fovBase` quello del keyframe; `forzato` vale solo sotto le sezioni (fuori il rig lo rilascia con la transizione di ritorno); `inTransizione` = la camera si muove da sola |
 | `rig`, `scroll`, `luci`, `cielo`, `ombre`, `nebbia` | servizi | moduli di sistema | §6 |
 | `carica` | caricatore | main | §10 |
 | `eventi` | `{on(n,f) → off, off, emit}` | main | §11 |
@@ -131,6 +138,8 @@ Lo stesso oggetto passa a ogni funzione di ogni modulo.
 9  interfaccia     testi, etichette, hud, cursore, lineaOro, finale, indice, servizi, contatti, intro, test
 10 veli            ctx.velo = max(ctx.veli) → opacità di .velo
 11 render          pipeline.render(dt), saltato se scheda nascosta o velo ≥ 0,999; 30 fps sotto le sezioni
+                   (i render forzati con dt = 0 non si saltano mai; il limite del finale fermo della pipeline
+                   non vale sotto le sezioni né con la camera in transizione)
 ```
 
 Ogni modulo riceve `aggiorna(ctx, T, t, dt)`. La camera viene prima dei contenuti, così ombre, cupola ed etichette usano la posa del fotogramma corrente. La UI viene dopo tutto, così le proiezioni sono coerenti con il render.
@@ -147,6 +156,8 @@ Ogni modulo riceve `aggiorna(ctx, T, t, dt)`. La camera viene prima dei contenut
 - Le chiavi annidate usano il punto: `'uV.0'`, `'fogliGIS.2.o'`, `'sole.el'`.
 - I valori possono essere numeri, colori `'#rrggbb'` (diventano `THREE.Color`, interpolati in lineare) o nomi di preset (diventano `{da, a, k}`, per esempio `STATO.cielo`).
 - Semantica: vale l'ultimo segmento con `T0 ≤ T`. Prima del primo segmento vale `STATO_INIZIALE`. Oltre `T1` vale `a`.
+
+**Riduci movimento** (§6.11): le tracce si valutano al `t1` della sosta più vicina (`stato.sostaVicina(T)`, la stessa regola della camera), così gli stati delle tappe saltano insieme alla camera. Restano a T le transizioni di luce e di passaggio: `velo`, `nebbia`, `cielo`, `sole.*`, `soleAuto`, `ora`, `emisfera`, `envGlobale`, `esposizione`, `saturazione`, `discoSole`, `gtao*`, `tempoScalaEsp`, `uNuvoleVel`, `lineaOro*`.
 
 **Valori derivati** (scritti da `stato.aggiorna`):
 
@@ -269,7 +280,7 @@ Chi **legge** dati o ancore di un altro pacchetto deve tollerarne l'assenza, per
 | Elemento | Uso |
 |---|---|
 | `canvas#scena` | WebGL |
-| `.scrim` | velo a gradiente: opacità scritta da `ui/testi.js`; il gradiente è `config.COLONNA.scrim` (scritto in `--scrim`; sotto 900 px il CSS usa il suo gradiente verticale) |
+| `.scrim` | velo a gradiente: opacità scritta da `ui/testi.js`; il gradiente è `config.COLONNA.scrim` (scritto in `--scrim`) e sotto 900 px `config.COLONNA.scrimPiccolo` (in `--scrim-piccolo`) |
 | `.velo` (con `.velo-messaggio`) | velo nero: opacità scritta da main (`ctx.velo`) |
 | `svg#linea-oro` | LineaOro (intro, transizione 4 → 5) |
 | `svg#petali` | petali del finale e archi dei fornitori (`ui/finale.js`); sta sopra lo `.velo`, quindi finale.js li dissolve con `ctx.veli.sezioni` |
@@ -279,7 +290,7 @@ Chi **legge** dati o ancore di un altro pacchetto deve tollerarne l'assenza, per
 | `section#storia` (alta 2000vh) `> .testi > article.battuta[data-battuta][data-tappa]` | battute: id come in `config.BATTUTE`; `.attiva` = visibile |
 | dentro le battute: `.occhiello`, `h1`/`h2` (`.grande`), `.testo`, `.dato`, `.legenda li[data-voce]`, `.diagramma.binari span[data-nodo]`, `.diagramma.corsie span[data-corsia]` | contenuti normativi già trascritti |
 | `#chi-siamo`, `#servizi`, `#contatti` (con `form` e `[role=status]`), `footer.piede` | sezioni |
-| classi su `html`: `no-webgl`, `riduci`, `piccolo`, `modo-test`, `contesto-perso`; su `body`: `carica` (tolta a pronto) | stati |
+| classi su `html`: `no-webgl`, `riduci` (aggiornata anche a runtime), `piccolo`, `modo-test`, `contesto-perso`; su `body`: `carica` (tolta a pronto). Variabile `--pulsa-mezzo` su `html` (mezzo ciclo della pulsazione "in trattativa" = 0,5 / `OVERLAY.tende.hz`) | stati |
 
 **Battute**: i tempi sono solo in `config.BATTUTE` (`in` e `out` sono i T di inizio ingresso e di inizio uscita; più `spunte`, `binari`, `passi`, `gse`…). `in:null` vuol dire visibile da `'intro-fine'`; `out:null` vuol dire che resta fino alle sezioni. Il testo sta solo nell'HTML, così funziona anche senza WebGL.
 
@@ -331,7 +342,8 @@ Modelli `.glb` facoltativi: si caricano solo con `config.ASSET.modelli[x].attivo
 | `mondo` | `'pianura' \| 'valle'` | main |
 | `valle-progresso`, `valle-pronta` | `0..1`, — | main |
 | `ridimensiona` | `{w, h}` | main (prima chiama `ridimensiona()` di ogni modulo) |
-| `riduci` | boolean | main |
+| `riduci` | boolean | main (preferenza del sistema cambiata; `?riduci=1` resta forzato) |
+| `senza-webgl` | motivo | main, quando la pagina già partita passa alla modalità senza WebGL (contesto perso) |
 | `qualita` | `info` | qualita |
 | `contesto-perso`, `contesto-ripristinato` | — | main (il cielo deve rifare le cotture) |
 
@@ -343,7 +355,7 @@ Modelli `.glb` facoltativi: si caricano solo con `config.ASSET.modelli[x].attivo
 
 A runtime il governatore cambia solo la scala interna, il GTAO, la taglia dell'ombra, MSAA/SMAA e il bloom, attraverso `pipeline.applicaQualita(ctx.qualita.R)`. `?q=` forza il livello e blocca il governatore. Con `?test=1` il livello è base.
 
-**Benchmark** (§6.8): main lo avvia a `'pronto'` quando c'è l'intro. Misura 90 fotogrammi (al massimo `QUALITA.benchmark.maxS` = 2,5 s, almeno 12) sotto il preloader, poi scende subito dei gradini necessari. Misura l'inquadratura di T = 0 (K0.0), non K0.1: spostare la camera sotto l'intro romperebbe la proiezione del fiume della linea d'oro.
+**Benchmark** (§6.8): main lo avvia a `'pronto'` quando c'è l'intro. Misura 90 fotogrammi (al massimo `QUALITA.benchmark.maxS` = 2,5 s, almeno 12) sotto il preloader, poi scende subito dei gradini necessari. Misura l'inquadratura di T = 0 (K0.0), non K0.1: spostare la camera sotto l'intro romperebbe la proiezione del fiume della linea d'oro. Il governatore e il benchmark misurano il **tempo vero** fra due fotogrammi (`performance.now()`), non il `dt` di main troncato a 0,1 s; a `'intro-fine'` il banco si chiude se ha i campioni minimi. La VALLE si costruisce dopo il benchmark (§2). Il budget di pixel usa `ctx.vista` e il `ctx.dprNativo` corrente.
 
 ---
 
@@ -422,13 +434,25 @@ Le voci sono marcate `[ARCH]` in `config.js` e si possono rivedere.
 - **`fogliGIS.quotaImpatto`** = 1,5 (da tarare).
 - **Niente timeline GSAP**: T si legge dallo scroll e le tracce sono funzioni pure. Il risultato è lo stesso di `tl.to(STATO_T, {T:19})` con `scrub`, ma è più robusto per `vaiT` e lo scroll all'indietro.
 - **`compileAsync`** solo se esiste `KHR_parallel_shader_compile`: su SwiftShader three altrimenti scrive un avviso in console.
-- **Velo `.scrim`** più largo e più denso di §4.0 (`config.COLONNA.scrimFermate`: 0,86 → 0,72 a 26 % → 0,34 a 40 % → 0 a 50 %): con il gradiente di DESIGN il contrasto del testo sul cielo chiaro scendeva a 2:1 (3a, 3c, 6). Unica fonte: config (testi.js scrive `--scrim`, test.js misura con le stesse fermate).
+- **Velo `.scrim`** più largo e più denso di §4.0 (`config.COLONNA.scrimFermate`: 0,86 → 0,72 a 26 % → 0,34 a 40 % → 0 a 54 %): con il gradiente di DESIGN il contrasto del testo sul cielo chiaro scendeva a 2:1 (3a, 3c, 6). Unica fonte: config (testi.js scrive `--scrim`, test.js misura con le stesse fermate).
 - **Nodo "Titolo" del diagramma 2a** acceso a 5,90 – 5,96 invece che a 7,00: a 7,00 la battuta 2a è già uscita (6,00).
 - **K3.7 – K3.8**: vale la quota minima 0,3 sul suolo (§4.0), non 0,25 della tabella (scarto di composizione ≈ 0,003).
 - **Suolo della cupola** (`config.CIELO.suolo`): sotto l'orizzonte la cupola scende in una piana scura (verso il nadir l'inchiostro `#0b0f12`) invece di ripetere il colore dell'orizzonte. Il mondo vero la copre; la fascia fino a h0 = −0,006 resta del colore della nebbia, così il bordo dell'anello del terreno non si vede.
 - **Avviso di mezzogiorno** nell'HUD: l'elevazione si calcola con `posizioneSole(13:11)` (71,45° → "71,5°"), la stessa funzione dell'HUD.
 - **Unità**: dati delle etichette, valori dell'HUD e piastra non passano più da `text-transform: uppercase` (m, m³/s, MWp, MWh restano unità corrette).
-- **Tarature promosse in config** (erano costanti locali `// TARATURA`): `CIELO.ibl`, `CIELO.tintaDisco`, `CIELO.aureola`, `CIELO.suolo`, `SCROLL`, `RIG.riduciDissolvenzaMs`, `TESTI_REGIA.{bloccoRitardo, bloccoSfalsamento, spento, accensione, auFrazione, saltoT}`, `ETICHETTE_REGOLE.{spazioTestoPx, marginePx, testataPx, areaPiccolo, saltoT, lambdaAlzata}`, `HUD.{scaleFiniM, barraLimitiPx, solare.pianoAgriT, maturita.completoT}`, `INTRO.{rivela, breve}`, `CONTATTI.chiusuraMs`, `QUALITA.benchmark.{maxS, minimo}`. Nuova chiave di STATO: `giranteHover`.
+- **Tarature promosse in config** (erano costanti locali `// TARATURA`): `CIELO.ibl`, `CIELO.tintaDisco`, `CIELO.aureola`, `CIELO.suolo`, `SCROLL`, `RIG.riduciDissolvenzaMs`, `TESTI_REGIA.{bloccoRitardo, bloccoSfalsamento, spento, accensione, auFrazione, saltoT}`, `ETICHETTE_REGOLE.{spazioTestoPx, marginePx, testataPx, areaPiccolo, saltoT, lambdaAlzata}`, `HUD.{scaleFiniM, barraLimitiPx, solare.pianoAgriT, maturita.completoT, scalaApertura.{da,a,passo}, idro.{turbine, discesa, confrontoT, scala}, gantt.{T, fineT}}`, `CAMBIO_MONDO.{ritardoValleMs, costruisciDaT, veloAttesaMs}`, `RENDER.{contestoAttesaMs, pellicola.granaCiclo}`, `COLONNA.{scrimPiccolo, scrimPiccoloFermate}`, `INTRO.{rivela, breve}`, `CONTATTI.chiusuraMs`, `QUALITA.benchmark.{maxS, minimo}`. Nuova chiave di STATO: `giranteHover`.
+- **Tracker eroe spento a 8,77** (non 8,72, §6.6 e §4.4): a 8,72 l'istanza k = 0 ha `comparsaFV` = −0,1 e scala 0 (piena solo a T ≈ 8,763). Lo scambio avviene con l'istanza identica all'eroe montato: nessun buco in primo piano.
+- **`trackerManuale` fino a 16,60** (non 16,55): il sole arriva alle 16:00 solo a 16,60, dove `angoloTracker` vale 38,59° = l'angolo manuale; a 16,55 l'angolo saltava di 10° su tutto il campo.
+- **Velo `.scrim` fino a 0,54** della larghezza (prima 0,50) e titoli delle battute (H1 e H2) larghi al massimo fino a 0,54: tutti i titoli restano su due righe come nel disegno (5a compresa) e restano dentro il velo.
+- **Deroghe tipografiche di BASE-UI** (valgono su DESIGN §2.2 e §6.12, approvate dal lead):
+  - H1 `clamp(48px, min(6vw, 11,5vh), 128px)` invece di `clamp(56px, 7,4vw, 128px)`: a 7,4vw "al Ready to Build." andrebbe su più righe; il tetto in vh tiene la battuta tra testata e HUD sugli schermi bassi;
+  - H2 e `.grande` con lo stesso tetto in vh (`min(3,6vw, 6,6vh)`, `min(7vw, 13vh)`);
+  - dato delle etichette 3D `#b4bcc1` invece di `--grigio`: 10,5 px sopra la scena viva, `--grigio` scendeva sotto 4,5:1;
+  - velo verticale sotto 900 px `config.COLONNA.scrimPiccolo` (.9 0 % → .75 30 % → 0 62 %) invece di .9 → 0 55 %: la colonna in basso arriva al 60 % dello schermo;
+  - testi dell'HUD e della piastra almeno 9,5–10 px (§2.2 dà 11 px per l'HUD, 10 px per la bandierina): i righelli e il Gantt restano leggibili a 1x.
+- **Piastra 5b appesa sotto il punto** quando sopra coprirebbe un'altra ancora (K5.2: il punto della stringa 14-B cade sotto il bordo superiore della piastra a sinistra, a destra c'è il Gantt): gomito di 24 px verso il basso, stessa regola per il resto. Le etichette normali restano sempre sopra il punto (§2.7).
+- **Etichette 3D**: impaginazione in due passate (la seconda rivede ogni scelta contro tutte le altre), costo contro i punti d'ancora di tutte le etichette attive e contro le singole voci dell'indice; l'indice attenuato mostra solo le linee di avanzamento.
+- **Microtipografia**: apostrofi tipografici (’) in tutto il testo visibile; righe dati con `&nbsp;` (si va a capo solo dopo " · ", valore e unità legati); spazio fine U+202F per le migliaia anche a 4 cifre (`geo.numeroIt`, §0). `dividiRighe` conserva gli `&nbsp;`.
 - **Tappa 0 ancora poco drammatica** (segnalato da BASE-RENDER): con sole a 4° e intensità 2,0 la luce del cielo pesa più del sole sul piano. Da rivedere sul terreno vero: `sole.int` 2,6 oppure `envGlobale` 0,40 in tappa 0.
 
 ---

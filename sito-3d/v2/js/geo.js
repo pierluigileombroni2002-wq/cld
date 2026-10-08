@@ -124,7 +124,7 @@ const SPAZIO_FINE = ' ';
 /** Numero all'italiana: virgola decimale, spazio fine per le migliaia (§0). */
 export function numeroIt(v, decimali = 0) {
   const neg = v < 0; const s = Math.abs(v).toFixed(decimali); const [i, d] = s.split('.');
-  const intero = i.length > 4 ? i.replace(/\B(?=(\d{3})+(?!\d))/g, SPAZIO_FINE) : i;   // "1200" resta, "15 960" con spazio
+  const intero = i.length > 3 ? i.replace(/\B(?=(\d{3})+(?!\d))/g, SPAZIO_FINE) : i;   // "1 200", "15 960": spazio fine anche a 4 cifre (§0)
   return (neg ? '−' : '') + intero + (d ? ',' + d : '');
 }
 /** Ora decimale → "hh:mm". */

@@ -24,12 +24,12 @@
 // Contratto (ARCHITETTURA §6): export posa(T) PURA; crea(ctx) pubblica
 //  ctx.rig = { aggiorna(T,t,dt), posa(T), salta(), forza(id|null), mouse(nx, ny) }
 //  ctx.regia = { target, posizione, d, phi, psi, fov, vicino, lontano, meta, centroOmbra, keyframe,
-//                inSosta, mondo } + (extra) fovBase, ancora, rollio, volo:{da, a, e}|null, forzato
+//                inSosta, mondo } + (extra) fovBase, ancora, rollio, volo:{da, a, e}|null, forzato, inTransizione
 // =============================================================================
 import * as THREE from 'three';
 import { CAMERA, RIG, SERVIZI_CAMERA } from '../config.js';
 import { altezza, clamp, smootherstep, diffAngolo, fovStretto, rad, damp } from '../geo.js';
-import { mondoDi, ease } from './stato.js';
+import { mondoDi, ease, sostaVicina } from './stato.js';   // sostaVicina: stessa regola dello STATO (§6.11)
 
 export const MONDO = 'sistema';
 
@@ -159,16 +159,6 @@ function posaIn(T, o) {
   return posaSosta(S[S.length - 1], 1, o);       // oltre l'ultima sosta: resta alla fine della sua deriva
 }
 
-/** Sosta più vicina a T nel suo mondo (riduci movimento). */
-function sostaVicina(T) {
-  const S = MONDI[mondoDi(T)].soste; let best = S[0], bd = Infinity;
-  for (let i = 0; i < S.length; i++) {
-    const s = S[i], dist = T < s.t0 ? s.t0 - T : (T > s.t1 ? T - s.t1 : 0);
-    if (dist < bd) { bd = dist; best = s; }
-  }
-  return best;
-}
-
 const _pPsi = nuovaPosa();
 /** Psi normativo srotolato al tempo T all'interno del volo v (per la derivata del rollio). */
 function psiVolo(v, T) { return posaVolo(v, clamp(T, v.tA + 1e-6, v.tB - 1e-6), _pPsi).psi; }
@@ -201,7 +191,7 @@ export function crea(ctx) {
     target: new THREE.Vector3(), posizione: new THREE.Vector3(), centroOmbra: new THREE.Vector3(),
     d: 1, phi: 0, psi: 0, fov: 37.8, fovBase: 37.8, vicino: 0.5, lontano: 4000, meta: 190,
     keyframe: 'K0.0', inSosta: true, mondo: 'pianura', ancora: 'target', rollio: 0,
-    volo: null, forzato: null,
+    volo: null, forzato: null, inTransizione: false,
   };
   const voloInfo = { da: '', a: '', e: 0 };          // riusato in regia.volo
   const base = nuovaPosa();                           // posa normativa del fotogramma
@@ -240,6 +230,10 @@ export function crea(ctx) {
   function aggiornaRig(T, t, dt) {
     const riduci = !!ctx.flags.riduci;
     const mondo = mondoDi(T);
+    // §4.7: la camera forzata dai Servizi vale SOLO sotto le sezioni. Un focus rimasto in una colonna (tastiera,
+    // tocco su un collegamento) non deve bloccare la storia quando si torna a scorrere: si rilascia con la
+    // transizione di ritorno di 1,2 s.
+    if (forzato && !(ctx.scroll?.inSezioni || (ctx.veli?.sezioni ?? 0) > 0.5)) ctx.rig.forza(null);
     // ---- 1. posa normativa (o sosta più vicina con riduci movimento)
     if (riduci) {
       const voluta = (forzato && forzato.mondo === mondo) ? forzato : sostaVicina(T);
@@ -320,6 +314,7 @@ export function crea(ctx) {
     if (!riduci && !trans && !forzato && base.volo) { voloInfo.da = base.da; voloInfo.a = base.a; voloInfo.e = base.e; regia.volo = voloInfo; }
     else regia.volo = null;
     regia.forzato = forzato ? forzato.id : null;
+    regia.inTransizione = !!trans || (rid.t0 >= 0);   // la camera si muove da sola (Servizi, dissolvenza del riduci)
     saltaProssimo = false;
   }
 

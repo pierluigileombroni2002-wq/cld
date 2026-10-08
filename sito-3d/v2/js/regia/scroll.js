@@ -48,6 +48,8 @@ export function crea(ctx) {
     try {
       lenis = new window.Lenis(LENIS);
       if (ST) lenis.on('scroll', ST.update);
+      // con l'intro attiva Lenis resta fermo (anche se nasce durante l'intro, per esempio quando il riduci si spegne)
+      if (ctx.flags.intro && !ctx.introFinita) lenis.stop();
     } catch (e) { console.warn('[scroll] Lenis non disponibile, scroll nativo:', e?.message || e); lenis = null; }
     if (ctx.scroll) ctx.scroll.lenis = lenis;
   }
@@ -56,10 +58,14 @@ export function crea(ctx) {
   if (gsap?.ticker) { gsap.ticker.add(t => { if (lenis) lenis.raf(t * 1000); }); gsap.ticker.lagSmoothing(0); }
   else { const f = t => { if (lenis) lenis.raf(t); requestAnimationFrame(f); }; requestAnimationFrame(f); }
   // §6.11: il riduci movimento cambia a runtime senza ricaricare la pagina
-  ctx.eventi.on('riduci', on => {
-    if (on && lenis) { const y = lenis.animatedScroll; lenis.destroy(); lenis = null; ctx.scroll.lenis = null; window.scrollTo({ top: y, behavior: 'instant' }); }
-    else if (!on) creaLenis();
-  });
+  const distruggiLenis = () => {
+    if (!lenis) return;
+    const y = lenis.animatedScroll; lenis.destroy(); lenis = null; ctx.scroll.lenis = null;
+    window.scrollTo({ top: y, behavior: 'instant' });
+  };
+  ctx.eventi.on('riduci', on => { if (on) distruggiLenis(); else if (!ctx.noWebGL) creaLenis(); });
+  // contesto WebGL perso e non ripristinato: la pagina diventa un documento a scroll nativo
+  ctx.eventi.on('senza-webgl', distruggiLenis);
 
   // ---- geometria della pagina (ricalcolata al resize e quando cambia l'altezza del contenuto)
   const finestra = DOPO_STORIA.finestra || ['top bottom', 'top 30%'];
@@ -81,6 +87,7 @@ export function crea(ctx) {
 
     /** Ricalcola inizio della storia, altezza di uno schermo e offset delle sezioni. */
     ricalcola() {
+      if (ctx.noWebGL) return;                       // senza WebGL la storia è una sequenza di blocchi: niente T
       const schermoPrima = this.schermo, Tprima = this.T;
       this.inizio = assoluto(storia); if (!isFinite(this.inizio)) this.inizio = 0;
       // un "schermo" = altezza di #storia / 20 (2000vh): stabile anche quando la barra del browser mobile cambia innerHeight
@@ -167,9 +174,10 @@ export function crea(ctx) {
   document.fonts?.ready?.then(pianifica);
 
   // ---- intro: con l'intro attiva Lenis è fermo (la rotella salta l'intro, non scorre la storia)
-  if (lenis && ctx.flags.intro && !ctx.introFinita) {
-    lenis.stop();
-    const riparti = () => { if (lenis.isStopped) { lenis.start(); } };
+  //        (lenis si legge al momento: il riduci movimento può averlo distrutto o ricreato nel frattempo)
+  if (ctx.flags.intro && !ctx.introFinita) {
+    lenis?.stop();
+    const riparti = () => { if (lenis?.isStopped) lenis.start(); };
     ctx.eventi.on('intro-fine', riparti);
     ctx.eventi.on('pronto', () => setTimeout(riparti, SICUREZZA_INTRO_S * 1000));
   }

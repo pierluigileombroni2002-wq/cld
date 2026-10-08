@@ -73,14 +73,14 @@ export async function crea(ctx) {
           ${[...Array(10)].map((_, i) => `<i style="bottom:${i * 100 / 9}%;width:${i % 3 === 0 ? 7 : 4}px"></i>`).join('')}
           ${[0, 300, 600, 900].map(v => `<em style="bottom:${v / 9}%">${v}</em>`).join('')}
           <span class="pieno"></span>
-          ${['pelton', 'francis', 'kaplan'].map((k, i) => `<span class="parentesi" data-turbina="${k}" style="height:${Math.max(1.2, IDRO[k].H / HUD.idro.salto.max * 100)}%;right:${7 + i * 5}px"></span>`).join('')}
+          ${['pelton', 'francis', 'kaplan'].map((k, i) => `<span class="parentesi" data-turbina="${k}" style="height:${Math.max(1.2, IDRO[k].H / HUD.idro.salto.max * 100)}%;left:calc(100% + ${4 + i * 5}px)"></span>`).join('')}
         </div>
       </div>
       <div class="idro-colonna">
         <div class="str-riga"><span>PORTATA</span><b class="idro-portata-v">—</b></div>
         <div class="idro-portata">${[0, 1, 2, 3, 4].map(i => `<i style="left:${i * 25}%"></i>`).join('')}<span class="pieno"></span>
           ${['pelton', 'francis', 'kaplan'].map(k => `<span class="segno" data-turbina="${k}" style="left:${(Math.log10(IDRO[k].Q) + 1) * 25}%"></span>`).join('')}</div>
-        <div class="idro-scala"><span>0,1</span><span>1</span><span>10</span><span>100</span><span>1 000 m³/s</span></div>
+        <div class="idro-scala">${HUD.idro.scala.map((v, i, a) => `<span style="left:${(i * 100 / (a.length - 1)).toFixed(2)}%">${v}</span>`).join('')}</div>
         <div class="str-riga"><b>${HUD.idro.potenza}</b><span class="idro-tempo">TEMPO <b class="idro-tempo-v">×1</b></span></div>
         <div class="str-riga idro-legenda">${HUD.idro.legenda.join(' · ')}</div>
       </div>
@@ -90,7 +90,7 @@ export async function crea(ctx) {
     <div class="str-riga"><span class="str-titolo">CANTIERE</span><span>MESE <b class="gantt-mese">1</b> / ${HUD.gantt.mesi}</span></div>
     <div class="gantt">
       ${HUD.gantt.fasi.map(f => `<span class="gantt-nome">${f.nome}</span><span class="gantt-pista"><i class="gantt-barra"></i></span>`).join('')}
-      <span></span><span class="gantt-assi">${[...Array(HUD.gantt.mesi)].map((_, i) => `<span>${i + 1}</span>`).join('')}</span>
+      <span></span><span class="gantt-assi">${[...Array(HUD.gantt.mesi)].map((_, i) => `<span style="left:${((i + 0.5) * 100 / HUD.gantt.mesi).toFixed(2)}%">${i + 1}</span>`).join('')}</span>
     </div>
     <div class="str-riga str-nota gantt-fine" style="opacity:0">${HUD.gantt.fine}</div>
   </div>
@@ -114,8 +114,8 @@ export async function crea(ctx) {
   };
   for (const n of ['maturita', 'rtb', 'solare', 'idro', 'gantt', 'attesa']) S.strumenti[n] = q('.str-' + n);
 
-  // Gantt: posizione delle barre sull'asse dei mesi (T 15,62 → 16,50)
-  const G = HUD.gantt.fasi, g0 = G[0].T[0], g1 = 16.50;
+  // Gantt: posizione delle barre sull'asse dei mesi (config.HUD.gantt.T)
+  const G = HUD.gantt.fasi, [g0, g1] = HUD.gantt.T;
   S.gantt.def = G.map((f, i) => {
     const a = (f.T[0] - g0) / (g1 - g0), b = Math.max(a + 0.045, (f.T[1] - g0) / (g1 - g0));
     const el = S.gantt.barre[i]; el.style.left = (a * 100).toFixed(2) + '%'; el.style.width = (Math.min(1, b) - a) * 100 + '%';
@@ -160,7 +160,8 @@ export function aggiorna(ctx, T, t, dt) {
       stile(S.quotaRiga, 'display', '');
       testo(S.quota, numeroIt(Math.round(quotaSlm(ctx.camera.position.y))) + ' m');
     }
-    const mpp = metriPerPx(R.d, R.fovBase ?? R.fov, innerHeight);
+    // scala VERA (§5.5): fov verticale effettivo della camera (allargato da fovStretto sugli schermi con aspect < 1,5)
+    const mpp = metriPerPx(R.d, R.fov, ctx.vista?.h ?? innerHeight);
     let best = SCALE[0], err = Infinity;
     for (const L of SCALE) { const e = Math.abs(L / mpp - HUD.scalaBarraPx); if (e < err) { err = e; best = L; } }
     const px = clamp(best / mpp, BARRA_MIN, BARRA_MAX);
@@ -168,7 +169,7 @@ export function aggiorna(ctx, T, t, dt) {
     // tappa 0: scala nominale 1:10 000 → 1:2 000 (§4.1)
     const sa = HUD.scalaApertura;
     if (T < TAPPE[0].T1 && ctx.mondo === 'pianura') {
-      const k = fase(T, sa.T[0], sa.T[1]), n = Math.round((10000 + (2000 - 10000) * k) / 500) * 500;
+      const k = fase(T, sa.T[0], sa.T[1]), n = Math.round((sa.da + (sa.a - sa.da) * k) / sa.passo) * sa.passo;
       testo(S.rapporto, 'SCALA 1:' + numeroIt(n));
     } else testo(S.rapporto, '');
   }
@@ -179,6 +180,8 @@ export function aggiorna(ctx, T, t, dt) {
   if (attesaValle) voluto = 'attesa';
   else for (const s of HUD.strumenti) if (T >= s.T[0] && T < s.T[1]) { voluto = s.tipo; break; }
   if (piccolo && voluto !== 'maturita') voluto = null;           // §6.12: HUD ridotto alla sola maturità
+  // schermi stretti: con la piastra 5b in scena il Gantt concluso si toglie (stesse informazioni, niente sovrapposizioni)
+  if (voluto === 'gantt' && (ST.piastra || 0) > 0.05 && innerWidth < HUD.gantt.liberaPiastraPx) voluto = null;
   if (voluto !== S.attivo) {
     if (S.attivo) S.strumenti[S.attivo]?.classList.remove('attivo');
     if (voluto) S.strumenti[voluto]?.classList.add('attivo');
@@ -233,18 +236,18 @@ function solare(S, ST, T) {
   stile(Z.raggio, 'opacity', giorno ? '1' : '0'); stile(Z.disco, 'opacity', giorno ? '1' : '0');
 }
 
-/** Turbina attiva per T (§4.5): panoramica, Pelton, Francis, Kaplan, confronto. */
-function turbinaDi(T) { return T < 12.05 ? 'tutte' : T < 13.55 ? 'pelton' : T < 14.30 ? 'francis' : T < 14.80 ? 'kaplan' : 'tutte'; }
+/** Turbina attiva per T (§4.5, config.HUD.idro.turbine): panoramica, Pelton, Francis, Kaplan, confronto. */
+function turbinaDi(T) { for (const x of HUD.idro.turbine) if (T >= x.T[0] && T < x.T[1]) return x.k; return 'tutte'; }
 function idro(S, ST, T) {
   const I = S.idro, k = turbinaDi(T), max = HUD.idro.salto.max;
   // SALTO: durante la discesa (12,05 → 12,80) il contatore segue la quota della camera (STATO.saltoHud)
   let H = null, Q = null;
-  if (k !== 'tutte') { H = k === 'pelton' && T < 12.80 ? ST.saltoHud : IDRO[k].H; Q = IDRO[k].Q; }
+  if (k !== 'tutte') { H = k === 'pelton' && T < HUD.idro.discesa[1] ? ST.saltoHud : IDRO[k].H; Q = IDRO[k].Q; }
   testo(I.saltoV, H == null ? '12–700 m' : numeroIt(Math.round(H)) + ' m');
   stile(I.pienoS, 'transform', `scaleY(${H == null ? 0 : clamp(H / max, 0, 1).toFixed(4)})`);
   testo(I.portataV, Q == null ? '1,6–95 m³/s' : numeroIt(Q, Q < 10 ? 1 : 0) + ' m³/s');
   stile(I.pienoQ, 'transform', `scaleX(${Q == null ? 0 : clamp((Math.log10(Q) + 1) / 4, 0, 1).toFixed(4)})`);
-  for (const p of I.parentesi) classe(p, 'attiva', k === 'tutte' ? T >= 14.80 : p.dataset.turbina === k);
+  for (const p of I.parentesi) classe(p, 'attiva', k === 'tutte' ? T >= HUD.idro.confrontoT : p.dataset.turbina === k);
   for (const sgn of I.segni) stile(sgn, 'opacity', (k === 'tutte' || sgn.dataset.turbina === k) ? '1' : '.25');
   // TEMPO solo in 4b–4d (tempoScala: ×1 → ×1/1000 → ×1/8)
   const [t0, t1] = HUD.idro.tempo.T, vis = T >= t0 && T < t1;
@@ -256,5 +259,5 @@ function gantt(S, ST, T) {
   const G = S.gantt;
   testo(G.mese, String(1 + Math.min(HUD.gantt.mesi - 1, Math.floor(clamp(ST.gantt || 0, 0, 1) * HUD.gantt.mesi))));
   for (let i = 0; i < G.def.length; i++) stile(G.barre[i], 'transform', `scaleX(${fase(T, G.def[i].T0, G.def[i].T1).toFixed(3)})`);
-  stile(G.fine, 'opacity', T >= 16.52 ? '1' : '0');
+  stile(G.fine, 'opacity', T >= HUD.gantt.fineT ? '1' : '0');
 }

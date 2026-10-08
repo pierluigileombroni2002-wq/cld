@@ -29,6 +29,8 @@ const hS = (x, z, d = 0) => [x, altezza(x, z) + d, z];
 const COMPOSIZIONE = [
   { k: 'K0.0', s: [['fiume z=0', [fiumeX(0), acqua(0), 0], [0.50, 0.58]], ['sito', SITO_C, [0.51, 0.34]]] },
   { k: 'K0.1', s: [['sito', SITO_C, [0.62, 0.55]], ['CP', hS(128, -56), [0.81, 0.40]]] },
+  // K1.0 è un passaggio ('via'): il rig passa esattamente per il nodo quando il tempo distorto vale 2,45, cioè a T ≈ 2,5077
+  { k: 'K1.0', T: 2.5077, s: [['paesaggistico', hS(-112, 18), [0.73, 0.43]], ['archeologico', hS(-20, -52), [0.61, 0.72]], ['sito', SITO_C, [0.44, 0.58]]] },
   { k: 'K1.1', s: [['paesaggistico', hS(-112, 18), [0.69, 0.35]], ['archeologico', hS(-20, -52), [0.69, 0.66]], ['sito', SITO_C, [0.50, 0.61]]] },
   { k: 'K1.2', s: [['sito', SITO_C, [0.66, 0.55]], ['P.lle 117–118', hS(26.35, 14.6), [0.56, 0.52]], ['sopralluogo', hS(33.4, -5.5), [0.72, 0.72]]] },
   { k: 'K1.3', s: [['sito', SITO_C, [0.66, 0.52]], ['punto di connessione', hS(40.5, -12.5), [0.86, 0.82]]] },
@@ -67,7 +69,7 @@ export async function crea(ctx) {
     tela2d.width = c.width; tela2d.height = c.height;
     const g = tela2d.getContext('2d', { willReadFrequently: true });
     g.drawImage(c, 0, 0);
-    return { dati: g.getImageData(0, 0, c.width, c.height).data, w: c.width, h: c.height, sx: c.width / innerWidth, sy: c.height / innerHeight };
+    return { dati: g.getImageData(0, 0, c.width, c.height).data, w: c.width, h: c.height, sx: c.width / ctx.vista.w, sy: c.height / ctx.vista.h };
   }
 
   /** Verifica dell'Appendice C con la posa pura del rig (aspetto 16:9 di default). */
@@ -101,9 +103,8 @@ export async function crea(ctx) {
     const aScrim = scrimEl ? +getComputedStyle(scrimEl).opacity || 0 : 0;
     const piccolo = matchMedia('(max-width: 899px)').matches;
     const alfaScrim = (x, y) => {
-      if (piccolo) { const f = 1 - y / innerHeight; return aScrim * 0.9 * clamp(1 - f / 0.55, 0, 1); }
-      // stesse fermate del CSS (config.COLONNA.scrimFermate), interpolate in lineare
-      const f = x / innerWidth, F = COLONNA.scrimFermate;
+      // stesse fermate del CSS (config.COLONNA.scrimFermate / scrimPiccoloFermate), interpolate in lineare
+      const f = piccolo ? 1 - y / ctx.vista.h : x / ctx.vista.w, F = piccolo ? COLONNA.scrimPiccoloFermate : COLONNA.scrimFermate;
       for (let i = 1; i < F.length; i++) if (f <= F[i][0]) return aScrim * (F[i - 1][1] + (F[i][1] - F[i - 1][1]) * (f - F[i - 1][0]) / (F[i][0] - F[i - 1][0]));
       return 0;
     };

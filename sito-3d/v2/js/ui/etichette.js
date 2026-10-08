@@ -30,12 +30,20 @@ const SALTO_T = R.saltoT;                        // oltre questo salto di T nien
 const LAMBDA_ALZATA = R.lambdaAlzata;            // smorzamento dell'altezza del gomito
 // candidati di impaginazione: [direzione, gradino di alzata]
 const CANDIDATI = [[1, 0], [-1, 0], [1, 1], [-1, 1], [1, 2], [-1, 2]];
+// la piastra 5b (alta ~170 px) può anche appendersi SOTTO il punto (gradino −1: gomito verso il basso), quando
+// sopra coprirebbe il punto di un'altra etichetta (K5.2: la stringa 14-B cade sotto il suo bordo superiore)
+const CANDIDATI_PIASTRA = [...CANDIDATI, [-1, -1], [1, -1]];
+const PENALITA_APPESA = 700;
+const SOGLIA_INDICE_PX2 = 150;       // px² di sovrapposizione con le voci dell'indice oltre i quali l'indice si attenua
+const candidatiDi = s => (s.piastra ? CANDIDATI_PIASTRA : CANDIDATI);
+/** Alzata del gomito (px, verso l'alto; negativa = appesa sotto il punto). */
+const alzataDi = (s, gradino) => (gradino < 0 ? -R.gomito.verticalePx : R.gomito.verticalePx + gradino * (s.h + MARGINE));
 
 let E = null;
 const perT0 = (a, b) => a.def.t0 - b.def.t0;
 function slotDi(d) { for (const s of E.pool) if (s.def === d) return s; return null; }
 function slotVuoto() { for (const s of E.pool) if (!s.def) return s; return null; }
-function indiceCandidato(dir, gr) { for (let k = 0; k < CANDIDATI.length; k++) if (CANDIDATI[k][0] === dir && CANDIDATI[k][1] === gr) return k; return -1; }
+function indiceCandidato(lista, dir, gr) { for (let k = 0; k < lista.length; k++) if (lista[k][0] === dir && lista[k][1] === gr) return k; return -1; }
 
 export async function crea(ctx) {
   const strato = document.querySelector('.etichette');
@@ -72,16 +80,18 @@ export async function crea(ctx) {
   E = {
     ctx, defs, pool, piastra, tutti: piastra ? [...pool, piastra] : pool, attive: [], ordine: [], Tprec: -1,
     P: { x: 0, y: 0, z: 0, davanti: false, dentro: false },
-    ostacoli: [rett(), rett(), rett()], posati: [rett(), rett(), rett(), rett()], gambe: [rett(), rett(), rett(), rett()], prova: rett(), gamba: rett(),
+    ostacoli: [rett(), rett(), rett()], posati: [rett(), rett(), rett(), rett()], gambe: [rett(), rett(), rett(), rett()], prova: rett(), gamba: rett(), ancora: rett(),
     colonnaDx: 0, conta: 0, indiceAttenuato: false,
-    dom: { indice: document.querySelector('.indice'), hud: document.querySelector('.hud-strumento'), testi: document.querySelector('.testi') },
+    dom: { indice: document.querySelector('.indice'), hud: document.querySelector('.hud-strumento'), testi: document.querySelector('.testi'),
+           vociIndice: [...document.querySelectorAll('.indice a[data-tappa], .indice .salta-servizi')] },
   };
+  E.rettIndice = E.dom.vociIndice.map(rett);     // una per voce: l'ingombro vero del testo, non il riquadro dell'indice
   ctx.dati.etichette = E;                         // diagnostica (test.js, debug)
 }
 
 function nuovoSlot(el, r, piastra = false) {
   return { el, nome: el.querySelector?.('.etichetta-nome'), dato: el.querySelector?.('.etichetta-dato'), ...r, piastra,
-           def: null, testoDato: '', x: 0, y: 0, vis: 0, nuovo: true, dir: 1, gradino: 0, alzata: 0, w: 0, h: 0, ok: false, ultimo: {} };
+           def: null, testoDato: '', x: 0, y: 0, vis: 0, nuovo: true, dir: 1, gradino: 0, k: 0, alzata: 0, w: 0, h: 0, ok: false, ultimo: {} };
 }
 
 /** Posizione mondo dell'ancora (Vector3 riusato) o null. */
@@ -110,6 +120,12 @@ function aggiornaOstacoli(ctx) {
   };
   const indiceVisibile = D.indice && !D.indice.classList.contains('fuori') && getComputedStyle(D.indice).display !== 'none';
   da(0, D.indice, indiceVisibile);
+  for (let i = 0; i < E.rettIndice.length; i++) {
+    const o = E.rettIndice[i]; o.on = false;
+    if (!indiceVisibile) continue;
+    const r = D.vociIndice[i].getBoundingClientRect(); if (r.width <= 0 || r.height <= 0) continue;
+    o.l = r.left - MARGINE; o.t = r.top; o.r = r.right + MARGINE; o.b = r.bottom; o.on = true;
+  }
   da(1, D.hud?.querySelector('.strumento.attivo'), true);
   O[2].on = false;
   // bordo destro della colonna del testo (il gomito non porta mai il testo lì dentro)
@@ -118,6 +134,12 @@ function aggiornaOstacoli(ctx) {
 }
 
 const interseca = (a, b) => a.on && b.on && a.l < b.r && a.r > b.l && a.t < b.b && a.b > b.t;
+/** Sovrapposizione con le voci dell'indice (0 se fuori dal suo riquadro). */
+function areaIndice(r) {
+  if (!interseca(r, E.ostacoli[0])) return 0;
+  let a = 0; for (const v of E.rettIndice) a += area(r, v);
+  return a;
+}
 
 /** Area di sovrapposizione di due rettangoli (0 se disgiunti o spenti). */
 function area(a, b) {
@@ -125,30 +147,53 @@ function area(a, b) {
   const w = Math.min(a.r, b.r) - Math.max(a.l, b.l), h = Math.min(a.b, b.b) - Math.max(a.t, b.t);
   return (w > 0 && h > 0) ? w * h : 0;
 }
-/**
- * Costo di un candidato (direzione, gradino): 0 = posto pulito. Pesi: fuori quadro e colonna del testo
- * (vietati), testi e gomiti delle etichette già posate, strumento dell'HUD, indice (lieve: si attenua),
- * più una preferenza per destra e per il gomito corto. Scrive E.prova e E.copreIndice.
- */
-function costo(s, dir, gradino, nPosati) {
-  const G = R.gomito, W = innerWidth, H = innerHeight, p = E.prova, g = E.gamba;
-  const lift = G.verticalePx + gradino * (s.h + MARGINE);
-  const yL = s.y - lift, xL = s.x + dir * G.orizzontalePx;
+/** Rettangoli del candidato (direzione, gradino) alla posizione voluta: testo in E.prova, gomito in E.gamba. */
+function geometria(s, dir, gradino) {
+  const G = R.gomito, p = E.prova, g = E.gamba;
+  const yL = s.y - alzataDi(s, gradino), xL = s.x + dir * G.orizzontalePx;
   p.l = dir > 0 ? xL + SPAZIO_TESTO : xL - SPAZIO_TESTO - s.w; p.r = p.l + s.w;
   p.t = s.piastra ? yL - 14 : yL - s.h / 2; p.b = p.t + s.h; p.on = true;
-  g.l = Math.min(s.x, xL) - 2; g.r = Math.max(s.x, xL) + 2; g.t = yL - 2; g.b = s.y; g.on = true;
-  let c = (dir > 0 ? 0 : 400) + gradino * 900;
+  g.l = Math.min(s.x, xL) - 2; g.r = Math.max(s.x, xL) + 2; g.t = Math.min(yL, s.y) - 2; g.b = Math.max(yL, s.y); g.on = true;
+}
+
+/**
+ * Costo di un candidato (direzione, gradino): 0 = posto pulito. Pesi: fuori quadro e colonna del testo
+ * (vietati), testi e gomiti interi delle altre etichette posate (le prime nPosati, tranne l'indice "salta"),
+ * punti d'ancora di TUTTE le etichette attive (un testo non copre mai il punto di un'altra), strumento dell'HUD,
+ * indice (si attenua, ma un testo sopra l'indice resta un difetto), più una preferenza per destra e per il
+ * gomito corto.
+ */
+function costo(s, dir, gradino, nPosati, salta = -1) {
+  const G = R.gomito, W = E.ctx.vista.w, H = E.ctx.vista.h, p = E.prova, g = E.gamba;
+  geometria(s, dir, gradino);
+  let c = (dir > 0 ? 0 : 400) + (gradino < 0 ? PENALITA_APPESA : gradino * 900);
   // fuori dal quadro, sotto la testata, dentro la colonna del testo
   const sx = Math.max(8, E.colonnaDx);
   c += 400 * (Math.max(0, sx - p.l) + Math.max(0, p.r - (W - 8)) + Math.max(0, TESTATA_PX - p.t) + Math.max(0, p.b - (H - 8))) * s.h;
-  const ind = area(p, E.ostacoli[0]);
-  E.copreIndice = ind > 0;
-  c += 0.6 * ind + 6 * area(p, E.ostacoli[1]);
+  c += 4 * areaIndice(p) + 6 * area(p, E.ostacoli[1]);
   for (let i = 0; i < nPosati; i++) {
-    const q = E.posati[i];
-    c += 30 * area(p, q) + 12 * area(g, q) + 12 * area(p, E.gambe[i]);
+    if (i === salta) continue;
+    const q = E.posati[i], gb = E.gambe[i];
+    c += 30 * area(p, q) + 12 * area(g, q) + 12 * area(p, gb) + 6 * area(g, gb);
+  }
+  // punto d'ancora e primo tratto verticale delle altre etichette attive
+  const A = E.ancora, vp = G.verticalePx;
+  for (const o of E.ordine) {
+    if (o === s || !o.def || o.vis < 0.05) continue;
+    A.l = o.x - 8; A.r = o.x + 8; A.t = o.y - vp - 4; A.b = o.y + 8; A.on = true;
+    c += 40 * area(p, A) + 6 * area(g, A);
   }
   return c;
+}
+
+/** Registra lo spazio occupato dall'etichetta i (testo con margine e gomito intero) per le altre. */
+function occupa(s, i) {
+  const [dir, gr] = candidatiDi(s)[s.k], G = R.gomito;
+  geometria(s, dir, gr);
+  const q = E.posati[i], gb = E.gambe[i], p = E.prova;
+  q.l = p.l - MARGINE; q.r = p.r + MARGINE; q.t = p.t - MARGINE; q.b = p.b + MARGINE; q.on = true;
+  const yL = s.y - alzataDi(s, gr), xL = s.x + dir * G.orizzontalePx;
+  gb.l = Math.min(s.x, xL) - 3; gb.r = Math.max(s.x, xL) + 3; gb.t = Math.min(yL, s.y) - 3; gb.b = Math.max(yL, s.y) + 3; gb.on = true;
 }
 
 export function aggiorna(ctx, T, t, dt) {
@@ -159,7 +204,7 @@ export function aggiorna(ctx, T, t, dt) {
 
   const piccolo = ctx.flags.piccolo || innerWidth < 900;
   const max = piccolo ? QUALITA.piccolo.etichetteMax : Math.min(R.max, QUALITA.etichetteMax);
-  const W = innerWidth, H = innerHeight, area = piccolo ? AREA_PICCOLO : R.area;
+  const W = ctx.vista.w, H = ctx.vista.h, zona = piccolo ? AREA_PICCOLO : R.area;   // stesso box di ctx.proietta
   const mondoValle = ctx.mondo === 'valle';
 
   // ---- etichette attive per T (con l'uscita di 0,03 T), al massimo 'max' in ordine di comparsa
@@ -188,7 +233,7 @@ export function aggiorna(ctx, T, t, dt) {
     if (!s.w) { s.w = s.el.offsetWidth || 160; s.h = s.el.offsetHeight || 34; }
     const a = ancora(ctx, d); if (!a) { nascondi(s); continue; }
     ctx.proietta(a, P);
-    let ok = P.davanti && P.x >= area.x[0] * W && P.x <= area.x[1] * W && P.y >= area.y[0] * H && P.y <= area.y[1] * H;
+    let ok = P.davanti && P.x >= zona.x[0] * W && P.x <= zona.x[1] * W && P.y >= zona.y[0] * H && P.y <= zona.y[1] * H;
     if (ok && !mondoValle) ok = visibileSulTerreno(cam.x, cam.y, cam.z, a.x, a.y, a.z, R.passiOcclusione);
     const voluto = ok ? 1 : 0;
     if (salto || s.nuovo) s.vis = voluto;
@@ -201,31 +246,41 @@ export function aggiorna(ctx, T, t, dt) {
     }
     E.ordine.push(s);
   }
-  // ---- 2. impaginazione in ordine di comparsa (t0): la scelta precedente resta se è ancora libera
+  // ---- 2. impaginazione in due passate. Prima: in ordine di comparsa (t0), contro le etichette già posate.
+  //         Seconda: ogni scelta si rivede contro TUTTE le altre, così un'etichetta posata prima non occupa il
+  //         posto naturale di una successiva. La scelta del fotogramma precedente resta se non costa
+  //         sensibilmente di più (niente sfarfallio).
   E.ordine.sort(perT0);
-  let n = 0, coperto = false;
-  for (const s of E.ordine) {
-    // candidato più economico; quello attuale resta se non costa sensibilmente di più (niente sfarfallio)
-    let scelto = 0, minimo = Infinity, sopra = false;
-    for (let k = 0; k < CANDIDATI.length; k++) {
-      const c = costo(s, CANDIDATI[k][0], CANDIDATI[k][1], n);
-      if (c < minimo) { minimo = c; scelto = k; sopra = E.copreIndice; }
+  const n = E.ordine.length;
+  for (let passata = 0; passata < (n > 1 ? 2 : 1); passata++) {
+    for (let i = 0; i < n; i++) {
+      const s = E.ordine[i], nConf = passata === 0 ? i : n, lista = candidatiDi(s);
+      let scelto = 0, minimo = Infinity;
+      for (let k = 0; k < lista.length; k++) {
+        const c = costo(s, lista[k][0], lista[k][1], nConf, i);
+        if (c < minimo) { minimo = c; scelto = k; }
+      }
+      if (!s.nuovo && s.dir) {
+        const k = indiceCandidato(lista, s.dir, s.gradino);         // scelta del fotogramma precedente
+        if (k >= 0 && k !== scelto && costo(s, s.dir, s.gradino, nConf, i) <= minimo * 1.15 + 200) scelto = k;
+      }
+      s.k = scelto;
+      occupa(s, i);
     }
-    if (!s.nuovo && s.dir) {
-      const k = indiceCandidato(s.dir, s.gradino);
-      if (k >= 0 && k !== scelto) { const c = costo(s, s.dir, s.gradino, n); if (c <= minimo * 1.15 + 200) { scelto = k; sopra = E.copreIndice; } }
-    }
-    s.sopraIndice = sopra;
-    if (sopra && s.vis > 0.05) coperto = true;
-    const [dir, gr] = CANDIDATI[scelto];
+  }
+  // ---- 3. scelte definitive, alzata smorzata, disegno
+  let coperto = false;
+  for (let i = 0; i < n; i++) {
+    const s = E.ordine[i], [dir, gr] = candidatiDi(s)[s.k];
+    geometria(s, dir, gr);
+    // anche il solo gomito sopra l'indice lo attenua (K2.1: il punto della CP cade dentro l'indice)
+    // (soglia: uno sfioro di pochi px fra le righe di 25 px dell'indice non lo attenua)
+    s.sopraIndice = areaIndice(E.prova) + areaIndice(E.gamba) > SOGLIA_INDICE_PX2;
+    if (s.sopraIndice && s.vis > 0.05) coperto = true;
     if (dir !== s.dir) { s.dir = dir; s.el.classList.toggle('sinistra', dir < 0); }
     s.gradino = gr;
-    const alzata = R.gomito.verticalePx + gr * (s.h + MARGINE);
+    const alzata = alzataDi(s, gr);
     s.alzata = (salto || s.nuovo) ? alzata : damp(s.alzata, alzata, LAMBDA_ALZATA, dt);
-    costo(s, dir, 0, 0);                                          // rettangolo occupato (per le successive)
-    const q = E.posati[n], gb = E.gambe[n], p = E.prova, dy = s.alzata - R.gomito.verticalePx; n++;
-    q.l = p.l - MARGINE; q.r = p.r + MARGINE; q.t = p.t - dy - MARGINE; q.b = p.b - dy + MARGINE; q.on = true; q.testo = true;
-    gb.l = s.x - 3; gb.r = s.x + 3; gb.t = s.y - s.alzata; gb.b = s.y; gb.on = true;
     s.nuovo = false;
     // ingresso (gomito poi testo) e uscita, in T
     const d = s.def;
@@ -245,7 +300,8 @@ function assegna(s, d) {
 function disegna(s, gomito, testoK, alfa) {
   const G = R.gomito, x = s.x, y = s.y, dir = s.dir;
   const yL = y - s.alzata, xL = x + dir * G.orizzontalePx;
-  const d1 = `M${x.toFixed(1)} ${(y - G.puntoPx / 2 - 1).toFixed(1)}V${yL.toFixed(1)}H${xL.toFixed(1)}`;
+  const y0 = s.alzata >= 0 ? y - G.puntoPx / 2 - 1 : y + G.puntoPx / 2 + 1;     // il tratto parte dal bordo del punto
+  const d1 = `M${x.toFixed(1)} ${y0.toFixed(1)}V${yL.toFixed(1)}H${xL.toFixed(1)}`;
   if (scrivi(s, 'd', d1)) s.p.setAttribute('d', d1);
   const cx = x.toFixed(1), cy = y.toFixed(1);
   if (scrivi(s, 'cx', cx)) s.c.setAttribute('cx', cx);

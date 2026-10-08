@@ -34,18 +34,18 @@ export function rileva(ctx) {
   return 'alta';
 }
 
-/** Pixel nativi della tela. */
-const pixelNativi = dpr => innerWidth * innerHeight * dpr * dpr;
+/** Pixel nativi della tela (box CSS reale × DPR corrente: lo zoom e il cambio di monitor lo cambiano). */
+const pixelNativi = ctx => (ctx.vista?.w ?? innerWidth) * (ctx.vista?.h ?? innerHeight) * ctx.dprNativo * ctx.dprNativo;
 
 export function crea(ctx) {
   const livello = rileva(ctx);
   const Q = { ...QUALITA.livelli[livello] };
   const G = QUALITA.governatore;
-  const dpr = ctx.dprNativo;
-  const scalaBudget = () => Math.min(1, Math.sqrt(Q.budget / pixelNativi(dpr)));
+  // ctx.dprNativo si rilegge ogni volta: main lo aggiorna al resize e al cambio di risoluzione
+  const scalaBudget = () => Math.min(1, Math.sqrt(Q.budget / pixelNativi(ctx)));
   // MSAA: Ultra/Alta passano a 0 + SMAA se i pixel interni superano 3,7 MP (§6.8)
   const msaaIniziale = () => (Q.msaa > 0 && (livello === 'ultra' || livello === 'alta')
-    && pixelNativi(dpr) * scalaBudget() ** 2 > QUALITA.sogliaSmaa) ? 0 : Q.msaa;
+    && pixelNativi(ctx) * scalaBudget() ** 2 > QUALITA.sogliaSmaa) ? 0 : Q.msaa;
 
   // Gradini del governatore per questo livello, nell'ordine di §6.8 (si scende in avanti, si sale indietro)
   const gradini = [];
@@ -73,7 +73,9 @@ export function crea(ctx) {
   calcolaR(0);
 
   const gov = { m: 0, intervallo: 1, primoSecondo: 0, campioni: 0, sopra: 0, sotto: 0, fermo: 0, ultimoCambio: -1e9,
-                inSezioni: false, banco: null, mediaInizio: false };
+                inSezioni: false, banco: null, mediaInizio: false, tPrec: 0, chiudiBanco: false };
+  // a fine intro il banco si chiude comunque, se ha già i campioni minimi (la camera sta per muoversi)
+  ctx.eventi?.on?.('intro-fine', () => { if (gov.banco) gov.chiudiBanco = true; });
   ctx.dati.qualita = { gov, gradini, calcolaR };
 
   ctx.qualita = {
@@ -88,7 +90,7 @@ export function crea(ctx) {
                mediaMs: +(gov.m * 1000).toFixed(2), obiettivoMs: +(obiettivo() * 1000).toFixed(2) };
     },
     /**
-     * Benchmark di 90 fotogrammi (§6.8): da chiamare durante l'intro, con la camera su K0.1.
+     * Benchmark di 90 fotogrammi (§6.8): da chiamare durante l'intro, con la camera su K0.0 (ARCHITETTURA §12).
      * Misura il tempo medio di fotogramma e, se serve, scende subito di più gradini (sotto il velo dell'intro).
      * @returns {Promise<object>} info()
      */
@@ -121,19 +123,24 @@ export function aggiorna(ctx, T, t, dt) {
   const sez = !!ctx.scroll?.inSezioni;
   if (sez !== gov.inSezioni) { gov.inSezioni = sez; ctx.pipeline?.applicaQualita?.(q.R); }
 
-  if (!(dt > 0) || ctx.inWarmup || document.hidden) return;     // passi forzati (vaiT, warm-up): niente misure
+  if (!(dt > 0) || ctx.inWarmup || document.hidden) { gov.tPrec = 0; return; }   // passi forzati (vaiT, warm-up): niente misure
+  // tempo VERO fra due fotogrammi: il dt di main è troncato a 0,1 s e sottostimerebbe proprio i dispositivi lenti
+  const ora = performance.now(), dv = gov.tPrec ? (ora - gov.tPrec) / 1000 : dt; gov.tPrec = ora;
+  if (dv > 1) return;                                                // ritorno da un'altra scheda, pausa del debugger
   // la costruzione della VALLE in idle (compilazioni, cotture) fa fotogrammi lenti che non dicono nulla della GPU
-  if (ctx.valle?.stato === 'costruzione') { gov.sopra = gov.sotto = 0; return; }
+  // (il benchmark non ne risente: main costruisce la valle dopo il benchmark)
+  if (ctx.valle?.stato === 'costruzione' && !gov.banco) { gov.sopra = gov.sotto = 0; return; }
 
   // intervallo del monitor = dt minimo del primo secondo (60, 120, 144 Hz)
-  if (gov.primoSecondo < 1) { gov.primoSecondo += dt; gov.intervallo = Math.min(gov.intervallo, dt); gov.m = gov.obiettivo(); return; }
-  gov.m = gov.m * (1 - G.media) + dt * G.media;
+  if (gov.primoSecondo < 1) { gov.primoSecondo += dv; gov.intervallo = Math.min(gov.intervallo, dv); gov.m = gov.obiettivo(); return; }
+  gov.m = gov.m * (1 - G.media) + dv * G.media;
 
   // benchmark dell'intro: 90 fotogrammi, poi correzione immediata
   if (gov.banco) {
-    const b = gov.banco; b.somma.push(dt); b.tempo = (b.tempo || 0) + dt;
-    const B = QUALITA.benchmark;
-    if (b.somma.length >= B.fotogrammi || (b.tempo >= (B.maxS ?? Infinity) && b.somma.length >= (B.minimo ?? 1))) {
+    const b = gov.banco; b.somma.push(dv); b.tempo = (b.tempo || 0) + dv;
+    const B = QUALITA.benchmark, minimo = B.minimo ?? 1;
+    if (b.somma.length >= B.fotogrammi || (b.tempo >= (B.maxS ?? Infinity) && b.somma.length >= minimo)
+        || (gov.chiudiBanco && b.somma.length >= minimo)) {
       const v = b.somma.slice().sort((x, y) => x - y), mediana = v[v.length >> 1];
       let stima = mediana; const obj = gov.obiettivo();
       while (!q.forzato && stima > G.giu * obj && q.gradino < d.gradini.length) {
@@ -142,17 +149,17 @@ export function aggiorna(ctx, T, t, dt) {
         stima *= p.tipo === 'scala' ? (p.v / prima) ** 2 : 0.9;   // stima grezza: il costo scala con i pixel
       }
       if (q.gradino) { applica(ctx, 'benchmark'); gov.ultimoCambio = t; }
-      gov.m = mediana; gov.banco = null; b.risolvi(q.info());
+      gov.m = mediana; gov.banco = null; gov.chiudiBanco = false; b.risolvi(q.info());
     }
     return;
   }
   if (q.forzato) return;
 
   const obj = gov.obiettivo();
-  gov.sopra = gov.m > G.giu * obj ? gov.sopra + dt : 0;
-  gov.sotto = gov.m < G.su * obj ? gov.sotto + dt : 0;
+  gov.sopra = gov.m > G.giu * obj ? gov.sopra + dv : 0;
+  gov.sotto = gov.m < G.su * obj ? gov.sotto + dv : 0;
   const v = ctx.scroll?.velocita ?? 0;
-  gov.fermo = v < G.scrollMax ? gov.fermo + dt : 0;
+  gov.fermo = v < G.scrollMax ? gov.fermo + dv : 0;
   const permesso = gov.fermo >= G.scrollFermo || ctx.velo > 0.5 || (ctx.STATO?.nebbia ?? 0) >= 0.01;
   if (!permesso || t - gov.ultimoCambio < G.intervallo) return;
   if (gov.sopra >= G.tGiu && q.gradino < d.gradini.length) {

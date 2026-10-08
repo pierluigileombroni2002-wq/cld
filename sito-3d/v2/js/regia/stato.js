@@ -50,6 +50,29 @@ export function traccia(segmenti, T, iniziale = 0) {
 export const tappaDi = T => { const t = CFG.TAPPE; for (let i = t.length - 1; i >= 0; i--) if (T >= t[i].T0) return i; return 0; };
 export const mondoDi = T => (T >= CFG.CAMBIO_MONDO.valleDa && T < CFG.CAMBIO_MONDO.valleA) ? 'valle' : 'pianura';
 
+// ---------------------------------------------------------------- soste (keyframe non 'via') per mondo
+const SOSTE = { pianura: [], valle: [] };
+for (const k of CFG.CAMERA) if (!k.via && SOSTE[k.mondo]) SOSTE[k.mondo].push(k);
+for (const m in SOSTE) SOSTE[m].sort((a, b) => a.t0 - b.t0 || a.t1 - b.t1);
+/**
+ * Sosta più vicina a T nel suo mondo (§6.11, riduci movimento). Unica regola per la camera (regia/camera.js)
+ * e per lo STATO: le due cose saltano insieme.
+ * @returns {object} keyframe di config.CAMERA
+ */
+export function sostaVicina(T) {
+  const S = SOSTE[mondoDi(T)]; let best = S[0], bd = Infinity;
+  for (let i = 0; i < S.length; i++) {
+    const s = S[i], dist = T < s.t0 ? s.t0 - T : (T > s.t1 ? T - s.t1 : 0);
+    if (dist < bd) { bd = dist; best = s; }
+  }
+  return best;
+}
+// Riduci movimento (§6.11): gli stati delle tappe saltano al valore finale della sosta mostrata; restano legate
+// a T solo le transizioni di luce e di passaggio (veli, nebbia, cielo, sole, esposizione, LineaOro).
+const RESTANO_A_T = new Set(['velo', 'nebbia', 'cielo', 'sole.el', 'sole.az', 'sole.int', 'sole.col', 'soleAuto', 'ora',
+  'emisfera', 'envGlobale', 'esposizione', 'saturazione', 'discoSole', 'gtao', 'gtaoRaggio', 'tempoScalaEsp', 'uNuvoleVel',
+  'lineaOroAlfa', 'lineaOroStende', 'lineaOroPiega']);
+
 // ---------------------------------------------------------------- STATO
 const copiaProfonda = o => JSON.parse(JSON.stringify(o));
 const eColore = v => typeof v === 'string' && v[0] === '#';
@@ -91,7 +114,7 @@ export function creaStato(cfg = CFG) {
       segmenti[i].da = i ? segmenti[i - 1].a : iniziale; if (tipo === 'colore') segmenti[i].cDa = i ? segmenti[i - 1].cA : new THREE.Color(iniziale);
     }
     const cIniziale = tipo === 'colore' ? new THREE.Color(iniziale) : null;
-    tracce.push({ percorso, obj, chiave, segmenti, tipo, iniziale, cIniziale });
+    tracce.push({ percorso, obj, chiave, segmenti, tipo, iniziale, cIniziale, aT: RESTANO_A_T.has(percorso) });
   }
 
   function valutaTraccia(tr, T, scrivi = true) {
@@ -136,13 +159,15 @@ export function creaStato(cfg = CFG) {
    * @param {{riduci?:boolean}} opz
    */
   function aggiorna(T, t = 0, dt = 0, opz = {}) {
-    for (const tr of tracce) valutaTraccia(tr, T);
+    if (opz.riduci) { const Tq = sostaVicina(T).t1; for (const tr of tracce) valutaTraccia(tr, tr.aT ? T : Tq); }
+    else for (const tr of tracce) valutaTraccia(tr, T);
     STATO.T = T; STATO.t = t; STATO.dt = dt; STATO.tappa = tappaDi(T); STATO.mondo = mondoDi(T);
 
     // ---- sole: tracce (soleAuto 0), funzione dell'ora (1), colore da luceSole (2)
     let modo = STATO.soleAuto;
     let ora = STATO.ora;
-    if (opz.riduci && T >= 7.60 && T < 11.50) { modo = 1; ora = STATO.ora = cfg.SOLE.oraRiduci; }   // §6.11: sole fisso alle 10:00 (anche l'ORA dell'HUD)
+    // §6.11: sole fisso alle 10:00 in tappa 3 (dall'alba al cambio di mondo; anche l'ORA dell'HUD)
+    if (opz.riduci && T >= cfg.ORA_T[0][0] && T < cfg.CAMBIO_MONDO.valleDa) { modo = 1; ora = STATO.ora = cfg.SOLE.oraRiduci; }
     const sole = STATO.sole;
     if (modo === 1) {
       const p = posizioneSole(ora); sole.el = p.el; sole.az = p.az;

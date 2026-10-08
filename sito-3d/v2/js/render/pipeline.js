@@ -88,7 +88,7 @@ export function creaRenderer(ctx) {
   r.shadowMap.needsUpdate = true;
   r.localClippingEnabled = true;
   r.setPixelRatio(ctx.dprNativo);
-  r.setSize(innerWidth, innerHeight, false);       // dimensione CSS della tela: la decide stile.css (100vw × 100vh)
+  r.setSize(ctx.vista.w, ctx.vista.h, false);      // dimensione CSS della tela: la decide stile.css (box reale, ctx.vista)
   r.setClearColor(0x050607, 1);
   r.info.autoReset = false;                        // le statistiche contano TUTTO il fotogramma (render.reset in render())
   ctx.renderer = r;
@@ -110,7 +110,7 @@ export function crea(ctx) {
   const composer = new EffectComposer(r, rtScena);
   const rtAltro = composer.renderTarget2; rtAltro.samples = 0; rtAltro.texture.name = 'ERI.post';
 
-  const W = innerWidth, H = innerHeight, s0 = ctx.qualita.scala, wInt = Math.max(1, Math.round(W * ctx.dprNativo * s0)), hInt = Math.max(1, Math.round(H * ctx.dprNativo * s0));
+  const W = ctx.vista.w, H = ctx.vista.h, s0 = ctx.qualita.scala, wInt = Math.max(1, Math.round(W * ctx.dprNativo * s0)), hInt = Math.max(1, Math.round(H * ctx.dprNativo * s0));
   composer._pixelRatio = ctx.dprNativo * s0;
   composer.setSize(W, H);
 
@@ -177,16 +177,19 @@ export function crea(ctx) {
     /** Un fotogramma completo. dt = 0 nei passi forzati (vaiT, warm-up): mai saltati. */
     render(dt) {
       const S = ctx.STATO, R = ctx.qualita.R;
-      // 30 fps nel finale fermo da più di 4 s (§6.8)
+      // 30 fps nel finale fermo da più di 4 s (§6.8). Non sotto le sezioni (main dimezza già) e non mentre la
+      // camera si muove da sola (transizione dei Servizi, §4.7): lì il dimezzamento renderebbe il moto a scatti.
       st.frame++;
-      if (dt > 0 && S.T >= TAPPA_FINALE && !ctx.flags.test) {
-        if ((ctx.scroll?.velocita ?? 0) > 1) st.fermoDa = 0; else st.fermoDa += dt;
+      if (dt > 0 && S.T >= TAPPA_FINALE && !ctx.flags.test && !ctx.scroll?.inSezioni) {
+        if ((ctx.scroll?.velocita ?? 0) > 1 || ctx.regia?.forzato || ctx.regia?.inTransizione) st.fermoDa = 0; else st.fermoDa += dt;
         if (st.fermoDa > QUALITA.finaleFermo.secondi && (st.frame & 1)) return;
       } else st.fermoDa = 0;
 
       r.toneMappingExposure = S.esposizione * scalaAgx;
       PU.uSaturazione.value = S.saturazione * (agx ? 1 + RENDER.agx.saturazione : 1);
-      PU.uTempo.value = ctx.flags.riduci ? 0 : ctx.tempo.t;            // riduci movimento: grana statica
+      // grana a 24 fps con un indice di fotogramma limitato (ctx.tempo.t cresce senza fine: dopo un'ora l'hash in
+      // float32 perderebbe bit e la grana diventerebbe a trama); riduci movimento: grana statica
+      PU.uTempo.value = ctx.flags.riduci ? 0 : (Math.floor(ctx.tempo.t * RENDER.pellicola.granaFps) % RENDER.pellicola.granaCiclo) / RENDER.pellicola.granaFps;
 
       // GTAO solo se il livello lo prevede e la tappa lo chiede; nel warm-up sempre (compila i programmi)
       const warm = !!ctx.inWarmup;
@@ -204,7 +207,7 @@ export function crea(ctx) {
       composer.render(dt);
     },
     /** Tela nativa (dprNativo), composer alla risoluzione interna dprNativo × scala. */
-    ridimensiona(w = innerWidth, h = innerHeight) {
+    ridimensiona(w = ctx.vista.w, h = ctx.vista.h) {
       ctx.qualita.ricalcola?.();
       const scala = ctx.qualita.scala;
       // la tela si tocca solo se cambia davvero (riassegnare width/height la svuota e la rialloca)
@@ -228,7 +231,7 @@ export function crea(ctx) {
      */
     applicaQualita(R) {
       if (!R) return;
-      if (Math.abs(ctx.qualita.scala - P.scalaInterna) > 1e-4 || R.msaa !== st.msaa) P.ridimensiona(innerWidth, innerHeight);
+      if (Math.abs(ctx.qualita.scala - P.scalaInterna) > 1e-4 || R.msaa !== st.msaa) P.ridimensiona(ctx.vista.w, ctx.vista.h);
       ctx.ombre?.taglia?.(R.ombra);
     },
   };
@@ -236,5 +239,5 @@ export function crea(ctx) {
     if (n === st.msaa) return;
     st.msaa = n; rtScena.samples = n; rtScena.dispose();   // si rialloca al prossimo uso con i nuovi campioni
   }
-  P.ridimensiona(innerWidth, innerHeight);
+  P.ridimensiona(ctx.vista.w, ctx.vista.h);
 }

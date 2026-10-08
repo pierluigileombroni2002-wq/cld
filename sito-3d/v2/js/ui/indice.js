@@ -21,7 +21,7 @@ let I = null;
 
 export async function crea(ctx) {
   const testata = document.querySelector('.testata'), indice = document.querySelector('.indice');
-  I = { ctx, testata, indice, fuori: null };
+  I = { ctx, testata, indice, fuori: null, attenuato: false };
 
   /** Scorre fino a un elemento (o a y) con Lenis se c'è, altrimenti con lo scroll nativo. */
   const vaiA = (bersaglio, focus) => {
@@ -75,17 +75,23 @@ export async function crea(ctx) {
   addEventListener('scroll', suScroll, { passive: true });
   suScroll();
 
-  // ---- senza WebGL: voce attiva = tappa della battuta al centro dello schermo
-  if (ctx.noWebGL && 'IntersectionObserver' in window) {
+  // ---- senza WebGL: voce attiva = tappa della battuta al centro dello schermo (anche dopo un contesto perso)
+  let osservatore = null;
+  const senzaWebGL = () => {
+    if (osservatore || !('IntersectionObserver' in window)) return;
     const voci = [...document.querySelectorAll('.indice a[data-tappa]')];
-    const io = new IntersectionObserver(ee => {
+    osservatore = new IntersectionObserver(ee => {
       for (const e of ee) if (e.isIntersecting) {
         const t = e.target.dataset.tappa;
         for (const v of voci) { const si = v.dataset.tappa === t; v.classList.toggle('attiva', si); if (si) v.setAttribute('aria-current', 'step'); else v.removeAttribute('aria-current'); }
       }
     }, { rootMargin: '-45% 0px -45% 0px' });
-    for (const b of document.querySelectorAll('.battuta[data-tappa]')) io.observe(b);
-  }
+    for (const b of document.querySelectorAll('.battuta[data-tappa]')) osservatore.observe(b);
+    I.fuori = null; I.attenuato = false;
+    suScroll();
+  };
+  if (ctx.noWebGL) senzaWebGL();
+  else ctx.eventi.on('senza-webgl', senzaWebGL);
 }
 
 export function aggiorna(ctx) {

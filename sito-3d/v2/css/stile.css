@@ -76,9 +76,10 @@ ul,ol{ padding:0; list-style:none; }
 .occhiello{ font:400 12px/1.4 var(--f-mono); letter-spacing:.24em; text-transform:uppercase; color:var(--oro);
   display:flex; align-items:center; gap:14px; }
 .occhiello::before{ content:""; flex:none; width:28px; height:1px; background:currentColor; opacity:.65; }
-/* H1 [BASE-UI]: DESIGN chiede clamp(56px, 7,4vw, 128px) e "seconda riga in corsivo": "al Ready to Build." misura
-   7,64 em, quindi a 7,4vw le due righe diventano quattro. Si tengono le DUE righe del disegno: 6vw (limitato
-   dall'altezza per gli schermi bassi) e il titolo può uscire dalla colonna fino a 52vw (vedi .battuta h1). */
+/* H1 [BASE-UI, ARCHITETTURA §16]: DESIGN chiede clamp(56px, 7,4vw, 128px) e "seconda riga in corsivo": "al Ready to
+   Build." misura 7,64 em, quindi a 7,4vw le due righe diventano quattro. Si tengono le DUE righe del disegno: 6vw
+   (limitato dall'altezza per gli schermi bassi) e il titolo può uscire dalla colonna fino a 0,54 della larghezza,
+   dove finisce il velo .scrim (vedi .battuta h1). H2 e .grande: stesso tetto in vh per gli schermi bassi. */
 h1{ font-family:var(--f-titolo); font-weight:400; font-size:clamp(48px, min(6vw, 11.5vh), 128px); line-height:.98;
   letter-spacing:-.01em; color:var(--avorio); font-variation-settings:"opsz" 96; }
 h2{ font-family:var(--f-titolo); font-weight:400; font-size:clamp(34px, min(3.6vw, 6.6vh), 60px); line-height:1.06;
@@ -87,14 +88,14 @@ h2.grande{ font-size:clamp(56px, min(7vw, 13vh), 120px); line-height:.98; letter
 h1 em,h2 em{ font-style:italic; color:var(--oro-chiaro); }
 .testo{ max-width:52ch; color:var(--platino); text-wrap:pretty; }
 .dato{ font:400 12px/1.7 var(--f-mono); font-variant-numeric:tabular-nums; letter-spacing:.06em; color:var(--grigio); }
-.dicitura{ color:var(--oro); }
+.dicitura{ color:var(--oro); white-space:nowrap; }
 
 /* ---------------------------------------------------------------- §5.1 livelli fissi */
 #scena{ position:fixed; inset:0; width:100%; height:100%; z-index:0; }
 .filigrana{ display:none; }
 /* gradiente: config.COLONNA.scrim (scritto da ui/testi.js in --scrim); il valore qui sotto è solo la riserva */
 .scrim{ position:fixed; inset:0; z-index:1; pointer-events:none; opacity:0;
-  background:var(--scrim, linear-gradient(90deg, rgba(5,6,7,.86) 0%, rgba(5,6,7,.72) 26%, rgba(5,6,7,.34) 40%, rgba(5,6,7,0) 50%)); }
+  background:var(--scrim, linear-gradient(90deg, rgba(5,6,7,.86) 0%, rgba(5,6,7,.72) 26%, rgba(5,6,7,.34) 40%, rgba(5,6,7,0) 54%)); }
 .velo{ position:fixed; inset:0; z-index:2; pointer-events:none; background:var(--nero); opacity:0; }
 .velo-messaggio{ display:none; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); white-space:nowrap;
   font:400 11px var(--f-mono); letter-spacing:.24em; text-transform:uppercase; color:var(--grigio); }
@@ -169,8 +170,9 @@ html.contesto-perso .velo-messaggio{ display:block; }
 .indice ol{ display:flex; flex-direction:column; align-items:flex-end; }
 .indice a[data-tappa]{ display:flex; align-items:center; justify-content:flex-end; gap:12px; padding:5px 0;
   font:400 11px/1.4 var(--f-mono); letter-spacing:.1em; text-transform:uppercase; color:var(--grigio); text-decoration:none;
-  text-shadow:0 0 3px rgba(5,6,7,.9), 0 1px 14px rgba(5,6,7,.9); transition:color .4s; }
+  text-shadow:0 0 2px rgba(5,6,7,.85), 0 1px 8px rgba(5,6,7,.6); transition:color .4s; }
 .indice .indice-n{ color:inherit; opacity:.7; font-variant-numeric:tabular-nums; }
+.indice .indice-n,.indice .indice-nome{ transition:opacity .35s linear; }
 .indice-linea{ position:relative; flex:none; width:18px; height:1px; background:var(--platino-24);
   transition:width .7s var(--expo-out); }
 .indice-linea::after{ content:""; position:absolute; inset:0; background:var(--oro); transform-origin:left;
@@ -180,10 +182,13 @@ html.contesto-perso .velo-messaggio{ display:block; }
 .indice a[data-tappa].attiva .indice-n{ opacity:1; }
 .indice a[data-tappa].attiva .indice-linea{ width:36px; }
 .salta-servizi{ display:inline-block; margin-top:20px; padding:6px 0; font:400 11px/1 var(--f-mono); letter-spacing:.1em;
-  color:var(--oro); text-decoration:none; text-shadow:var(--ombra-testo); transition:color .3s; }
+  color:var(--oro); text-decoration:none; text-shadow:var(--ombra-testo); transition:color .3s, opacity .35s linear; }
 .salta-servizi:hover{ color:var(--oro-chiaro); }
-.indice.attenuato{ opacity:.16; transition:opacity .35s linear; }
-.indice.attenuato:hover,.indice.attenuato:focus-within{ opacity:1; }
+/* attenuato (un'etichetta 3D o gli archi dei fornitori ci passano sopra): restano solo le linee di avanzamento, un
+   binario minimo; il testo sparisce, così non si intreccia con quello dell'etichetta. Torna al passaggio del mouse. */
+.indice.attenuato:not(:hover):not(:focus-within) .indice-n,
+.indice.attenuato:not(:hover):not(:focus-within) .indice-nome,
+.indice.attenuato:not(:hover):not(:focus-within) .salta-servizi{ opacity:0; }
 .indice.fuori{ opacity:0; visibility:hidden; transition:opacity .5s linear, visibility 0s linear .5s; }
 
 /* ---------------------------------------------------------------- §4.0 storia: colonna del testo */
@@ -199,8 +204,10 @@ html.contesto-perso .velo-messaggio{ display:block; }
 .battuta h1,.battuta h2{ margin-left:-.04em; }
 /* l'occhiello resta su una riga: se è più lungo della colonna sborda di poco verso la scena (mai a capo) */
 .battuta .occhiello{ white-space:nowrap; width:max-content; max-width:calc(100vw - var(--colonna-sx) - 24px); }
-.battuta h1{ width:max-content; max-width:min(52vw, calc(100vw - var(--colonna-sx) - 24px)); }
-.battuta .dato{ padding-top:16px; border-top:1px solid var(--bordo); max-width:52ch;
+/* titoli su DUE righe come nel disegno (ogni titolo ha il suo <br>): possono uscire dalla colonna, ma non oltre
+   0,54 della larghezza, dove finisce il velo .scrim (config.COLONNA.scrimFermate) */
+.battuta h1,.battuta h2{ width:max-content; max-width:min(calc(54vw - var(--colonna-sx)), calc(100vw - var(--colonna-sx) - 24px)); }
+.battuta .dato{ padding-top:16px; border-top:1px solid var(--bordo); max-width:none; text-wrap:balance;
   color:color-mix(in srgb, var(--platino) 45%, var(--grigio)); }   /* ≥ 4,5:1 anche sul cielo chiaro (prove di contrasto) */
 .battuta .formula{ font-size:13px; color:var(--oro-chiaro); white-space:pre; letter-spacing:.04em; }
 .battuta .lead{ font-size:clamp(17px, 1.3vw, 21px); }
@@ -240,7 +247,8 @@ html.contesto-perso .velo-messaggio{ display:block; }
 /* 1b · proprietari */
 .legenda-proprietari{ grid-auto-flow:row; }
 .legenda-proprietari .segno{ display:inline-block; width:14px; color:var(--oro); text-shadow:none; }
-.legenda-proprietari .trattativa .segno{ animation:pulsa 1.2s ease-in-out infinite alternate; }   /* 1,2 Hz come le tende */
+/* 1,2 Hz come le tende "in trattativa" (§2.7): mezzo ciclo = 0,5 / config.OVERLAY.tende.hz (main.js scrive --pulsa-mezzo) */
+.legenda-proprietari .trattativa .segno{ animation:pulsa var(--pulsa-mezzo, .417s) ease-in-out infinite alternate; }
 @keyframes pulsa{ from{ opacity:.35; } to{ opacity:1; } }
 
 /* 2a · diagramma a binari: un anello di due binari fra due nodi, come in uno schema ferroviario.
@@ -275,7 +283,7 @@ html.contesto-perso .velo-messaggio{ display:block; }
 .binari [data-nodo="progetto"]{ grid-row:2; grid-column:1; align-self:start; color:var(--oro-chiaro); }
 .binari [data-nodo="via"]{ grid-row:2; grid-column:2; justify-self:center; align-self:start; padding:3px 8px 2px; border:1px dashed var(--platino-40);
   font-size:10.5px; white-space:nowrap; color:var(--grigio); }
-.binari [data-nodo="titolo"]{ grid-row:2; grid-column:3; align-self:start; text-align:right; max-width:14ch; color:var(--grigio); }
+.binari [data-nodo="titolo"]{ grid-row:2; grid-column:3; align-self:start; text-align:right; white-space:nowrap; color:var(--grigio); }
 .binari [data-nodo="titolo"].acceso{ color:var(--oro-chiaro); }
 .binari:has([data-nodo="titolo"].acceso) .binari-rete::after{ background:var(--oro); box-shadow:0 0 10px rgba(241,223,179,.6); }
 
@@ -320,11 +328,11 @@ html.contesto-perso .velo-messaggio{ display:block; }
 
 /* ---------------------------------------------------------------- §5.6 etichette 3D */
 .etichetta{ position:absolute; left:0; top:0; max-width:270px; opacity:0; will-change:transform, opacity;
-  text-shadow:0 0 3px rgba(5,6,7,.95), 0 1px 12px rgba(5,6,7,.95), 0 0 26px rgba(5,6,7,.7); }
+  text-shadow:0 0 2px rgba(5,6,7,.9), 0 1px 12px rgba(5,6,7,.65); }
 .etichetta-nome{ white-space:nowrap; }
-/* alone scuro sfumato dietro al testo (non è un riquadro): leggibile anche vicino al disco del sole */
-.etichetta::before{ content:""; position:absolute; inset:-16px -26px; z-index:-1; pointer-events:none;
-  background:radial-gradient(closest-side, rgba(5,6,7,.26), rgba(5,6,7,.12) 58%, rgba(5,6,7,0)); }
+/* alone appena accennato dietro al testo (non è un riquadro né una chiazza): disegno tecnico, non vetro */
+.etichetta::before{ content:""; position:absolute; inset:-10px -16px; z-index:-1; pointer-events:none;
+  background:radial-gradient(closest-side, rgba(5,6,7,.2), rgba(5,6,7,0)); }
 .piastra{ isolation:isolate; }
 .etichetta-nome{ display:block; font:500 13px/1.25 var(--f-testo); letter-spacing:.04em; color:var(--avorio); }
 .etichetta-dato{ display:block; margin-top:3px; font:400 10.5px/1.4 var(--f-mono); letter-spacing:.06em;   /* niente maiuscole: m, m³/s, Wp restano unità corrette */
@@ -334,31 +342,31 @@ html.contesto-perso .velo-messaggio{ display:block; }
 .richiami .richiamo circle{ stroke:none; }
 .piastra{ position:absolute; left:0; top:0; opacity:0; will-change:transform, opacity; }
 /* piastra dati 5b (contenuto di ui/finale.js): niente riquadro né vetro, solo filetti oro come uno strumento */
-.piastra{ width:252px; padding:9px 0 0; border-top:1px solid var(--oro); font:400 10px/1.4 var(--f-mono); letter-spacing:.08em;
+.piastra{ width:268px; padding:9px 0 0; border-top:1px solid var(--oro); font:400 10px/1.4 var(--f-mono); letter-spacing:.08em;
   color:var(--grigio); text-shadow:0 0 3px rgba(5,6,7,.95), 0 1px 12px rgba(5,6,7,.9); }
 .piastra::before{ content:""; position:absolute; inset:-12px -22px -14px; z-index:-1; pointer-events:none;
   background:radial-gradient(closest-side, rgba(5,6,7,.5), rgba(5,6,7,.28) 62%, rgba(5,6,7,0)); }
 .piastra-titolo{ color:var(--oro-chiaro); letter-spacing:.1em; white-space:nowrap; }
 .piastra-dati{ display:grid; grid-template-columns:repeat(3, auto); justify-content:space-between; gap:0 10px; margin:8px 0 6px; }
 .piastra-dati div{ display:flex; flex-direction:column; gap:1px; }
-.piastra-dati dt{ font-size:8.5px; letter-spacing:.06em; white-space:nowrap; }
+.piastra-dati dt{ font-size:9.5px; letter-spacing:.06em; white-space:nowrap; }
 .piastra-dati dd{ margin:0; color:var(--platino); font-variant-numeric:tabular-nums; white-space:nowrap; }
 .piastra-dati b{ font-weight:400; font-size:15px; letter-spacing:.01em; color:var(--avorio); }
-.piastra-curva{ display:block; width:244px; height:auto; overflow:visible; }
+.piastra-curva{ display:block; width:260px; height:auto; overflow:visible; }
 .piastra-curva .tetto{ stroke:var(--oro-30); stroke-width:1; stroke-dasharray:1 3; }
 .piastra-curva .base,.piastra-curva .tacca{ stroke:var(--platino-24); stroke-width:1; }
-.piastra-curva text{ fill:var(--grigio); font:400 7.5px var(--f-mono); text-anchor:middle; letter-spacing:.04em; }
+.piastra-curva text{ fill:var(--grigio); font:400 9.5px var(--f-mono); text-anchor:middle; letter-spacing:.04em; }
 .piastra-curva path{ fill:none; stroke-width:1.2; stroke-linejoin:round; stroke-linecap:round; }
 .piastra-curva .tracker{ stroke:var(--oro); }
 .piastra-curva .fisso{ stroke:var(--grigio); stroke-dasharray:3 2.5; }
 .piastra-curva .dopo{ stroke-dasharray:.1 3.2; stroke-width:1.4; opacity:.7; }
 .piastra-curva .ora{ stroke:var(--oro-chiaro); stroke-width:1; opacity:.55; }
 .piastra-curva .adesso{ fill:var(--oro-chiaro); }
-.piastra-legenda{ display:flex; gap:16px; margin-top:2px; font-size:9px; text-transform:none; letter-spacing:.06em; }
+.piastra-legenda{ display:flex; gap:16px; margin-top:2px; font-size:10px; text-transform:none; letter-spacing:.06em; }
 .piastra-legenda span{ display:inline-flex; align-items:center; gap:6px; }
 .piastra-legenda span::before{ content:""; width:14px; height:0; border-top:1px solid var(--oro); }
 .piastra-legenda .voce-fisso::before{ border-top:1px dashed var(--grigio); }
-.piastra-nota{ margin-top:3px; font-size:9px; text-transform:none; letter-spacing:.03em; white-space:nowrap; color:var(--oro); }
+.piastra-nota{ margin-top:3px; font-size:10px; text-transform:none; letter-spacing:.03em; white-space:nowrap; color:var(--oro); }
 /* archi dei fornitori e petali del finale (ui/finale.js) su svg#petali */
 #petali .arco{ fill:none; stroke:var(--oro-chiaro); stroke-width:1; vector-effect:non-scaling-stroke; }
 #petali .arco-punto{ fill:var(--oro-chiaro); opacity:0; transition:opacity .3s linear; }
@@ -417,26 +425,34 @@ html.contesto-perso .velo-messaggio{ display:block; }
 .idro-righello::before{ content:""; position:absolute; right:0; top:0; bottom:0; width:1px; background:var(--platino-40); }
 .idro-righello i{ position:absolute; right:0; height:1px; background:var(--platino-40); }
 .idro-righello .pieno{ position:absolute; right:-1px; bottom:0; width:3px; height:100%; background:var(--oro); transform-origin:bottom; transform:scaleY(0); }
-.idro-righello .parentesi{ position:absolute; right:7px; bottom:0; width:6px; border:1px solid var(--acqua); border-right:0; opacity:.35; transition:opacity .4s; }
+/* parentesi delle centrali a DESTRA dell'asse (nello spazio verso la colonna della portata), aperte verso l'asse:
+   le etichette delle quote restano libere a sinistra */
+.idro-righello .parentesi{ position:absolute; bottom:0; width:6px; border:1px solid var(--acqua); border-left:0; opacity:.35; transition:opacity .4s; }
 .idro-righello .parentesi.attiva{ opacity:1; border-color:var(--oro-chiaro); }
-.idro-righello em{ position:absolute; right:14px; font-style:normal; font-size:9px; line-height:1; transform:translateY(50%); color:var(--grigio); }
+.idro-righello em{ position:absolute; right:12px; font-style:normal; font-size:10px; line-height:1; transform:translateY(50%); color:var(--grigio); }
 .idro-colonna{ display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
 .idro-portata{ position:relative; width:220px; height:16px; }
 .idro-portata::before{ content:""; position:absolute; left:0; right:0; top:5px; height:1px; background:var(--platino-24); }
 .idro-portata .pieno{ position:absolute; left:0; top:5px; height:1px; width:100%; background:var(--acqua); transform-origin:left; transform:scaleX(0); }
 .idro-portata .segno{ position:absolute; top:1px; width:1px; height:9px; background:var(--oro-chiaro); }
 .idro-portata i{ position:absolute; top:2px; width:1px; height:3px; background:var(--platino-40); }
-.idro-scala{ display:flex; justify-content:space-between; width:220px; font-size:9px; color:var(--grigio); letter-spacing:.04em; text-transform:none; }
+/* scala logaritmica: ogni etichetta CENTRATA sulla sua tacca (i·25 %), estremi allineati ai bordi */
+.idro-scala{ position:relative; display:block; width:220px; height:12px; font-size:10px; line-height:12px; color:var(--grigio); letter-spacing:.04em; text-transform:none; }
+.idro-scala span{ position:absolute; top:0; transform:translateX(-50%); white-space:nowrap; }
+.idro-scala span:first-child{ transform:none; }
+.idro-scala span:last-child{ transform:translateX(-100%); }
 .idro-legenda{ font-size:10px; color:var(--grigio); letter-spacing:.06em; text-transform:none; }
 .hud-attesa{ color:var(--oro-chiaro); }
 
 /* Gantt di cantiere */
-.gantt{ display:grid; grid-template-columns:auto var(--gantt-l, 220px); gap:2px 12px; align-items:center; font-size:9.5px; line-height:1.25; }
+.gantt{ display:grid; grid-template-columns:auto var(--gantt-l, 220px); gap:2px 12px; align-items:center; font-size:10px; line-height:1.25; }
 .gantt-nome{ text-align:right; color:var(--grigio); }
 .gantt-pista{ position:relative; height:5px; }
 .gantt-pista::before{ content:""; position:absolute; left:0; right:0; top:2px; height:1px; background:var(--platino-12); }
 .gantt-barra{ position:absolute; top:0; height:5px; background:var(--oro); transform-origin:left; transform:scaleX(0); }
-.gantt-assi{ display:flex; justify-content:space-between; font-size:9px; color:var(--grigio); }
+/* mesi centrati sulla propria colonna del mese (stessa scala delle barre) */
+.gantt-assi{ position:relative; display:block; height:13px; font-size:10px; line-height:13px; color:var(--grigio); }
+.gantt-assi span{ position:absolute; top:0; transform:translateX(-50%); }
 
 /* ---------------------------------------------------------------- §5.7 cursore-mirino da teodolite */
 .cursore{ position:fixed; left:0; top:0; z-index:60; pointer-events:none; display:none; }
@@ -478,14 +494,14 @@ main{ position:relative; }
 .chi-dx .titolo-sezione{ max-width:21ch; }
 .chi-testi{ display:grid; grid-template-columns:repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap:24px clamp(24px, 3vw, 56px); margin-top:44px; }
 .principi{ display:grid; grid-template-columns:repeat(3, 1fr); gap:24px; margin-top:64px; }
-.principi li{ position:relative; padding-top:18px; font:400 12px/1.5 var(--f-mono); letter-spacing:.14em; text-transform:uppercase; color:var(--platino); }
+.principi li{ position:relative; padding-top:18px; font:400 11px/1.5 var(--f-mono); letter-spacing:.1em; text-transform:uppercase; color:var(--platino); }
 .principi li::before{ content:""; position:absolute; left:0; top:0; width:100%; height:1px; background:linear-gradient(90deg, var(--oro), var(--oro-16) 60%); }
-.principio-n{ color:var(--oro); }
+.principio-n{ display:block; margin-bottom:8px; color:var(--oro); }   /* numero sopra: la voce sta su una riga */
 .cifre{ margin-top:56px; }
 .cifre-elenco{ display:grid; grid-template-columns:repeat(3, 1fr); gap:24px; }
-.cifra{ display:flex; flex-direction:column; gap:12px; padding:18px 0 0; border-top:1px dashed var(--platino-24); }
-.cifra-valore{ font:400 56px/1 var(--f-titolo); color:var(--grigio); opacity:.55; }
-.cifra-segnaposto{ font:400 12px/1.4 var(--f-mono); letter-spacing:.06em; color:var(--grigio); }
+/* cifre chiave: il segnaposto dichiarato è il protagonista tipografico (Bodoni corsivo), non un trattino in un vano vuoto */
+.cifra{ display:flex; flex-direction:column; gap:0; padding:20px 0 0; border-top:1px dashed var(--platino-24); }
+.cifra-segnaposto{ font:italic 400 clamp(28px, 2.4vw, 40px)/1.1 var(--f-titolo); letter-spacing:0; color:var(--grigio); }
 .cifre .nota{ margin-top:18px; }
 
 /* Servizi */
@@ -525,7 +541,7 @@ main{ position:relative; }
 
 /* Contatti (1fr / 1fr) */
 .griglia-contatti{ grid-template-columns:1fr 1fr; align-items:start; }
-.contatti-sx .titolo-sezione{ max-width:16ch; }
+.contatti-sx .titolo-sezione{ max-width:none; }   /* il <br> del markup dà le due righe: dritta + corsivo */
 .recapiti{ margin-top:56px; max-width:560px; }
 .recapiti > div{ display:grid; grid-template-columns:minmax(150px, 40%) 1fr; gap:16px; padding:16px 0; border-top:1px solid var(--bordo); align-items:baseline; }
 .recapiti > div:last-child{ border-bottom:1px solid var(--bordo); }
@@ -542,8 +558,8 @@ main{ position:relative; }
 .chips{ display:flex; flex-wrap:wrap; gap:10px; }
 .chip{ position:relative; cursor:pointer; }
 .chip input{ position:absolute; opacity:0; inset:0; margin:0; cursor:inherit; }
-.chip span{ position:relative; display:inline-flex; align-items:center; padding:11px 18px; border:1px solid var(--platino-24); font:400 11px/1 var(--f-mono);
-  letter-spacing:.14em; text-transform:uppercase; color:var(--platino); transition:border-color .3s, color .3s, background-color .3s; }
+.chip span{ position:relative; display:inline-flex; align-items:center; padding:11px 14px; border:1px solid var(--platino-24); font:400 11px/1 var(--f-mono);
+  letter-spacing:.1em; text-transform:uppercase; color:var(--platino); transition:border-color .3s, color .3s, background-color .3s; }
 .chip span::before{ content:""; position:absolute; left:7px; top:50%; width:5px; height:5px; margin-top:-2.5px; border-radius:50%; background:var(--oro);
   transform:scale(0); transition:transform .4s var(--expo-out); }
 .chip:hover span{ border-color:var(--oro-30); color:var(--avorio); }
@@ -603,13 +619,16 @@ body.carica .indice,body.carica .hud{ opacity:0; }
 /* ---------------------------------------------------------------- §6.12 senza WebGL: la storia diventa una sequenza di blocchi */
 html.no-webgl body{ background:radial-gradient(ellipse at 60% 40%, #0d1012 0%, #050607 70%) fixed; }
 html.no-webgl #scena,html.no-webgl #preloader,html.no-webgl .hud,html.no-webgl .scrim,html.no-webgl .velo,
-html.no-webgl #linea-oro,html.no-webgl #petali,html.no-webgl .etichette{ display:none; }
+html.no-webgl #linea-oro,html.no-webgl #petali,html.no-webgl .etichette,html.no-webgl .cursore{ display:none; }
 html.no-webgl .filigrana{ display:block; position:fixed; z-index:0; pointer-events:none; width:min(70vw, 980px); height:auto; right:-8vw; top:50%;
   transform:translateY(-50%); opacity:.05; }
 html.no-webgl #storia{ height:auto; }
 html.no-webgl .testi{ position:static; display:block; height:auto; max-height:none; transform:none; width:auto; max-width:760px; padding:16vh 0 4vh var(--colonna-sx); padding-right:var(--margine-dx); pointer-events:auto; }
-html.no-webgl .battuta{ position:static; transform:none; opacity:1; visibility:visible; min-height:70vh; display:flex; flex-direction:column; justify-content:center; text-shadow:none; }
-html.no-webgl .battuta > *{ opacity:1 !important; translate:none !important; }
+html.no-webgl .battuta{ position:static; transform:none; visibility:visible; min-height:70vh; display:flex; flex-direction:column; justify-content:center; text-shadow:none; }
+/* !important: dopo un contesto perso restano stili in linea del ciclo (main.js li toglie, questo è il paracadute) */
+html.no-webgl .battuta,html.no-webgl .battuta > *{ opacity:1 !important; translate:none !important; }
+html.no-webgl .battuta .riga{ translate:none !important; }
+html.no-webgl .battuta .dato{ max-width:600px; }   /* il filetto non va oltre la misura del testo */
 html.no-webgl .legenda li{ opacity:1 !important; color:var(--platino); }
 html.no-webgl .legenda .spunta{ transform:rotate(-45deg) scale(1); }
 html.no-webgl .binari{ --riempimento:1; }
@@ -661,8 +680,9 @@ html.modo-test .goccia,html.modo-test .legenda-proprietari .trattativa .segno{ a
   /* colonna del testo in basso, a tutta larghezza, velo verticale */
   .testi{ left:16px; right:16px; width:auto; top:auto; bottom:84px; height:auto; max-height:calc(100vh - 170px); }
   .battuta{ align-self:end; }
-  .battuta h1{ max-width:100%; }
-  .scrim{ background:linear-gradient(0deg, rgba(5,6,7,.9) 0%, rgba(5,6,7,.75) 30%, rgba(5,6,7,0) 62%); }
+  .battuta h1,.battuta h2{ max-width:100%; }
+  /* gradiente verticale: config.COLONNA.scrimPiccolo (scritto da ui/testi.js in --scrim-piccolo); qui la riserva */
+  .scrim{ background:var(--scrim-piccolo, linear-gradient(0deg, rgba(5,6,7,.9) 0%, rgba(5,6,7,.75) 30%, rgba(5,6,7,0) 62%)); }
   .battuta .occhiello{ font-size:11px; letter-spacing:.18em; gap:10px; }
   .battuta .occhiello::before{ width:18px; }
   h1{ font-size:clamp(40px, 11.5vw, 56px); }
@@ -691,8 +711,7 @@ html.modo-test .goccia,html.modo-test .legenda-proprietari .trattativa .segno{ a
   .fascia{ flex-wrap:wrap; padding:20px 16px; }
   .fascia-tag{ width:100%; }
   .cifre-elenco{ grid-template-columns:1fr; gap:12px; }
-  .cifra{ flex-direction:row; align-items:baseline; gap:18px; }
-  .cifra-valore{ font-size:40px; }
+  .cifra{ padding-top:14px; }
   .recapiti > div{ grid-template-columns:1fr; gap:4px; }
   .modulo{ padding:22px 16px; }
   .piede{ padding:48px 16px 40px; }

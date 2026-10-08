@@ -46,7 +46,10 @@ export async function crea(ctx) {
   // righe ricalcolate al resize (debounce 200 ms) e quando arrivano i font
   let timer = 0;
   const ricalcola = () => { clearTimeout(timer); timer = setTimeout(() => divisi.forEach(d => d.ricalcola()), 200); };
-  addEventListener('resize', ricalcola);
+  // solo se può cambiare l'impaginazione (vedi ui/testi.js): niente ricostruzioni per la barra degli indirizzi mobile
+  const chiaveImpaginazione = () => innerWidth + 'x' + (innerWidth >= 900 ? innerHeight : 0);
+  let impaginazione = chiaveImpaginazione();
+  addEventListener('resize', () => { const k = chiaveImpaginazione(); if (k !== impaginazione) { impaginazione = k; ricalcola(); } });
   document.fonts?.ready?.then(ricalcola);
 }
 

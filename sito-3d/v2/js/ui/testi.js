@@ -64,10 +64,11 @@ export function dividiRighe(el) {
     const visita = (nodo) => {
       for (const n of [...nodo.childNodes]) {
         if (n.nodeType === 3) {
-          const parti = n.nodeValue.split(/(\s+)/), frag = document.createDocumentFragment();
+          // spazi normali sì, spazio indivisibile (&nbsp;) no: "e&nbsp;connessione" resta una parola sola
+          const parti = n.nodeValue.split(/([^\S\u00a0]+)/), frag = document.createDocumentFragment();
           for (const p of parti) {
             if (!p) continue;
-            if (/^\s+$/.test(p)) { spazio = true; continue; }
+            if (/^[^\S\u00a0]+$/.test(p)) { spazio = true; continue; }
             const s = document.createElement('span');
             s.className = 'parola'; s.style.display = 'inline-block'; s.textContent = p;
             s._spazio = spazio && parole.length > 0; spazio = false;
@@ -171,7 +172,11 @@ export async function crea(ctx) {
   if (!ctx.flags.riduci) dividi();
   let timer = 0;
   const ricalcola = () => { clearTimeout(timer); timer = setTimeout(() => { for (const b of battute) b.div?.ricalcola(); }, 200); };
-  addEventListener('resize', ricalcola);
+  // a capo ricalcolati solo se può cambiare l'impaginazione: la larghezza, o l'altezza sopra 900 px (i titoli
+  // usano anche vh). Sotto 900 px l'altezza cambia con la barra degli indirizzi mobile e non sposta gli a capo.
+  const chiaveImpaginazione = () => innerWidth + 'x' + (innerWidth >= 900 ? innerHeight : 0);
+  let impaginazione = chiaveImpaginazione();
+  addEventListener('resize', () => { const k = chiaveImpaginazione(); if (k !== impaginazione) { impaginazione = k; ricalcola(); } });
   document.fonts?.addEventListener?.('loadingdone', ricalcola);
   ctx.eventi.on('riduci', on => { if (!on) dividi(); });
 
@@ -215,6 +220,7 @@ export async function crea(ctx) {
   dati.scrim = scrim ? rec(scrim) : null;
   // gradiente del velo: unica fonte config.COLONNA (lo usa anche test.js per il contrasto); il CSS lo legge da --scrim
   scrim?.style.setProperty('--scrim', COLONNA.scrim);
+  scrim?.style.setProperty('--scrim-piccolo', COLONNA.scrimPiccolo);   // sotto 900 px (velo verticale, §6.12)
 }
 
 // ---------------------------------------------------------------- aggiorna (ogni fotogramma)

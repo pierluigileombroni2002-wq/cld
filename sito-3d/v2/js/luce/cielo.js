@@ -19,7 +19,7 @@
 // =============================================================================
 import * as THREE from 'three';
 import { CIELO, COTTURE_PIANURA, AMBIENTE_VALLE, HDRI, PALETTE } from '../config.js';
-import { posizioneSole, rad, deg } from '../geo.js';
+import { posizioneSole, rad, deg, ss } from '../geo.js';
 import { COLORI_CIELO, calcolaCielo } from './nebbia.js';
 
 export const MONDO = 'sistema';
@@ -338,7 +338,9 @@ export function aggiorna(ctx, T /*, t, dt */) {
   const C = calcolaCielo(ctx.STATO);           // stessi valori della nebbia (nebbia.js li ha già calcolati)
   const u = cl.materiale.uniforms;
   u.uZenit.value.copy(C.zenit); u.uOrizzonte.value.copy(C.orizzonte); u.uBagliore.value.copy(C.bagliore);
-  u.uDisco.value = C.disco;
+  // sotto le sezioni HTML il disco del sole (già diventato i petali del finale) non serve: dietro il velo 0,75
+  // resterebbe un puntino grigio, come polvere sullo schermo
+  u.uDisco.value = C.disco * (1 - ss(0.2, 0.6, ctx.veli?.sezioni || 0));
   const cam = ctx.camera, cupola = cl.cupole[ctx.mondo];
   if (cupola) {
     cupola.position.copy(cam.position);
