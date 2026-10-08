@@ -12,6 +12,15 @@ Promemoria per la prossima sessione (vale anche se si apre una chat nuova).
      Descrivere l'oggetto (es. "Pelton turbine runner, bronze, studio lighting") o caricare una foto, poi esportare in `.glb`.
 2. **Scegliere il logo**: `logo/ufficiale/logo-eri.svg` (fedele all'originale) oppure `logo/ufficiale/logo-eri-v2.svg` (rifinito). Poi va messo nel sito al posto del logo provvisorio "Isoipse".
 
+## Stato della versione 2 (sito-3d/v2) · in pausa
+
+- Fatto: progetto (`v2/DESIGN.md`), architettura (`v2/ARCHITETTURA.md`), fondamenta complete e revisionate
+  (luce, cielo, ombre, post-produzione, qualità fino a 4K, regia camera, scroll, interfaccia, testi, sezioni).
+- Parziale: mondi 3D (terreno, catasto, fiume e dintorni iniziati; fotovoltaico, valle idro, turbine e cantiere da fare).
+- Per riprendere: rilanciare la fase "mondi" (costruttori in parallelo che continuano dai file esistenti), poi collaudo visivo e pubblicazione.
+  Stima: 4-5 finestre di utilizzo con collaudo doppio, 2-3 con collaudo leggero.
+- Anteprima locale: `cd sito-3d && python3 -m http.server 8790` poi aprire http://localhost:8790/v2/
+
 ## Servizi reali di ERI (da usare nel sito)
 
 1. Screening preliminare vincolistico
