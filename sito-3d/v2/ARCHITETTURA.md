@@ -2,7 +2,7 @@
 
 Questo documento è il contratto tecnico fra i pacchetti di lavoro. Vale insieme a `DESIGN.md`, che resta normativo per i contenuti, i numeri e la coreografia. Se i due documenti non sono d'accordo su un'interfaccia, vale questo. Se non sono d'accordo su un numero o su un contenuto, vale `DESIGN.md`. In entrambi i casi la discrepanza va segnalata al lead.
 
-Stato attuale: tutti i file esistono. `config.js`, `geo.js`, `regia/stato.js`, `main.js` e `luce/nebbia.js` sono completi. Gli altri sono stub che rispettano le firme. Alcuni stub già funzionano in modo grezzo (camera, scroll, sole, pipeline, qualità, testi, intro, test) per permettere il lavoro in parallelo. La pagina si carica senza errori in console; `window.__eri.pronto` diventa vero e `vaiT` funziona.
+Stato attuale (integrazione delle fondamenta): tutti i file esistono. Sono completi `config.js`, `geo.js`, `regia/stato.js`, `main.js`, i pacchetti BASE-RENDER (luce e render), BASE-REGIA (camera, scroll, testi, test) e BASE-UI (markup, stile e interfaccia), più una prima versione di `ui/finale.js` (solo 2D). Restano stub i mondi 3D: PIANURA (`mondo/*`), FV (`impianti/tracker.js`, `agri.js`), FINALE 3D (`impianti/cantiere.js`) e VALLE (`idro/*`). Senza di loro la pagina gira dall'inizio alla fine senza errori: preloader, intro, storia T 0 → 19 (cielo, luce, nebbia, testi, HUD, etichette, petali) e sezioni HTML. Sotto l'orizzonte la cupola del cielo scende in una piana scura (`config.CIELO.suolo`), così il mondo vuoto resta intenzionale; il mondo di prova esiste solo con `?debug=1`.
 
 ---
 
@@ -30,25 +30,25 @@ Stato attuale: tutti i file esistono. `config.js`, `geo.js`, `regia/stato.js`, `
 | `js/geo.js` | ARCH | completo | funzioni pure: `altezza`, catasto, sole, tracker, layout, valle, formati (aggiunto all'albero di §6.2) |
 | `js/regia/stato.js` | ARCH | completo | STATO, tracce, uniform condivise `U`, easing, `fase()` |
 | `js/luce/nebbia.js` | BASE-RENDER | **completo** (ARCH) | chunk della nebbia, `nuovoMateriale`, `aggiungiPatch`, registro ENV |
-| `js/luce/sole.js` | BASE-RENDER | stub funzionante | luci sole ed emisfera per scena; riesporta le funzioni solari di `geo.js` |
-| `js/luce/cielo.js` | BASE-RENDER | stub (ambiente grezzo) | cupole, de-solazione, cotture PMREM |
-| `js/render/pipeline.js` | BASE-RENDER | stub funzionante (render diretto) | renderer, composer, Pellicola |
-| `js/render/ombre.js` | BASE-RENDER | stub | `adattaOmbra`, aggiornamento su richiesta |
-| `js/render/qualita.js` | BASE-RENDER | stub funzionante (scelta del livello) | livelli, governatore |
-| `js/regia/camera.js` | BASE-REGIA | stub funzionante (interpolazione semplice) | rig §4.0 |
-| `js/regia/scroll.js` | BASE-REGIA | stub funzionante (scroll nativo) | Lenis, T, veli delle sezioni |
-| `js/test.js` | BASE-REGIA | stub funzionante (pannello minimo) | `?test=1`, `?debug=1` |
-| `js/ui/testi.js` | BASE-REGIA | stub funzionante (accende e spegne) | battute, divisore di righe, decodifica, `.scrim` |
-| `index.html` | BASE-UI | scheletro con tutti i testi delle battute | markup §5 |
-| `css/stile.css` | BASE-UI | scheletro | token, tipografia, layout |
-| `js/ui/intro.js` | BASE-UI | stub (chiude il preloader) | preloader, logo, intro |
-| `js/ui/indice.js` | BASE-UI | stub | testata e indice (aggiunto all'albero) |
-| `js/ui/etichette.js` | BASE-UI | stub | etichette 3D |
-| `js/ui/hud.js` | BASE-UI | stub | HUD e strumenti di tappa |
-| `js/ui/cursore.js` | BASE-UI | stub | mirino, hover delle particelle, `rendiMagnetico` |
-| `js/ui/lineaOro.js` | BASE-UI | stub | componente LineaOro e transizione 4 → 5 |
-| `js/ui/servizi.js` | BASE-UI | stub | Chi siamo e Servizi |
-| `js/ui/contatti.js` | BASE-UI | stub | Contatti e modulo di prova |
+| `js/luce/sole.js` | BASE-RENDER | completo | luci sole ed emisfera per scena; riesporta le funzioni solari di `geo.js` (`sole-prova.mjs`: prova con node contro l'App. A) |
+| `js/luce/cielo.js` | BASE-RENDER | completo | cupole (con il suolo scuro sotto l'orizzonte), de-solazione, cotture PMREM |
+| `js/render/pipeline.js` | BASE-RENDER | completo | renderer, composer, GTAO, bloom, SMAA, Pellicola |
+| `js/render/ombre.js` | BASE-RENDER | completo | `adattaOmbra`, aggiornamento su richiesta; carica `pipeline-banco.js` solo con `?banco=1` |
+| `js/render/qualita.js` | BASE-RENDER | completo | livelli, governatore, benchmark |
+| `js/regia/camera.js` | BASE-REGIA | completo | rig §4.0 |
+| `js/regia/scroll.js` | BASE-REGIA | completo | Lenis, T, veli delle sezioni, stato dell'indice |
+| `js/test.js` | BASE-REGIA | completo | `?test=1`, `?debug=1`, prove automatiche, mondo di prova (solo `?debug=1`) |
+| `js/ui/testi.js` | BASE-REGIA | completo | battute, divisore di righe, decodifica, `.scrim` |
+| `index.html` | BASE-UI | completo | markup §5 |
+| `css/stile.css` | BASE-UI | completo | token, tipografia, layout |
+| `js/ui/intro.js` | BASE-UI | completo | preloader, logo, intro |
+| `js/ui/indice.js` | BASE-UI | completo | testata e indice (aggiunto all'albero) |
+| `js/ui/etichette.js` | BASE-UI | completo | etichette 3D |
+| `js/ui/hud.js` | BASE-UI | completo | HUD e strumenti di tappa |
+| `js/ui/cursore.js` | BASE-UI | completo | mirino, hover delle particelle e delle giranti (4e), `rendiMagnetico` |
+| `js/ui/lineaOro.js` | BASE-UI | completo | componente LineaOro e transizione 4 → 5 |
+| `js/ui/servizi.js` | BASE-UI | completo | Chi siamo e Servizi |
+| `js/ui/contatti.js` | BASE-UI | completo | Contatti e modulo di prova |
 | `js/mondo/terreno.js` | PIANURA | stub | mesh e shader del terreno |
 | `js/mondo/catasto.js` | PIANURA | stub | tStati, tVincoli, tMaschere; fogli GIS, lunetta, tende, percorso, layout, sigillo, polvere |
 | `js/mondo/fiume.js` | PIANURA | stub | nastro del fiume, normal map dell'acqua, traversa |
@@ -56,13 +56,15 @@ Stato attuale: tutti i file esistono. `config.js`, `geo.js`, `regia/stato.js`, `
 | `js/impianti/tracker.js` | FV | stub | tracker FV e agrivoltaici istanziati, tracker eroe |
 | `js/impianti/agri.js` | FV | stub | colture, quote, trattore |
 | `js/impianti/cantiere.js` | FINALE | stub | picchetti, recinzione, battipali (tappa 5) |
-| `js/ui/finale.js` | FINALE | stub | archi dei fornitori, piastra dati 5b, petali del logo (tappe 5 e 6) |
+| `js/ui/finale.js` | FINALE | prima versione (ARCH, solo 2D) | archi dei fornitori, piastra dati 5b con mini-curva, petali del logo (tappe 5 e 6) |
 | `js/idro/valle.js` | VALLE | stub | plastico, sezione, laghi, edifici, righello, piani di taglio, luci della valle |
 | `js/idro/pelton.js`, `francis.js`, `kaplan.js` | VALLE | stub | macchine procedurali |
 | `js/idro/acqua.js` | VALLE | stub | getti, spruzzi, linee di corrente, colonne |
 | `js/idro/diagramma.js` | VALLE | stub | diagramma 4e |
 
 Ogni stub ha in testa un commento in italiano con le sezioni di `DESIGN.md` da implementare e il proprio contratto.
+
+File privati già presenti (regola 0.1): `luce/sole-prova.mjs` (prova con node), `render/pipeline-banco.js` (banco di prova della resa, solo `?banco=1` con `?debug=1` o `?test=1`).
 
 ---
 
@@ -76,7 +78,7 @@ Ogni stub ha in testa un commento in italiano con le sezioni di `DESIGN.md` da i
 6. `crea()` di sistema: `nebbia, sole, cielo, ombre, scroll, camera`.
 7. `crea()` della PIANURA nell'ordine `catasto, terreno, fiume, contorno, tracker, agri, cantiere` (GEOMETRIA), poi la UI (`testi, etichette, hud, cursore, lineaOro, finale, indice, servizi, contatti, test`).
 8. **Warm-up della PIANURA**: tutti gli oggetti visibili, poi `compileAsync` (o `compile` se manca `KHR_parallel_shader_compile`), `initTexture` di ogni texture (SHADER). Poi un render completo, con l'ombra aggiornata, per ogni T di `config.WARMUP.pianura` (VERIFICA). Infine si ripristina la visibilità.
-9. Parte il ciclo (`gsap.ticker`, oppure `requestAnimationFrame`). Si salta al T iniziale. `__eri.pronto = true` ed evento `'pronto'`.
+9. Parte il ciclo (`gsap.ticker`, oppure `requestAnimationFrame`). Si salta al T iniziale. `__eri.pronto = true` ed evento `'pronto'`. Con l'intro parte il benchmark della qualità (§12); senza intro main emette subito `'intro-fine'`.
 10. **VALLE in idle** (`requestIdleCallback`): HDRI kloofendal, set `cemento_diga` e `metallo_lamiera`, `crea()` di `valle, pelton, francis, kaplan, acqua, diagramma` (in quest'ordine), `ctx.cielo.cotturaValle()`, warm-up della VALLE. I render di warm-up sono sincroni e il mondo corrente si ridisegna nello stesso task: allo schermo non arriva mai un fotogramma della valle. Poi `ctx.valle.pronta = true` ed evento `'valle-pronta'`. Infine HDRI autumn.
 
 Se l'utente entra nella VALLE prima che sia pronta, `ctx.veli.valle = 1` per al massimo 3 s. L'HUD mostra `PREPARAZIONE DELLA VALLE · {ctx.valle.progresso}` e `vaiT` aspetta la costruzione.
@@ -95,13 +97,13 @@ Lo stesso oggetto passa a ogni funzione di ogni modulo.
 | `flags` | `{test, debug, T0, q, tm, riduci, piccolo, nowebgl, intro, lenis}` | main | §13; `riduci` cambia a runtime (evento `'riduci'`) |
 | `canvas`, `renderer`, `dprNativo` | | main / pipeline | `dprNativo = min(devicePixelRatio, 2)`, 1 in test |
 | `pipeline` | §6 | pipeline | |
-| `qualita` | §12 | qualita | |
+| `qualita` | §12 | qualita | `qualita.R` = stato di runtime che il governatore cambia |
 | `scene` | `{pianura: Scene, valle: Scene}` | main | i moduli aggiungono qui i loro oggetti |
 | `camera` | `PerspectiveCamera` | main (scrive il rig) | **una sola** camera per le due scene, `rotation.order = 'YXZ'` |
 | `mondo` | `'pianura' \| 'valle'` | main | mondo attivo |
 | `stato`, `STATO`, `U` | §5 | stato.js | |
 | `tempo` | `{t, dt, T, frame, fps}` | main | `t` in secondi (fisso a 1/60 per fotogramma con `?test=1`) |
-| `regia` | `{target, posizione, d, phi, psi, fov, vicino, lontano, meta, centroOmbra, keyframe, inSosta, mondo}` | camera | `target`, `posizione` e `centroOmbra` sono `Vector3` |
+| `regia` | `{target, posizione, d, phi, psi, fov, vicino, lontano, meta, centroOmbra, keyframe, inSosta, mondo}` + `{fovBase, ancora, rollio, volo:{da,a,e}\|null, forzato}` | camera | `target`, `posizione` e `centroOmbra` sono `Vector3`; `fov` è quello effettivo (schermi stretti), `fovBase` quello del keyframe |
 | `rig`, `scroll`, `luci`, `cielo`, `ombre`, `nebbia` | servizi | moduli di sistema | §6 |
 | `carica` | caricatore | main | §10 |
 | `eventi` | `{on(n,f) → off, off, emit}` | main | §11 |
@@ -196,17 +198,18 @@ export function ridimensiona(ctx, w, h) {}    // facoltativa
 
 | Modulo | Esporta in più | Pubblica |
 |---|---|---|
-| `render/pipeline.js` | `creaRenderer(ctx) → WebGLRenderer` | `ctx.pipeline = { impostaScena(nome), render(dt), ridimensiona(w,h), applicaQualita(Q), scalaInterna, passi:{render,gtao,bloom,uscita,smaa,pellicola} }`; scrive `U.uPx`, `U.uRisoluzione`; legge `STATO.esposizione/saturazione/gtao/gtaoRaggio` |
-| `render/qualita.js` | `rileva(ctx) → livello` | `ctx.qualita = { livello, Q, scala, gradino, forzato, info(), benchmark() }` |
-| `render/ombre.js` | — | `ctx.ombre = { gestisce, adatta(centro, meta), richiedi() }`. I moduli chiamano `richiedi()` quando muovono qualcosa che proietta ombra |
-| `luce/nebbia.js` | `NEBBIA`, `nuovoMateriale`, `aggiungiPatch`, `collegaNebbia`, `registraEnv`, `impostaEnvGlobale` | `ctx.nebbia`; nebbia FogExp2 per scena |
+| `render/pipeline.js` | `creaRenderer(ctx) → WebGLRenderer` | `ctx.pipeline = { impostaScena(nome), render(dt), ridimensiona(w,h), applicaQualita(R), scalaInterna, composer, passi:{render,gtao,bloom,uscita,smaa,pellicola} }`; scrive `U.uPx`, `U.uRisoluzione`; legge `STATO.esposizione/saturazione/gtao/gtaoRaggio`. GTAO: salta gli oggetti con `userData.noAO`; per una mesh con `userData.materialeNormali` usa quel materiale nel passaggio delle normali |
+| `render/qualita.js` | `rileva(ctx) → livello` | `ctx.qualita = { livello, Q, R, scala (getter), gradino, forzato, ricalcola(), info(), benchmark(): Promise }`. `R = { scalaGradino, gtao, ombra, msaa, smaa, bloom }` è lo stato che il governatore cambia (i moduli leggono solo `Q`, e solo in `crea()`). `benchmark()` lo avvia main a `'pronto'` quando c'è l'intro |
+| `render/ombre.js` | — | `ctx.ombre = { gestisce, adatta(centro, meta), richiedi(), taglia(n), aggiornamenti }`. I moduli chiamano `richiedi()` quando muovono qualcosa che proietta ombra **anche nel movimento continuo** (giranti, nuvole, trattore); le chiavi di STATO legate allo scroll che muovono proiettori sono già osservate. `taglia(n)` la usa solo il governatore |
+| `luce/nebbia.js` | `NEBBIA`, `nuovoMateriale`, `aggiungiPatch`, `collegaNebbia`, `registraEnv`, `impostaEnvGlobale`, `calcolaCielo(S, out?)`, `COLORI_CIELO` | `ctx.nebbia = { NEBBIA, colori: COLORI_CIELO }`; nebbia FogExp2 per scena. `COLORI_CIELO` (zenit, orizzonte, bagliore, soleNebbia, disco) si calcola una volta per fotogramma ed è condiviso da nebbia e cupola |
 | `luce/sole.js` | riesporta da `geo.js` `posizioneSole, angoloTracker, luceSole, intensitaSole, coloreSole, direzioneSole, oraDaT` | `ctx.luci = { pianura:{sole, emisfera}, valle:{sole, emisfera} }`; scrive `U.uSoleDir` |
-| `luce/cielo.js` | — | `ctx.cielo = { orizzonte: Color, bagliore: Color, forzaCottura(), cotturaValle(): Promise, azHDRI }` |
-| `regia/scroll.js` | — | `ctx.scroll = { T, y, inizio, lunghezza, velocita, inSezioni, lenis, aggiorna(dt) → T, vai(T), scorri(y), vaiTappa(i), ricalcola() }`; scrive `ctx.veli.sezioni` |
-| `regia/camera.js` | `posa(T)` (pura) | `ctx.rig = { aggiorna, posa, salta(), forza(id\|null), mouse(nx, ny) }` e `ctx.regia` (§3) |
-| `ui/testi.js` | `dividiRighe(el) → {righe, ricalcola}`, `decodifica(el, ms)` | — |
-| `ui/cursore.js` | `rendiMagnetico(el)` | scrive `ctx.STATO.uHover` |
-| `ui/lineaOro.js` | `creaLineaOro(svg) → {imposta, morph, alfa}` | — |
+| `luce/cielo.js` | `desola(tex, nome)`, `desolaInIdle(tex, nome)` | `ctx.cielo = { orizzonte, bagliore, colori, forzaCottura(), cotturaValle(): Promise, azHDRI: {qwantani, kloofendal, autumn}, azAmbiente, cotture, cupole, statistiche() }`. `azHDRI` = azimut del bagliore di ogni HDRI prima della rotazione; `azAmbiente` (numero) = dove cade nel mondo il bagliore dell'ambiente corrente, cioè la direzione voluta del sole (freccia di `?debug=1`) |
+| `regia/scroll.js` | — | `ctx.scroll = { T, y, inizio, lunghezza, schermo, velocita, inSezioni, lenis, tappa, avanzamenti, aggiorna(dt) → T, vai(T), scorri(y), vaiTappa(i), ricalcola() }`; scrive `ctx.veli.sezioni` e lo STATO dell'indice (`.attiva`, `aria-current`, `--avanzamento`). `schermo` = altezza di `#storia` / 20 (stabile con le barre dei browser mobili) |
+| `regia/camera.js` | `posa(T)` (pura), `soste()` | `ctx.rig = { aggiorna, posa, soste, salta(), forza(id\|chiave di SERVIZI_CAMERA\|null), mouse(nx, ny) }` e `ctx.regia` (§3) |
+| `ui/testi.js` | `dividiRighe(el) → {righe, ricalcola}`, `decodifica(el, ms)` | `ctx.dati.testi = { battute, presenza, entraApertura() }`: `entraApertura()` fa salire il titolo della battuta 0 (lo chiama da sé su `'intro-fine'`); scrive `--scrim` su `.scrim` da `config.COLONNA.scrim` |
+| `ui/cursore.js` | `rendiMagnetico(el)` | scrive `ctx.STATO.uHover` (tappa 1) e `ctx.STATO.giranteHover` (4e: 1 Pelton, 2 Francis, 3 Kaplan, con `ctx.dati.diagramma.pick`) |
+| `ui/lineaOro.js` | `creaLineaOro(svg) → {imposta, morph, morphBuffer, alfa, punta, pista}` | — |
+| `ui/finale.js` | — | contenuto di `#piastra-dati`; gruppi `g.archi-fornitori` e `g.petali-finale` in `svg#petali` |
 
 ### Dati pubblicati e ancore registrate dai contenuti
 
@@ -223,7 +226,7 @@ export function ridimensiona(ctx, w, h) {}    // facoltativa
 | valle | `valle = { piani:{Z0,ZP,YF,ZK}, patchSezione(m), materiali, luci:{rect:[a,b], spot} }` | — |
 | pelton, francis, kaplan | `{ gruppo, girante }` | `pelton.cucchiaio`; `francis.chiocciola/.distributore/.girante`; `kaplan.pala/.distributore/.aspirazione` |
 | acqua | `acqua = { getti, spruzzi, linee, colonne }` | — |
-| diagramma | — | `diagramma.pelton/.francis/.kaplan`, `diagramma.retta10` (`[Vector3, Vector3]`) |
+| diagramma | `diagramma = { pick(x, y) → 'pelton'\|'francis'\|'kaplan'\|null }` (x, y in px CSS: girante sotto il cursore). Legge `STATO.giranteHover` per accendere il campo d'impiego (§5.7) | `diagramma.pelton/.francis/.kaplan`, `diagramma.retta10` (`[Vector3, Vector3]`) |
 
 Chi **legge** dati o ancore di un altro pacchetto deve tollerarne l'assenza, perché l'altro può essere ancora uno stub: usa texture neutre, le coordinate di `riserva` di config o salta l'effetto.
 
@@ -255,7 +258,7 @@ Chi **legge** dati o ancore di un altro pacchetto deve tollerarne l'assenza, per
   - aggiunge la patch, se c'è.
 - **Patch**: si usa sempre `aggiungiPatch(materiale, patch, chiave)`, **mai** `material.onBeforeCompile = …`, perché romperebbe la nebbia. La `chiave` entra in `customProgramCacheKey`. È **obbligatoria** quando il GLSL generato dipende da variabili di chiusura: senza, due materiali diversi condividono lo stesso programma.
 - **Overlay e trasparenze** (`LineMaterial`, `ShaderMaterial`): `fog:false` se si dissolvono per alfa propria, oppure si creano con `nuovoMateriale` se devono entrare nella nebbia. Su tutto ciò che non deve scurirsi con il GTAO si mette `userData.noAO = true`: `LineSegments2`, getti, colonne, fogli, tende, sigillo, cupole, piano del diagramma, involucri tagliati.
-- **Mesh con vertici spostati nello shader**: `customDepthMaterial` con la stessa patch (terreno, istanze, colture, alberi).
+- **Mesh con vertici spostati nello shader**: `customDepthMaterial` con la stessa patch (terreno, istanze, colture, alberi). Per il GTAO anche `userData.materialeNormali`: un `MeshNormalMaterial` con la stessa patch (e gli stessi piani di taglio nella VALLE), altrimenti l'AO si calcola sulla geometria non spostata.
 - **Piani di taglio della VALLE**: `ctx.dati.valle.piani` (`THREE.Plane`), assegnati alla creazione dei materiali con `clipShadows: true` e `side: DoubleSide`. `valle.js` aggiorna `YF.constant = STATO.YF`.
 - **Cupola del cielo**: segue la camera, con raggio `min(CIELO.raggio, 0,9·camera.far)`. Alcune inquadrature hanno `lontano` pari a 800–3 000, mentre la cupola ha raggio 3 000.
 
@@ -266,10 +269,10 @@ Chi **legge** dati o ancore di un altro pacchetto deve tollerarne l'assenza, per
 | Elemento | Uso |
 |---|---|
 | `canvas#scena` | WebGL |
-| `.scrim` | velo a gradiente: opacità scritta da `ui/testi.js` |
+| `.scrim` | velo a gradiente: opacità scritta da `ui/testi.js`; il gradiente è `config.COLONNA.scrim` (scritto in `--scrim`; sotto 900 px il CSS usa il suo gradiente verticale) |
 | `.velo` (con `.velo-messaggio`) | velo nero: opacità scritta da main (`ctx.velo`) |
 | `svg#linea-oro` | LineaOro (intro, transizione 4 → 5) |
-| `svg#petali` | petali del finale (`ui/finale.js`) |
+| `svg#petali` | petali del finale e archi dei fornitori (`ui/finale.js`); sta sopra lo `.velo`, quindi finale.js li dissolve con `ctx.veli.sezioni` |
 | `.etichette > svg.richiami`, `#piastra-dati.piastra` | etichette 3D e piastra 5b |
 | `header.testata`, `nav.indice` (`a[data-tappa]`), `.hud` (`.hud-sx`, `.hud-strumento`, `.bandierina`), `.cursore` | UI fissa |
 | `#preloader` (`.logo-intro`, `.linea-intro`, `.contatore`, `.didascalia .gruppo`, `.salta`) | intro; la classe `.fatto` lo nasconde |
@@ -338,7 +341,9 @@ Modelli `.glb` facoltativi: si caricano solo con `config.ASSET.modelli[x].attivo
 
 `ctx.qualita.Q` è una copia di `config.QUALITA.livelli[livello]`: `{budget, msaa, ombra, gtao, gtaoMezza, iridescenza, terreno, fileAlterne?, coltureSoloVicolo?}`. I moduli la leggono **solo in `crea()`**, per esempio per S del terreno, la taglia dell'ombra, l'iridescenza, le file alterne o le colture.
 
-A runtime il governatore cambia solo la scala interna, il GTAO, la taglia dell'ombra, MSAA/SMAA e il bloom, attraverso `pipeline.applicaQualita`. `?q=` forza il livello e blocca il governatore. Con `?test=1` il livello è base.
+A runtime il governatore cambia solo la scala interna, il GTAO, la taglia dell'ombra, MSAA/SMAA e il bloom, attraverso `pipeline.applicaQualita(ctx.qualita.R)`. `?q=` forza il livello e blocca il governatore. Con `?test=1` il livello è base.
+
+**Benchmark** (§6.8): main lo avvia a `'pronto'` quando c'è l'intro. Misura 90 fotogrammi (al massimo `QUALITA.benchmark.maxS` = 2,5 s, almeno 12) sotto il preloader, poi scende subito dei gradini necessari. Misura l'inquadratura di T = 0 (K0.0), non K0.1: spostare la camera sotto l'intro romperebbe la proiezione del fiume della linea d'oro.
 
 ---
 
@@ -354,6 +359,9 @@ A runtime il governatore cambia solo la scala interna, il GTAO, la taglia dell'o
 | `?riduci=1` | forza il riduci movimento |
 | `?nowebgl=1` | forza la modalità senza WebGL |
 | `?nointro=1` | salta l'intro |
+| `?prove=1` | esegue `__eri.prove()` dopo `'pronto'` (test.js) |
+| `?banco=1` (con `?debug=1` o `?test=1`) | banco di prova della resa di BASE-RENDER; `&grigio=1` terreno grigio 18 % |
+| `?introlenta=N` | rallenta l'intro di N volte (solo verifica) |
 
 ---
 
@@ -372,7 +380,7 @@ A runtime il governatore cambia solo la scala interna, il GTAO, la taglia dell'o
 | `config`, `versione`, `errori`, `guasti`, `moduli()` | diagnostica (`moduli()` restituisce `ok`, `assente` o `guasto` per ogni modulo) |
 | `ctx` | solo con `?test=1` o `?debug=1` |
 
-`test.js` può aggiungere `contrasto(battuta)` e `soste()`. Non ridefinisce i membri qui sopra.
+`test.js` aggiunge `soste()`, `composizione(aspetto?)` (App. C con la posa pura), `contrasto(idBattuta)`, `sonde()` (centro non nero, oro, riflessi del campo) e `prove(opz?)` (le prove di §6.13; il risultato resta in `esitoProve`). Non ridefinisce i membri qui sopra. Con `?debug=1`: pannello (D dettagli), ← → tra le soste, G mondo di prova (automatico finché il mondo vero non c'è), C carta grigia 18 % e freccia verso `ctx.cielo.azAmbiente`.
 
 ---
 
@@ -414,6 +422,14 @@ Le voci sono marcate `[ARCH]` in `config.js` e si possono rivedere.
 - **`fogliGIS.quotaImpatto`** = 1,5 (da tarare).
 - **Niente timeline GSAP**: T si legge dallo scroll e le tracce sono funzioni pure. Il risultato è lo stesso di `tl.to(STATO_T, {T:19})` con `scrub`, ma è più robusto per `vaiT` e lo scroll all'indietro.
 - **`compileAsync`** solo se esiste `KHR_parallel_shader_compile`: su SwiftShader three altrimenti scrive un avviso in console.
+- **Velo `.scrim`** più largo e più denso di §4.0 (`config.COLONNA.scrimFermate`: 0,86 → 0,72 a 26 % → 0,34 a 40 % → 0 a 50 %): con il gradiente di DESIGN il contrasto del testo sul cielo chiaro scendeva a 2:1 (3a, 3c, 6). Unica fonte: config (testi.js scrive `--scrim`, test.js misura con le stesse fermate).
+- **Nodo "Titolo" del diagramma 2a** acceso a 5,90 – 5,96 invece che a 7,00: a 7,00 la battuta 2a è già uscita (6,00).
+- **K3.7 – K3.8**: vale la quota minima 0,3 sul suolo (§4.0), non 0,25 della tabella (scarto di composizione ≈ 0,003).
+- **Suolo della cupola** (`config.CIELO.suolo`): sotto l'orizzonte la cupola scende in una piana scura (verso il nadir l'inchiostro `#0b0f12`) invece di ripetere il colore dell'orizzonte. Il mondo vero la copre; la fascia fino a h0 = −0,006 resta del colore della nebbia, così il bordo dell'anello del terreno non si vede.
+- **Avviso di mezzogiorno** nell'HUD: l'elevazione si calcola con `posizioneSole(13:11)` (71,45° → "71,5°"), la stessa funzione dell'HUD.
+- **Unità**: dati delle etichette, valori dell'HUD e piastra non passano più da `text-transform: uppercase` (m, m³/s, MWp, MWh restano unità corrette).
+- **Tarature promosse in config** (erano costanti locali `// TARATURA`): `CIELO.ibl`, `CIELO.tintaDisco`, `CIELO.aureola`, `CIELO.suolo`, `SCROLL`, `RIG.riduciDissolvenzaMs`, `TESTI_REGIA.{bloccoRitardo, bloccoSfalsamento, spento, accensione, auFrazione, saltoT}`, `ETICHETTE_REGOLE.{spazioTestoPx, marginePx, testataPx, areaPiccolo, saltoT, lambdaAlzata}`, `HUD.{scaleFiniM, barraLimitiPx, solare.pianoAgriT, maturita.completoT}`, `INTRO.{rivela, breve}`, `CONTATTI.chiusuraMs`, `QUALITA.benchmark.{maxS, minimo}`. Nuova chiave di STATO: `giranteHover`.
+- **Tappa 0 ancora poco drammatica** (segnalato da BASE-RENDER): con sole a 4° e intensità 2,0 la luce del cielo pesa più del sole sul piano. Da rivedere sul terreno vero: `sole.int` 2,6 oppure `envGlobale` 0,40 in tappa 0.
 
 ---
 
@@ -426,6 +442,8 @@ cd /home/user/cld/sito-3d && nohup python3 -m http.server 8790 >/dev/null 2>&1 &
 node /tmp/claude-0/-home-user-cld/c3d21a17-32c2-5d77-985f-ab05129798fb/scratchpad/foto-v2.js \
   "http://localhost:8790/v2/?test=1" <cartella> "T:1.8,T:9.95,T:13.1" 960 540 3000
 ```
+
+Senza i mondi 3D le prove di `__eri.prove()` che guardano il contenuto ("centro non nero", oro in K1.1/K2.2, riflessi in K3.5) non possono passare: sono il criterio di fatto dei pacchetti PIANURA, FV e VALLE, non delle fondamenta. Tutte le altre (composizione, contrasto, programmi stabili, errori, moduli) passano.
 
 Un pacchetto è fatto quando valgono tutte queste condizioni:
 

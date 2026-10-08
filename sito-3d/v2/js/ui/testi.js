@@ -31,12 +31,12 @@ export const MONDO = 'ui';
 
 const expoOut = ease('expo.out');
 const p2io = ease('power2.inOut');
-// TARATURA: proporre in config (dettagli di ritmo non scritti in DESIGN)
-const BLOCCO_RITARDO = 0.016, BLOCCO_SFALSAMENTO = 0.008;   // T: paragrafo e blocchi dopo il titolo
-const SPENTO = 0.45;                                         // opacità di voci e nodi non ancora accesi
-const ACCENSIONE = 0.03;                                     // T per accendere una voce o un nodo
-const AU_FRAZIONE = 0.5;                                     // il binario AU si accende a metà del riempimento
-const SALTO_T = 0.25;                                        // oltre questo salto di T le dissolvenze del riduci non si animano
+// Ritmo dei blocchi e dei diagrammi (config.TESTI_REGIA, tarature [ARCH])
+const BLOCCO_RITARDO = TR.bloccoRitardo, BLOCCO_SFALSAMENTO = TR.bloccoSfalsamento;   // T: paragrafo e blocchi dopo il titolo
+const SPENTO = TR.spento;                                    // opacità di voci e nodi non ancora accesi
+const ACCENSIONE = TR.accensione;                            // T per accendere una voce o un nodo
+const AU_FRAZIONE = TR.auFrazione;                           // il binario AU si accende a metà del riempimento
+const SALTO_T = TR.saltoT;                                   // oltre questo salto di T le dissolvenze del riduci non si animano
 
 // ---------------------------------------------------------------- divisore di righe (§5.7)
 const DIVISI = new WeakMap();
@@ -213,6 +213,8 @@ export async function crea(ctx) {
   };
   ctx.eventi.on('intro-fine', dati.entraApertura);
   dati.scrim = scrim ? rec(scrim) : null;
+  // gradiente del velo: unica fonte config.COLONNA (lo usa anche test.js per il contrasto); il CSS lo legge da --scrim
+  scrim?.style.setProperty('--scrim', COLONNA.scrim);
 }
 
 // ---------------------------------------------------------------- aggiorna (ogni fotogramma)

@@ -14,16 +14,17 @@
 // Il DOM degli strumenti si costruisce una volta in crea(); in aggiorna() si scrivono solo testi e trasformazioni.
 // =============================================================================
 import { HUD, IDRO, LAYOUT, TAPPE } from '../config.js';
-import { formatoGMS, quotaSlm, metriPerPx, numeroIt, formatoOra, clamp } from '../geo.js';
+import { formatoGMS, quotaSlm, metriPerPx, numeroIt, formatoOra, clamp, posizioneSole } from '../geo.js';
 import { fase } from '../regia/stato.js';
 
 export const MONDO = 'ui';
 
-// TARATURA: proporre in config — lunghezze della barra di scala sotto i 10 m (primi piani e macro della valle)
-const SCALE_FINI = [0.05, 0.1, 0.2, 0.5, 1, 2, 5];
-const SCALE = [...SCALE_FINI, ...HUD.scaleBarraM];
-const BARRA_MIN = 24, BARRA_MAX = 240;        // px
-const T_PIANO_AGRI = 10.40;                   // dall'agrivoltaico lo strumento mostra i tracker con GCR 0,24 (§4.4 3c)
+// Barra di scala: lunghezze fini per primi piani e macro della valle (config.HUD, tarature [ARCH])
+const SCALE = [...HUD.scaleFiniM, ...HUD.scaleBarraM];
+const [BARRA_MIN, BARRA_MAX] = HUD.barraLimitiPx;   // px
+const T_PIANO_AGRI = HUD.solare.pianoAgriT;          // dall'agrivoltaico lo strumento mostra i tracker con GCR 0,24 (§4.4 3c)
+/** Testo di un avviso solare: {el} = elevazione calcolata all'ora dell'avviso (stessa funzione dell'HUD). */
+const testoAvviso = av => av.testo.replace('{el}', av.ora != null ? numeroIt(posizioneSole(av.ora).el, 1) : '');
 
 let H = null;                                  // riferimenti e cache
 
@@ -62,7 +63,7 @@ export async function crea(ctx) {
         <div class="str-riga str-nota"><span class="sol-nota">SIMULAZIONE · 21 GIUGNO · 42° N</span></div>
       </div>
     </div>
-    <div class="sol-avviso">${HUD.solare.avvisi[0].testo}</div>
+    <div class="sol-avviso">${testoAvviso(HUD.solare.avvisi[0])}</div>
   </div>
   <div class="strumento str-idro">
     <div class="idro-corpo">
@@ -198,7 +199,7 @@ function maturita(S, ST, T) {
   for (const tc of S.tacche) { const ok = m >= tc.v - 0.01; classe(tc.el, 'raggiunta', ok); if (ok) fase = tc.nome; }
   testo(S.matFase, m >= 99.99 ? HUD.maturita.completo : fase ? 'FASE · ' + fase.toUpperCase() : '');
   // lampo × 4 per 0,02 T al raggiungimento del 100 % (§4.3): funzione pura di T
-  const T100 = 7.10, k = (T >= T100 && T < T100 + HUD.maturita.lampoT) ? 1 - (T - T100) / HUD.maturita.lampoT : 0;
+  const T100 = HUD.maturita.completoT, k = (T >= T100 && T < T100 + HUD.maturita.lampoT) ? 1 - (T - T100) / HUD.maturita.lampoT : 0;
   stile(S.matLampo, 'opacity', k.toFixed(2)); stile(S.matLampo, 'transform', `scale(${(1 + k * (HUD.maturita.lampo - 1) * 0.5).toFixed(2)})`);
 }
 
@@ -209,7 +210,7 @@ function solare(S, ST, T) {
   testo(Z.theta, fmtGradi(tr.theta) + '°'); testo(Z.stato, tr.stato);
   testo(Z.nota, `SIMULAZIONE · 21 GIUGNO · 42° N · GCR ${numeroIt(agri ? LAYOUT.agri.gcr : LAYOUT.fv.gcr, 2)}`);
   const av = HUD.solare.avvisi[0];
-  classe(Z.avviso, 'visibile', T >= av.T[0] && T < av.T[1]);
+  classe(Z.avviso, 'visibile', T >= av.T[0] && T < av.T[1] && !S.ctx.flags.riduci);   // riduci: sole fisso alle 10:00, niente mezzogiorno
   // mini-spaccato est-ovest (est a destra): moduli ruotati di theta, raggio del sole, ombre al suolo
   const g = Z.geo, th = tr.theta * Math.PI / 180, c = Math.cos(th), s = Math.sin(th);
   const el = sole.el * Math.PI / 180, az = sole.az * Math.PI / 180;

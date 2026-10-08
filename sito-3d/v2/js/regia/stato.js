@@ -142,7 +142,7 @@ export function creaStato(cfg = CFG) {
     // ---- sole: tracce (soleAuto 0), funzione dell'ora (1), colore da luceSole (2)
     let modo = STATO.soleAuto;
     let ora = STATO.ora;
-    if (opz.riduci && T >= 7.60 && T < 11.50) { modo = 1; ora = cfg.SOLE.oraRiduci; }   // §6.11: sole fisso alle 10:00
+    if (opz.riduci && T >= 7.60 && T < 11.50) { modo = 1; ora = STATO.ora = cfg.SOLE.oraRiduci; }   // §6.11: sole fisso alle 10:00 (anche l'ORA dell'HUD)
     const sole = STATO.sole;
     if (modo === 1) {
       const p = posizioneSole(ora); sole.el = p.el; sole.az = p.az;

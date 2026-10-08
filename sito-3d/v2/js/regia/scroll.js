@@ -20,17 +20,17 @@
 // Scrive ctx.veli.sezioni. Sull'indice (nav.indice a[data-tappa]) scrive solo lo STATO: classe
 // .attiva, aria-current="step" e la variabile CSS --avanzamento (0..1). Lo stile è di [BASE-UI].
 // =============================================================================
-import { T_FINE, STORIA_VH, TAPPE, INDICE, DOPO_STORIA } from '../config.js';
+import { T_FINE, STORIA_VH, TAPPE, INDICE, DOPO_STORIA, SCROLL } from '../config.js';
 import { clamp, damp } from '../geo.js';
 import { tappaDi } from './stato.js';
 
 export const MONDO = 'sistema';
 
-// TARATURA: proporre in config (valori scritti in DESIGN §6.8 / §6.11, non ancora in config.js)
-const LENIS = { lerp: 0.075, wheelMultiplier: 0.85, smoothWheel: true };
-const LAMBDA_RIDUCI = 5;            // levigatura dello scroll nativo con riduci movimento (≈ scrub 0,6 s)
-const LAMBDA_VELOCITA = 8;          // media della velocità di scroll (px/s) per il governatore
-const SICUREZZA_INTRO_S = 12;       // Lenis riparte comunque dopo 'pronto' + 12 s se l'intro non chiude
+// Valori di DESIGN §6.8 / §6.11 (config.SCROLL)
+const LENIS = SCROLL.lenis;
+const LAMBDA_RIDUCI = SCROLL.lambdaRiduci;          // levigatura dello scroll nativo con riduci movimento (≈ scrub 0,6 s)
+const LAMBDA_VELOCITA = SCROLL.lambdaVelocita;      // media della velocità di scroll (px/s) per il governatore
+const SICUREZZA_INTRO_S = SCROLL.sicurezzaIntroS;   // Lenis riparte comunque dopo 'pronto' + 12 s se l'intro non chiude
 const easingIndice = t => 1 - Math.pow(1 - t, 4);   // §5.4
 
 /** "top 30%" → 0,30 (frazione dell'altezza della finestra). */

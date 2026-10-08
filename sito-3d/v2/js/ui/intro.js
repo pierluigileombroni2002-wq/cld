@@ -34,11 +34,11 @@ const EXPO_OUT = 'cubic-bezier(.16,1,.3,1)';
 const EXPO_INOUT = 'cubic-bezier(.87,0,.13,1)';
 const p2io = ease('power2.inOut');
 
-// TARATURA: proporre in config (sovrapposizioni della rivelazione, non scritte in DESIGN)
-const FOGLIE_DA_MS = 900, SCRITTE_DA_MS = 1100;   // foglie/nastro/collina e scritte partono prima della fine dei petali
-const SCRITTE_VIA_MS = 350;                        // durante il FLIP scritte e collina svaniscono (la testata ha solo il simbolo)
-const FONDO_MS = 700;                              // durata della dissolvenza del fondo
-const BREVE = { flip: 700, allunga: 150, morph: 600, fondo: 450, fine: 600, lineaVia: 900, totale: 1200 };
+// Sovrapposizioni della rivelazione e versione breve (config.INTRO.rivela / .breve, tarature [ARCH])
+const FOGLIE_DA_MS = INTRO.rivela.foglieDaMs, SCRITTE_DA_MS = INTRO.rivela.scritteDaMs;   // partono prima della fine dei petali
+const SCRITTE_VIA_MS = INTRO.rivela.scritteViaMs;  // durante il FLIP scritte e collina svaniscono (la testata ha solo il simbolo)
+const FONDO_MS = INTRO.rivela.fondoMs;             // durata della dissolvenza del fondo
+const BREVE = INTRO.breve;
 
 let D = null;        // riferimenti DOM e stato
 // Solo verifica: ?introlenta=N rallenta l'intro di N volte (le schermate SwiftShader sono lente). Default 1.

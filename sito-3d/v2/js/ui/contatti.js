@@ -12,7 +12,7 @@ import { rendiMagnetico } from './cursore.js';
 
 export const MONDO = 'ui';
 
-const CHIUSURA_MS = 800;     // TARATURA: rete di sicurezza se transitionend non arriva
+const CHIUSURA_MS = CONTATTI.chiusuraMs;     // rete di sicurezza se transitionend non arriva
 
 export async function crea(ctx) {
   // collegamenti segnaposto (informativa, privacy, cookie): non portano da nessuna parte, per ora

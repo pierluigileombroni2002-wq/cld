@@ -21,13 +21,13 @@ import { altezza, visibileSulTerreno, clamp, damp } from '../geo.js';
 export const MONDO = 'ui';
 
 const NS = 'http://www.w3.org/2000/svg';
-// TARATURA: proporre in config (non scritti in DESIGN)
-const SPAZIO_TESTO = 8;                          // px tra la fine del gomito e il testo
-const MARGINE = 10;                              // px di respiro attorno a testi e ostacoli
-const TESTATA_PX = 76;                           // il testo non sale sotto la testata
-const AREA_PICCOLO = { x: [0.06, 0.94], y: [0.10, 0.56] };   // schermi piccoli: testo in basso, soggetto in alto
-const SALTO_T = 0.05;                            // oltre questo salto di T niente smorzamenti (vaiT, indice)
-const LAMBDA_ALZATA = 14;                        // smorzamento dell'altezza del gomito
+// Impaginazione (config.ETICHETTE_REGOLE, tarature [ARCH])
+const SPAZIO_TESTO = R.spazioTestoPx;            // px tra la fine del gomito e il testo
+const MARGINE = R.marginePx;                     // px di respiro attorno a testi e ostacoli
+const TESTATA_PX = R.testataPx;                  // il testo non sale sotto la testata
+const AREA_PICCOLO = R.areaPiccolo;              // schermi piccoli: testo in basso, soggetto in alto
+const SALTO_T = R.saltoT;                        // oltre questo salto di T niente smorzamenti (vaiT, indice)
+const LAMBDA_ALZATA = R.lambdaAlzata;            // smorzamento dell'altezza del gomito
 // candidati di impaginazione: [direzione, gradino di alzata]
 const CANDIDATI = [[1, 0], [-1, 0], [1, 1], [-1, 1], [1, 2], [-1, 2]];
 
@@ -76,6 +76,7 @@ export async function crea(ctx) {
     colonnaDx: 0, conta: 0, indiceAttenuato: false,
     dom: { indice: document.querySelector('.indice'), hud: document.querySelector('.hud-strumento'), testi: document.querySelector('.testi') },
   };
+  ctx.dati.etichette = E;                         // diagnostica (test.js, debug)
 }
 
 function nuovoSlot(el, r, piastra = false) {
@@ -154,7 +155,7 @@ export function aggiorna(ctx, T, t, dt) {
   if (!E) return;
   const attiva = ctx.introFinita && !ctx.inWarmup && ctx.camera && !(ctx.scroll?.inSezioni);
   const salto = Math.abs(T - E.Tprec) > SALTO_T || dt === 0; E.Tprec = T;
-  if (!attiva) { for (const s of E.tutti) if (s.def) nascondi(s); if (E.indiceAttenuato) { E.indiceAttenuato = false; E.dom.indice?.classList.remove('attenuato'); } return; }
+  if (!attiva) { for (const s of E.tutti) if (s.def) nascondi(s); E.indiceAttenuato = false; return; }
 
   const piccolo = ctx.flags.piccolo || innerWidth < 900;
   const max = piccolo ? QUALITA.piccolo.etichetteMax : Math.min(R.max, QUALITA.etichetteMax);
@@ -191,7 +192,9 @@ export function aggiorna(ctx, T, t, dt) {
     if (ok && !mondoValle) ok = visibileSulTerreno(cam.x, cam.y, cam.z, a.x, a.y, a.z, R.passiOcclusione);
     const voluto = ok ? 1 : 0;
     if (salto || s.nuovo) s.vis = voluto;
-    else { const passo = dt / (R.svanimentoMs / 1000); s.vis = voluto > s.vis ? Math.min(1, s.vis + passo) : Math.max(0, s.vis - passo); }
+    else if (voluto !== s.vis) {      // (a regime vis = voluto: niente passo, altrimenti 1 → 1 − passo → 1 sfarfalla)
+      const passo = dt / (R.svanimentoMs / 1000); s.vis = voluto > s.vis ? Math.min(1, s.vis + passo) : Math.max(0, s.vis - passo);
+    }
     if (P.davanti) {
       if (salto || s.nuovo) { s.x = P.x; s.y = P.y; }
       else { s.x = damp(s.x, P.x, R.smorzamento, dt); s.y = damp(s.y, P.y, R.smorzamento, dt); }
@@ -229,7 +232,7 @@ export function aggiorna(ctx, T, t, dt) {
     const kin = clamp((T - d.t0) / R.ingresso, 0, 1), kout = clamp((T - d.t1) / R.uscita, 0, 1);
     disegna(s, clamp(kin * 2, 0, 1), clamp(kin * 2 - 1, 0, 1), s.vis * (1 - kout));
   }
-  if (coperto !== E.indiceAttenuato) { E.indiceAttenuato = coperto; E.dom.indice?.classList.toggle('attenuato', coperto); }
+  E.indiceAttenuato = coperto;                    // la classe .attenuato la scrive ui/indice.js (più richiedenti)
 }
 
 function assegna(s, d) {

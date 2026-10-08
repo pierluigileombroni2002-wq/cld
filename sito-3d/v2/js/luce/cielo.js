@@ -24,28 +24,26 @@ import { COLORI_CIELO, calcolaCielo } from './nebbia.js';
 
 export const MONDO = 'sistema';
 
-// TARATURA: proporre in config (nessun valore in DESIGN). Le tre HDRI hanno luminanze medie diverse
-// (emisfero alto: qwantani 1,20 · kloofendal 1,15 · autumn 1,78) e la cupola visibile è volutamente più
-// scura del vero ("notte americana"). Ogni HDRI si normalizza alla luminanza media qui sotto: il crepuscolo
-// (qwantani: tramonto, ora blu, alba, finale) resta basso perché il sole radente disegni rilievo e ombre;
-// il giorno pieno torna a 1. Così ENV_GLOBALE di §2.4 regola solo la tappa e le miscele restano continue.
-const LUMINANZA_CIELO = { qwantani: 0.3, kloofendal: 1.0, autumn: 0.85, altro: 1.0 };
-// TARATURA: le HDRI "puresky" non hanno suolo; sotto l'orizzonte si mette un suolo scuro
-// (albedo 0,12 × luminanza del cielo, tinta di terra): niente luce "dal basso" sui moduli e sull'acciaio.
-const ALBEDO_SUOLO = 0.12;
-const TINTA_SUOLO = [1.0, 0.84, 0.64];
-// TARATURA: le HDRI hanno tinte proprie (qwantani è lilla) che stonano con la palette nero-oro e con la
-// cupola visibile: l'ambiente si desatura in parte e si tinge col colore del cielo procedurale alla riga di cottura.
-const SATURAZIONE_ENV = 0.55, TINTA_ENV = 0.6;
-// TARATURA: il disco di §6.3 è (1; 0,85; 0,62) × 30 e dopo ACES diventa un punto bianco. Tinto col colore
-// del sole (luceSole: arancio sotto i 5°) ha il nucleo giallo pallido e l'alone arancio di una foto vera.
-// 0 = disco esattamente come §6.3.
-const TINTA_DISCO = 0.85;
-// TARATURA: aureola stretta attorno al disco (diffusione in avanti, ~2° di raggio), solo quando il disco è acceso:
-// a 0,27° il disco è di pochi px e senza aureola si legge come un punto.
-const AUREOLA = 1.2;
-const LATO_HDRI = 1024;        // dopo la de-solazione le HDRI si ricampionano a 1K (bastano per un cubo PMREM da 256)
-const LATO_CUBO = 256;
+// Tarature dell'ambiente (in config.CIELO.ibl, marcate [ARCH]; DESIGN non dà valori):
+//  - luminanza: ogni HDRI si normalizza alla luminanza media del suo emisfero alto (qwantani 1,20 · kloofendal 1,15 ·
+//    autumn 1,78 in origine). Il crepuscolo (qwantani: tramonto, ora blu, alba, finale) resta basso perché il sole
+//    radente disegni rilievo e ombre; il giorno pieno torna a 1. ENV_GLOBALE di §2.4 regola solo la tappa.
+//  - albedoSuolo/tintaSuolo: le HDRI "puresky" non hanno suolo; sotto l'orizzonte si mette un suolo scuro
+//    (niente luce "dal basso" sui moduli e sull'acciaio).
+//  - saturazione/tinta: le HDRI hanno tinte proprie (qwantani è lilla) che stonano con la palette nero-oro: l'ambiente
+//    si desatura in parte e si tinge col colore del cielo procedurale alla riga di cottura.
+//  - CIELO.tintaDisco: il disco di §6.3 (1; 0,85; 0,62) × 30 dopo ACES è un punto bianco; tinto col colore del sole
+//    ha il nucleo pallido e l'alone arancio di una foto vera (0 = disco esattamente come §6.3).
+//  - CIELO.aureola: aureola stretta (~2°) attorno al disco acceso (0 = nessuna).
+const IBL = CIELO.ibl;
+const LUMINANZA_CIELO = IBL.luminanza;
+const ALBEDO_SUOLO = IBL.albedoSuolo;
+const TINTA_SUOLO = IBL.tintaSuolo;
+const SATURAZIONE_ENV = IBL.saturazione, TINTA_ENV = IBL.tinta;
+const TINTA_DISCO = CIELO.tintaDisco;
+const AUREOLA = CIELO.aureola;
+const LATO_HDRI = IBL.lato;    // dopo la de-solazione le HDRI si ricampionano a 1K (bastano per un cubo PMREM da 256)
+const LATO_CUBO = IBL.latoCubo;
 
 // ---------------------------------------------------------------- shader
 const VERT = /* glsl */`
@@ -55,14 +53,19 @@ const VERT = /* glsl */`
 // Cupola di sfondo (§6.3). Il disco usa la distanza angolare θ = asin|d × s|, precisa anche per 0,27°
 // (cos θ in float32 non distingue 0,27° da 0,32°); leggero oscuramento al bordo per un disco "fisico".
 const FRAG_CIELO = /* glsl */`
-  uniform vec3 uZenit, uOrizzonte, uBagliore, uSoleDir, uDiscoColore, uColoreSole;
-  uniform float uDisco, uMieG, uEspBagliore, uDiscoR, uDiscoB, uDiscoHDR, uTintaDisco, uAureola;
+  uniform vec3 uZenit, uOrizzonte, uBagliore, uSoleDir, uDiscoColore, uColoreSole, uNadir;
+  uniform float uDisco, uMieG, uEspBagliore, uDiscoR, uDiscoB, uDiscoHDR, uTintaDisco, uAureola, uSuolo, uSuoloH0, uSuoloH1;
   varying vec3 vDir;
   void main(){
     vec3 d = normalize(vDir); float h = clamp(d.y, -0.2, 1.0);
     vec3 c = mix(uOrizzonte, uZenit, pow(smoothstep(-0.02, 0.6, h), 0.55));
     float mu = dot(d, uSoleDir);
     c += uBagliore * pow(max(mu, 0.0), uEspBagliore) * (1.0 - smoothstep(0.0, 0.35, h));
+    // suolo [ARCH]: sotto l'orizzonte la cupola scende in una piana scura (il mondo vero la copre; la fascia fino a
+    // h0 resta del colore dell'orizzonte = nebbia, così il bordo dell'anello del terreno non si vede)
+    float s = smoothstep(uSuoloH0, uSuoloH1, d.y);
+    vec3 suolo = mix(uOrizzonte * uSuolo + uBagliore * uSuolo * 0.5 * pow(max(mu, 0.0), 2.0), uNadir, smoothstep(uSuoloH1, -0.95, d.y));
+    c = mix(c, suolo, s);
     float g = uMieG; float mie = (1.0 - g * g) / pow(1.0 + g * g - 2.0 * g * mu, 1.5) * 0.02;
     c += uBagliore * mie;
     float th = asin(clamp(length(cross(d, uSoleDir)), 0.0, 1.0));
@@ -214,6 +217,8 @@ export async function crea(ctx) {
       uDiscoR: { value: rad(CIELO.discoRaggio) }, uDiscoB: { value: rad(CIELO.discoBordo) }, uDiscoHDR: { value: CIELO.discoHDR },
       uDiscoColore: { value: new THREE.Vector3(...CIELO.discoColore) },
       uColoreSole: ctx.U.uColoreSole, uTintaDisco: { value: TINTA_DISCO }, uAureola: { value: AUREOLA },
+      uSuolo: { value: CIELO.suolo.fattore }, uSuoloH0: { value: CIELO.suolo.h0 }, uSuoloH1: { value: CIELO.suolo.h1 },
+      uNadir: { value: new THREE.Color(CIELO.suolo.nadir) },
     },
     vertexShader: VERT, fragmentShader: FRAG_CIELO,
   });

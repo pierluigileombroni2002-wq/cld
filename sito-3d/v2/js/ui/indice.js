@@ -57,11 +57,14 @@ export async function crea(ctx) {
 
   // ---- testata: sfondo a gradiente dopo 100 px; senza WebGL anche l'indice segue lo scroll nativo
   let rqa = 0;
+  const primaSezione = document.getElementById('chi-siamo');
   const suScroll = () => {
     if (rqa) return;
     rqa = requestAnimationFrame(() => {
       rqa = 0;
       testata?.classList.toggle('scorsa', scrollY > SOGLIA_TESTATA);
+      // sopra le sezioni HTML il testo scorre sotto la testata: il gradiente diventa più denso (leggibilità)
+      if (primaSezione && testata) testata.classList.toggle('su-sezioni', primaSezione.getBoundingClientRect().top < testata.offsetHeight + 8);
       if (ctx.noWebGL) {
         const chi = document.getElementById('chi-siamo');
         const fuori = chi ? chi.getBoundingClientRect().top < innerHeight * 0.7 : false;
@@ -90,4 +93,7 @@ export function aggiorna(ctx) {
   // nascosto durante le sezioni HTML (§5.4, §4.7)
   const fuori = !!ctx.scroll?.inSezioni || clamp(ctx.veli?.sezioni || 0, 0, 1) > 0.02;
   if (fuori !== I.fuori) { I.fuori = fuori; I.indice.classList.toggle('fuori', fuori); }
+  // attenuato quando qualcosa di importante gli passa sopra: etichette 3D (ui/etichette.js), archi dei fornitori (ui/finale.js)
+  const attenuato = !!(ctx.dati.etichette?.indiceAttenuato || ctx.dati.finale?.archiVisibili);
+  if (attenuato !== I.attenuato) { I.attenuato = attenuato; I.indice.classList.toggle('attenuato', attenuato); }
 }

@@ -33,9 +33,8 @@ import { mondoDi, ease } from './stato.js';
 
 export const MONDO = 'sistema';
 
-// TARATURA: proporre in config (RIG.riduciDissolvenzaMs = 300 è scritto in §6.11; derivata per il rollio)
-const RIDUCI_DISSOLVENZA_S = 0.3;
-const PASSO_DERIVATA = 0.004;          // T, differenza centrale per dψ/dT
+const RIDUCI_DISSOLVENZA_S = RIG.riduciDissolvenzaMs / 1000;   // §6.11
+const PASSO_DERIVATA = 0.004;          // T, differenza centrale per dψ/dT (dettaglio numerico, non una taratura)
 const easeServizi = ease('power2.inOut');
 
 // ---------------------------------------------------------------- utilità (senza allocazioni)

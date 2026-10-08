@@ -400,6 +400,8 @@ async function avvia() {
   window.__eri.pronto = true; risolviPronto();
   ctx.eventi.emit('pronto', ctx);
   if (!flags.intro) { ctx.introFinita = true; ctx.eventi.emit('intro-fine'); }
+  // §6.8: benchmark durante l'intro (sotto il preloader): il governatore scende subito dei gradini necessari
+  else ctx.qualita?.benchmark?.()?.catch?.(e => segnala('qualita.benchmark', e));
   inIdle(() => costruisciValle());
 }
 async function vaiTInterno(T) { ctx.scroll.vai(T); ctx.rig?.salta?.(); passo(0, T); render(0); await dueFotogrammi(); }

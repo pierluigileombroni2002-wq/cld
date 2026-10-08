@@ -131,8 +131,9 @@ export function aggiorna(ctx, T, t, dt) {
 
   // benchmark dell'intro: 90 fotogrammi, poi correzione immediata
   if (gov.banco) {
-    const b = gov.banco; b.somma.push(dt);
-    if (b.somma.length >= QUALITA.benchmark.fotogrammi) {
+    const b = gov.banco; b.somma.push(dt); b.tempo = (b.tempo || 0) + dt;
+    const B = QUALITA.benchmark;
+    if (b.somma.length >= B.fotogrammi || (b.tempo >= (B.maxS ?? Infinity) && b.somma.length >= (B.minimo ?? 1))) {
       const v = b.somma.slice().sort((x, y) => x - y), mediana = v[v.length >> 1];
       let stima = mediana; const obj = gov.obiettivo();
       while (!q.forzato && stima > G.giu * obj && q.gradino < d.gradini.length) {

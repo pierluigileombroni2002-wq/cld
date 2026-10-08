@@ -102,8 +102,10 @@ export async function crea(ctx) {
     const piccolo = matchMedia('(max-width: 899px)').matches;
     const alfaScrim = (x, y) => {
       if (piccolo) { const f = 1 - y / innerHeight; return aScrim * 0.9 * clamp(1 - f / 0.55, 0, 1); }
-      const f = x / innerWidth;
-      return aScrim * (f < 0.22 ? 0.82 + (0.62 - 0.82) * f / 0.22 : f < 0.44 ? 0.62 * (1 - (f - 0.22) / 0.22) : 0);
+      // stesse fermate del CSS (config.COLONNA.scrimFermate), interpolate in lineare
+      const f = x / innerWidth, F = COLONNA.scrimFermate;
+      for (let i = 1; i < F.length; i++) if (f <= F[i][0]) return aScrim * (F[i - 1][1] + (F[i][1] - F[i - 1][1]) * (f - F[i - 1][0]) / (F[i][0] - F[i - 1][0]));
+      return 0;
     };
     const velo = ctx.velo || 0, N = [5, 6, 7];
     let peggiore = null;
@@ -254,7 +256,8 @@ export function aggiorna(ctx, T, t, dt) {
     _dx.set(1, 0, 0).applyQuaternion(cam.quaternion);
     g.position.copy(R.target).addScaledVector(_dx, s * 2.2); g.scale.setScalar(s); g.visible = true;
     g.quaternion.copy(cam.quaternion);
-    const az = typeof ctx.cielo?.azHDRI === 'number' ? ctx.cielo.azHDRI : null;
+    // azimut nel mondo del bagliore della HDRI dell'ambiente corrente (dopo la rotazione): deve indicare il sole
+    const az = typeof ctx.cielo?.azAmbiente === 'number' ? ctx.cielo.azAmbiente : null;
     if (az != null) {
       f.position.copy(R.target); f.setDirection(_dx.set(Math.sin(rad(az)), 0, -Math.cos(rad(az))));
       f.setLength(s * 6, s * 1.2, s * 0.6); f.visible = true;

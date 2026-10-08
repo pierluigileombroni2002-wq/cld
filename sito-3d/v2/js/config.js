@@ -132,6 +132,23 @@ export const CIELO = {
   frazioneFar: 0.9,
   discoRaggio: 0.27, discoBordo: 0.05, discoHDR: 30, discoColore: [1.0, 0.85, 0.62],
   mieG: 0.76, esponenteBagliore: 6,
+  // [ARCH] tarature di BASE-RENDER (DESIGN non dà valori): 0 = disco esattamente come il codice di §6.3
+  tintaDisco: 0.85,              // il disco prende il colore del sole (arancio sotto i 5°): nucleo pallido, alone caldo
+  aureola: 1.2,                  // aureola stretta (~2°) attorno al disco acceso: a 0,27° il disco è di pochi px
+  // [ARCH] suolo della cupola sotto l'orizzonte: il mondo vero lo copre (anello fino a 1 500 u); senza mondo
+  // (o oltre l'anello) l'orizzonte scende in una piana scura invece di un "cielo rovesciato".
+  // colore = orizzonte × fattore, raccordato tra h0 (≈ orizzonte, nascosto dalla nebbia) e h1 (verso il nadir).
+  suolo: { fattore: 0.2, h0: -0.006, h1: -0.22, nadir: '#0b0f12' },   // nadir = inchiostro (§2.1): un plastico d'inchiostro
+  // [ARCH] ambiente IBL (§2.4, §6.3): tarature di BASE-RENDER
+  ibl: {
+    // luminanza media dell'emisfero alto a cui si normalizza ogni HDRI (il crepuscolo resta basso: ombre e rilievo)
+    luminanza: { qwantani: 0.3, kloofendal: 1.0, autumn: 0.85, altro: 1.0 },
+    albedoSuolo: 0.12, tintaSuolo: [1.0, 0.84, 0.64],   // suolo scuro sotto l'orizzonte delle HDRI "puresky"
+    saturazione: 0.55,           // l'ambiente si desatura in parte…
+    tinta: 0.6,                  // …e si tinge col colore della cupola visibile alla riga di cottura
+    lato: 1024,                  // HDRI ricampionate a 1K dopo la de-solazione
+    latoCubo: 256,               // cubo della CubeCamera prima del PMREM
+  },
 };
 
 // Cotture PMREM della PIANURA (§2.4). Si cuoce SOLO al passaggio di questi T.
@@ -210,7 +227,9 @@ export const QUALITA = {
   sogliaSmaa: 3.7e6,             // Ultra/Alta: MSAA 0 + SMAA se pixel interni > 3,7 MP
   regexUltra: /RTX|RX [67]\d{3}|Apple M\d (Pro|Max|Ultra)|Arc A7/,
   regexBassa: /Intel|UHD|Iris|Mali|Adreno|PowerVR|SwiftShader|llvmpipe/,
-  benchmark: { fotogrammi: 90, T: 1.8 },   // sull'inquadratura K0.1
+  // §6.8: 90 fotogrammi durante l'intro (main.js lo avvia a 'pronto', sotto il preloader). [ARCH] al massimo
+  // maxS secondi di misura (almeno minimo fotogrammi): sulle GPU lente 90 fotogrammi durerebbero più dell'intro.
+  benchmark: { fotogrammi: 90, T: 1.8, maxS: 2.5, minimo: 12 },
   gradiniScala: [1, 0.85, 0.7, 0.6],
   governatore: { media: 0.05, giu: 1.35, tGiu: 1.5, su: 0.8, tSu: 3, intervallo: 4, scrollMax: 50, scrollFermo: 0.3, obiettivoMinMs: 16.7 },
   sezioni: { fps: 30, scala: 0.5 },
@@ -461,9 +480,15 @@ export const TAPPE = [
 export const CAMBIO_MONDO = { valleDa: 11.50, valleA: 15.50 };
 
 // Colonna del testo e velo (§4.0)
+// [ARCH] velo .scrim: DESIGN dà 0,82 → 0,62 (22 %) → 0 (44 %), ma a 22–44 % della larghezza c'è ancora la colonna
+// (fino a ~42 %, i titoli H1 fino a 52 %) e sul cielo chiaro il contrasto scendeva a 2:1. Fermate più larghe e
+// più dense dove sta il testo; a sx 0,50 il velo è già 0 (i soggetti stanno a destra di 0,38–0,44, App. C).
+// Fermate [frazione della larghezza, alfa]: unica fonte per il CSS (ui/testi.js scrive --scrim) e per test.js.
+const SCRIM_FERMATE = [[0, 0.86], [0.26, 0.72], [0.40, 0.34], [0.50, 0]];
 export const COLONNA = {
   left: 'clamp(24px, 6vw, 112px)', larghezza: 'min(36vw, 600px)', spostamentoY: '-4vh',
-  scrim: 'linear-gradient(90deg, rgba(5,6,7,.82) 0%, rgba(5,6,7,.62) 22%, rgba(5,6,7,0) 44%)',
+  scrimFermate: SCRIM_FERMATE,
+  scrim: `linear-gradient(90deg, ${SCRIM_FERMATE.map(([f, a]) => `rgba(5,6,7,${a}) ${Math.round(f * 100)}%`).join(', ')})`,
   scrimDurataT: 0.04, ombraTesto: '0 2px 24px rgba(5,6,7,.9)',
   limiteSoggetto: 0.38,           // la colonna occupa sx < 0,38 (App. C)
 };
@@ -527,6 +552,17 @@ export const RIG = {
   rollio: { fattore: -0.004, max: 2 },         // clamp(−0,004·dψ/dT, ±2°)
   aspettoStretto: 1.5, fovMax: 75,             // se aspect < 1,5: fovV = 2·atan(tan(fov/2)·1,5/aspect)
   serviziDurata: 1.2,                          // s, power2.inOut (§4.7)
+  riduciDissolvenzaMs: 300,                    // §6.11: cambio di sosta con dissolvenza nel velo
+  // [ARCH] K3.7–K3.8 (vicolo agrivoltaico): DESIGN mette la camera a 0,25 u dal suolo, la regola generale chiede 0,3.
+  // Vale la regola: il rig alza la camera di 0,05 u (scarto di composizione ≈ 0,003, invisibile).
+};
+
+// Scroll (§6.8, §6.11): Lenis sul ticker unico di GSAP
+export const SCROLL = {
+  lenis: { lerp: 0.075, wheelMultiplier: 0.85, smoothWheel: true },
+  lambdaRiduci: 5,            // riduci movimento: scroll nativo levigato (≈ scrub 0,6 s)
+  lambdaVelocita: 8,          // media della velocità di scroll (px/s) per il governatore
+  sicurezzaIntroS: 12,        // Lenis riparte comunque 12 s dopo 'pronto' se l'intro non chiude
 };
 
 // =============================================================================
@@ -576,6 +612,7 @@ export const STATO_INIZIALE = {
   gantt: 0, archi: 0, picchetti: 0, recinzione: 0,
   piastra: 0, statoFile: 0, stringa14B: 0, termica: 0,
   petali: 0,
+  giranteHover: 0,          // 4e: girante sotto il cursore (0 nessuna, 1 Pelton, 2 Francis, 3 Kaplan), scritto da ui/cursore.js
 };
 
 // =============================================================================
@@ -740,13 +777,21 @@ export const TRACCE = {
 // in / out = T di inizio ingresso / inizio uscita. in:null = visibile dalla fine dell'intro; out:null = resta fino alle sezioni.
 // =============================================================================
 export const TESTI_REGIA = { ingresso: 0.08, uscita: 0.05, sfalsamentoRighe: 0.012, decodificaMs: 300, uscitaY: -16, ingressoY: 12,
-                             alfabetoDecodifica: '0123456789·—/ABCDEFGHIJKLMNOPQRSTUVWXYZ', riduciMs: 200 };
+                             alfabetoDecodifica: '0123456789·—/ABCDEFGHIJKLMNOPQRSTUVWXYZ', riduciMs: 200,
+                             // [ARCH] tarature di BASE-REGIA (ritmo non scritto in DESIGN)
+                             bloccoRitardo: 0.016, bloccoSfalsamento: 0.008,   // T: paragrafo e blocchi dopo il titolo
+                             spento: 0.45,          // opacità di voci e nodi non ancora accesi
+                             accensione: 0.03,      // T per accendere una voce o un nodo
+                             auFrazione: 0.5,       // il binario AU si accende a metà del riempimento
+                             saltoT: 0.25 };        // oltre questo salto di T le dissolvenze del riduci non si animano
 export const BATTUTE = [
   { id: '0',  tappa: 0, in: null,  out: 0.55 },
   { id: '1a', tappa: 1, in: 2.50,  out: 3.30, spunte: [2.63, 2.75, 2.87, 2.99, 3.11], areaIdonea: 3.20 },
   { id: '1b', tappa: 1, in: 3.62,  out: 4.18 },
   { id: '1c', tappa: 1, in: 4.48,  out: 5.02 },
-  { id: '2a', tappa: 2, in: 5.30,  out: 6.00, binari: [5.30, 5.90], titolo: [7.00, 7.10] },
+  // [ARCH] DESIGN accende il nodo "Titolo" a 7,00 (con la maturità al 100 %), ma 2a esce a 6,00: il nodo si accende
+  // appena il binario AU è pieno, così la battuta mostra il percorso completo.
+  { id: '2a', tappa: 2, in: 5.30,  out: 6.00, binari: [5.30, 5.90], titolo: [5.90, 5.96] },
   { id: '2b', tappa: 2, in: 6.28,  out: 6.85, passi: [6.30, 6.45, 6.60], gse: [6.50, 6.70] },
   { id: '2c', tappa: 2, in: 7.08,  out: 7.46, grande: true },
   { id: '3a', tappa: 3, in: 8.16,  out: 8.72 },
@@ -822,6 +867,13 @@ export const ETICHETTE_REGOLE = {
   area: { x: [0.40, 0.92], y: [0.10, 0.85] }, sopraPx: 24,
   gomito: { puntoPx: 5, verticalePx: 24, orizzontalePx: 32 },
   svanimentoMs: 250, smorzamento: 20, passiOcclusione: 24,
+  // [ARCH] tarature di BASE-UI (impaginazione dei richiami)
+  spazioTestoPx: 8,                 // tra la fine del gomito e il testo
+  marginePx: 10,                    // respiro attorno a testi e ostacoli
+  testataPx: 76,                    // il testo non sale sotto la testata
+  areaPiccolo: { x: [0.06, 0.94], y: [0.10, 0.56] },   // schermi piccoli: testo in basso, soggetto in alto
+  saltoT: 0.05,                     // oltre questo salto di T niente smorzamenti (vaiT, indice)
+  lambdaAlzata: 14,                 // smorzamento dell'altezza del gomito
 };
 
 // =============================================================================
@@ -831,6 +883,8 @@ export const HUD = {
   frequenzaHz: 15, distanzaBordoPx: 22,
   bandierina: 'DATI ILLUSTRATIVI',
   scaleBarraM: [10, 20, 50, 100, 200, 500, 1000, 2000], scalaBarraPx: 120,
+  scaleFiniM: [0.05, 0.1, 0.2, 0.5, 1, 2, 5],   // [ARCH] primi piani e macro della valle
+  barraLimitiPx: [24, 240],
   scalaApertura: { T: [0.15, 1.55], testo: ['1:10 000', '1:2 000'] },
   strumenti: [                       // strumento di tappa per intervallo di T
     { tipo: 'maturita', T: [0, 7.60] },
@@ -840,9 +894,12 @@ export const HUD = {
     { tipo: 'gantt', T: [15.50, 17.50] },
   ],
   maturita: { larghezzaPx: 220, tacche: [['Territorio', 5], ['Screening', 20], ['Proprietari', 35], ['Layout', 45], ['Iter', 65], ['Connessione', 85], ['RTB', 100]],
-              titolo: 'MATURITÀ DEL PROGETTO', completo: 'READY TO BUILD', lampoT: 0.02, lampo: 4 },
+              titolo: 'MATURITÀ DEL PROGETTO', completo: 'READY TO BUILD', lampoT: 0.02, lampo: 4,
+              completoT: 7.10 /* fine dell'ultimo segmento di TRACCE.maturita (100 %) */ },
   solare: { formato: 'ORA {ora} · ELEVAZIONE {el}° · AZIMUT {az}° · TRACKER {theta}° · {stato}',
-            avvisi: [{ T: [9.93, 10.10], testo: '13:11 · MEZZOGIORNO SOLARE · ELEVAZIONE 71,4°' }],
+            // {el} = elevazione calcolata da posizioneSole all'ora dell'avviso: coincide con l'HUD a T 9,95 (App. A: 71,45°)
+            avvisi: [{ T: [9.93, 10.10], ora: 13 + 11 / 60, testo: '13:11 · MEZZOGIORNO SOLARE · ELEVAZIONE {el}°' }],
+            pianoAgriT: 10.40,   // dall'agrivoltaico (3c) lo strumento mostra i tracker con GCR 0,24
             spaccato: { file: 3, larghezzaM: 2.4, passoM: 6 }, ombraGrigio: 0.4 },
   idro: { salto: { min: 0, max: 900, px: 140 }, portata: { min: 0.1, max: 1000, px: 220, log: true }, potenza: 'POTENZA ≈10 MW',
           tempo: { T: [12.70, 14.78], testo: 'TEMPO ×1/1000 → ×1/8' },
@@ -875,6 +932,10 @@ export const INTRO = {
   riduci: { dissolvenzaMs: 300, pausaMs: 500, uscitaMs: 300 },
   fiume: { punti: 64, z: [-400, 400] },
   testata: { viewBox: '0 20 812 440', altezzaPx: 40 },
+  // [ARCH] tarature di BASE-UI: sovrapposizioni della rivelazione (ms dall'inizio dei petali)
+  rivela: { foglieDaMs: 900, scritteDaMs: 1100, scritteViaMs: 350, fondoMs: 700 },
+  // versione breve (seconda visita, schermi piccoli): durate in ms
+  breve: { flip: 700, allunga: 150, morph: 600, fondo: 450, fine: 600, lineaVia: 900, totale: 1200 },
 };
 export const LINEA_ORO = { punti: 64, sy: 0.58 };
 
@@ -902,6 +963,7 @@ export const CONTATTI = {
              ['Proprietari terrieri', 'terreni@eri-esempio.it'], ['Telefono', '+39 000 000 0000'], ['Sede', '[indirizzo da inserire]']],
   profili: ['Investitore', 'IPP', 'Proprietario terriero', 'Altro'],
   messaggioInvio: 'Versione di prova: il modulo non invia ancora i dati.',
+  chiusuraMs: 800,                 // [ARCH] rete di sicurezza se transitionend non arriva (gruppi condizionali)
 };
 
 // Soste per il debug (← →) e per il warm-up (§6.9)

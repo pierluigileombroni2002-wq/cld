@@ -136,7 +136,7 @@ function classe(c, nome, si) { if (C.classi[nome] !== si) { C.classi[nome] = si;
 export function aggiorna(ctx, T, t, dt) {
   if (!C) return;
   const S = ctx.STATO;
-  if (!C.attivo || !puntatore.mosso || puntatore.tipo !== 'mouse') { if (S && S.uHover) S.uHover = 0; return; }
+  if (!C.attivo || !puntatore.mosso || puntatore.tipo !== 'mouse') { if (S && S.uHover) S.uHover = 0; if (S && S.giranteHover) S.giranteHover = 0; return; }
   classe(C, 'attivo', C.dentro !== false);
   const x = puntatore.x, y = puntatore.y;
   if (x !== C.px || y !== C.py) {                       // scritture solo quando il puntatore si muove
@@ -151,7 +151,7 @@ export function aggiorna(ctx, T, t, dt) {
   const b = puntatore.bersaglio;
   const suLink = !!(b && b.closest && b.closest(LINK));
   classe(C, 'link', suLink);
-  classe(C, 'esplora', !!(b && b.closest && b.closest('[data-esplora]')));
+  classe(C, 'esplora', !!(b && b.closest && b.closest('[data-esplora]')) || C.girante > 0);
 
   // ---- lettura del suolo a 30 Hz (solo sulla tela della PIANURA, durante la storia)
   C.acc += dt;
@@ -179,6 +179,16 @@ export function aggiorna(ctx, T, t, dt) {
     }
   }
   if (S && S.uHover !== hover) S.uHover = hover;
+  // 4e (§5.7): girante sotto il cursore → STATO.giranteHover (1 Pelton, 2 Francis, 3 Kaplan); idro/diagramma.js
+  // pubblica pick(x, y) in px CSS e accende il campo d'impiego della girante. Senza pick: nulla.
+  let girante = 0;
+  const pick = ctx.dati.diagramma?.pick;
+  if (typeof pick === 'function' && ctx.mondo === 'valle' && (S?.diagramma ?? 0) > 0.5 && b && b.closest && !b.closest(NON_TELA) && !ctx.scroll?.inSezioni) {
+    const id = pick(x, y);
+    girante = id === 'pelton' ? 1 : id === 'francis' ? 2 : id === 'kaplan' ? 3 : 0;
+  }
+  if (S && S.giranteHover !== girante) S.giranteHover = girante;
+  C.girante = girante;
   if (testo !== C.testo) { C.testo = testo; C.lettura.textContent = testo; }
   if (C.classi.particella !== particella) { C.classi.particella = particella; C.lettura.classList.toggle('particella', particella); }
   C.lettura.classList.toggle('visibile', !!testo && !suLink);
