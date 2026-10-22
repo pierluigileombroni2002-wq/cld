@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 233 202" role="img" aria-label="Energie Rinnovabili Italia">
+  <defs>
+    <!-- facce dei petali: sfumatura dalla punta (0) alla base (1) -->
+    <linearGradient id="arancio-sx-a" gradientUnits="userSpaceOnUse" x1="13.6" y1="66" x2="71" y2="91.8"><stop offset="0" stop-color="#d89a12"/><stop offset="1" stop-color="#d5990e"/></linearGradient>
+    <linearGradient id="arancio-sx-b" gradientUnits="userSpaceOnUse" x1="13.6" y1="66" x2="71" y2="91.8"><stop offset="0" stop-color="#d08b0c"/><stop offset="1" stop-color="#d5890d"/></linearGradient>
+    <linearGradient id="giallo-sx-a" gradientUnits="userSpaceOnUse" x1="39.4" y1="31" x2="81.8" y2="76.5"><stop offset="0" stop-color="#dec212"/><stop offset="1" stop-color="#debb10"/></linearGradient>
+    <linearGradient id="giallo-sx-b" gradientUnits="userSpaceOnUse" x1="39.4" y1="31" x2="81.8" y2="76.5"><stop offset="0" stop-color="#dcb80e"/><stop offset=".55" stop-color="#dbab0d"/><stop offset="1" stop-color="#dd9b0b"/></linearGradient>
+    <linearGradient id="lime-a" gradientUnits="userSpaceOnUse" x1="73.4" y1="8.8" x2="97.6" y2="66.15"><stop offset="0" stop-color="#b6b80e"/><stop offset=".5" stop-color="#bfb80f"/><stop offset="1" stop-color="#a4b210"/></linearGradient>
+    <linearGradient id="lime-b" gradientUnits="userSpaceOnUse" x1="73.4" y1="8.8" x2="97.6" y2="66.15"><stop offset="0" stop-color="#8caa10"/><stop offset="1" stop-color="#8aa810"/></linearGradient>
+    <linearGradient id="arancio-a" gradientUnits="userSpaceOnUse" x1="117.4" y1="0.6" x2="116.55" y2="62.15"><stop offset="0" stop-color="#e08a0f"/><stop offset="1" stop-color="#df820e"/></linearGradient>
+    <linearGradient id="arancio-b" gradientUnits="userSpaceOnUse" x1="117.4" y1="0.6" x2="116.55" y2="62.15"><stop offset="0" stop-color="#df830c"/><stop offset="1" stop-color="#de7b0b"/></linearGradient>
+    <linearGradient id="rosso-a" gradientUnits="userSpaceOnUse" x1="159.3" y1="8.2" x2="135.35" y2="65.05"><stop offset="0" stop-color="#db5f0a"/><stop offset="1" stop-color="#d85909"/></linearGradient>
+    <linearGradient id="rosso-b" gradientUnits="userSpaceOnUse" x1="159.3" y1="8.2" x2="135.35" y2="65.05"><stop offset="0" stop-color="#d95b09"/><stop offset="1" stop-color="#d65608"/></linearGradient>
+    <linearGradient id="giallo-dx-a" gradientUnits="userSpaceOnUse" x1="176" y1="40.6" x2="151.25" y2="75.05"><stop offset="0" stop-color="#e4c313"/><stop offset="1" stop-color="#e2b10e"/></linearGradient>
+    <linearGradient id="giallo-dx-b" gradientUnits="userSpaceOnUse" x1="176" y1="40.6" x2="151.25" y2="75.05"><stop offset="0" stop-color="#e4c215"/><stop offset="1" stop-color="#e2ac10"/></linearGradient>
+    <linearGradient id="verde" gradientUnits="userSpaceOnUse" x1="1" y1="0" x2="67" y2="0"><stop offset="0" stop-color="#3e6e08"/><stop offset=".45" stop-color="#417707"/><stop offset="1" stop-color="#43790a"/></linearGradient>
+    <!-- stelo: dall'arancio della punta al lime della lama (lungo la diagonale punta → lama) -->
+    <linearGradient id="stelo" gradientUnits="userSpaceOnUse" x1="12" y1="120" x2="190" y2="35">
+      <stop offset="0" stop-color="#c9551f"/>
+      <stop offset=".14" stop-color="#c66b1b"/>
+      <stop offset=".26" stop-color="#cd8a12"/>
+      <stop offset=".35" stop-color="#bf9c14"/>
+      <stop offset=".42" stop-color="#a39d10"/>
+      <stop offset=".50" stop-color="#86990f"/>
+      <stop offset=".60" stop-color="#74951e"/>
+      <stop offset=".72" stop-color="#5f9728"/>
+      <stop offset=".84" stop-color="#9fb514"/>
+      <stop offset="1" stop-color="#8bae18"/>
+    </linearGradient>
+    <linearGradient id="foglia" gradientUnits="userSpaceOnUse" x1="96" y1="125" x2="160" y2="100">
+      <stop offset="0" stop-color="#4f7a36"/>
+      <stop offset="1" stop-color="#57a135"/>
+    </linearGradient>
+    <linearGradient id="collina" gradientUnits="userSpaceOnUse" x1="90" y1="0" x2="232" y2="0">
+      <stop offset="0" stop-color="#1c4a2a"/>
+      <stop offset=".35" stop-color="#08422a"/>
+      <stop offset="1" stop-color="#0a4a30"/>
+    </linearGradient>
+    <linearGradient id="italia" gradientUnits="userSpaceOnUse" x1="0" y1="186.7" x2="0" y2="199.1">
+      <stop offset="0" stop-color="#c4642f"/>
+      <stop offset="1" stop-color="#a8472a"/>
+    </linearGradient>
+  </defs>
+
+  <!-- petali del sole: ogni petalo ha due facce (la piega va dalla punta al centro della base).
+       Prima il petalo intero con il colore della faccia B, poi sopra la faccia A. Colori misurati all'interno dell'originale. -->
+  <g stroke-linejoin="round" stroke-width=".6">
+    <g id="p-arancio-sx">
+      <path fill="url(#arancio-sx-b)" stroke="url(#arancio-sx-b)" d="M13.6,66 L46.6,66.3 L73.3,86.3 L68.7,97.3 L39.5,91 L23.4,77.7 Z"/>
+      <path fill="url(#arancio-sx-a)" d="M13.6,66 L46.6,66.3 L73.3,86.3 L71,91.8 Z"/>
+    </g>
+    <g id="p-giallo-sx">
+      <path fill="url(#giallo-sx-b)" stroke="url(#giallo-sx-b)" d="M39.4,31 L68.6,45.4 L86.6,72 L77,81 L52.4,63.5 Z"/>
+      <path fill="url(#giallo-sx-a)" d="M39.4,31 L68.6,45.4 L86.6,72 L81.8,76.5 Z"/>
+    </g>
+    <g id="p-lime">
+      <path fill="url(#lime-b)" stroke="url(#lime-b)" d="M73.4,8.8 L91.9,26.2 L98.8,34.9 L104.7,63.1 L90.5,69.2 L75.6,45.8 Z"/>
+      <path fill="url(#lime-a)" d="M73.4,8.8 L91.9,26.2 L98.8,34.9 L104.7,63.1 L97.6,66.15 Z"/>
+    </g>
+    <g id="p-arancio">
+      <path fill="url(#arancio-b)" stroke="url(#arancio-b)" d="M117.4,0.6 L127,20.8 L129.6,31.8 L123.4,62.1 L109.7,62.2 L104.4,35.3 Z"/>
+      <path fill="url(#arancio-a)" d="M117.4,0.6 L127,20.8 L129.6,31.8 L123.4,62.1 L116.55,62.15 Z"/>
+    </g>
+    <g id="p-rosso">
+      <path fill="url(#rosso-b)" stroke="url(#rosso-b)" d="M159.3,8.2 L159.3,40.8 L141.8,67.5 L128.9,62.6 L133.9,36.7 Z"/>
+      <path fill="url(#rosso-a)" d="M159.3,8.2 L159.3,40.8 L141.8,67.5 L135.35,65.05 Z"/>
+    </g>
+    <g id="p-giallo-dx">
+      <path fill="url(#giallo-dx-b)" stroke="url(#giallo-dx-b)" d="M176,40.6 L168.2,67.8 L155.9,79.5 L146.6,70.6 L162.7,46.8 Z"/>
+      <path fill="url(#giallo-dx-a)" d="M176,40.6 L168.2,67.8 L155.9,79.5 L151.25,75.05 Z"/>
+    </g>
+    <path id="p-verde" fill="url(#verde)" stroke="url(#verde)" d="M1.2,115.2 C8,109 20,100.5 35,96.4 L67,102 L67.6,116.2 L31.7,117.7 Q14,117.3 1.2,115.2 Z"/>
+  </g>
+
+  <!-- collina, stelo (con la lama), foglia: in quest'ordine, dal fondo -->
+  <path id="collina" fill="url(#collina)" d="M90,127.4 C105,123 135,114 151,110 C160,105.5 172,101.6 182,99.8 C190,98.4 197,97.2 203,98.2 C212,100 224,109 232.6,116 C215,115.2 195,114.9 182,115.7 C165,117 135,122.3 110,126.7 C102,127.4 95,127.5 90,127.4 Z"/>
+  <path id="stelo" fill="url(#stelo)" d="M12,119.4 C25,121 38,122.6 50,122.9 C75,122.9 100,120 122,113.8 C134,110.8 148,102.55 158,93.3 C163,88.7 171.9,74 174.9,66 C176.6,59 180.8,45 181.9,38 Q182.5,33.5 191.4,32 L195,31.3 C194.2,40 189,58 184,66 C178,80 165,95 150,104 C135,113 118,121 104,124.4 C98,125.6 90,126.8 80,126.9 C60,126.6 35,124.3 12,119.4 Z"/>
+  <path id="foglia" fill="url(#foglia)" d="M219.6,65.6 C216.5,71.5 195.5,87.3 185.3,92 L165.9,100 Q160.5,102.7 154,107.5 C140,114.5 120,121.5 96,125.4 C110,123 128,117 140,110.5 C146,107.5 149,104 151,101 C154,97 158,93.3 161.1,90 C163.5,87 165,85 166.5,82.5 L172,77 C177,72 182,67.5 186.5,65.5 L218.6,65.5 Z"/>
+
+  <!-- scritte (tracciati generati da strumenti/logo-genera.html) -->
+  <g id="scritte">
+    <!-- ENERGIE: Montserrat Bold 23.3 px, spaziatura 3.26 -->
+    <path fill="#0f3b2c" d="M67.63 149.24L55 149.24L55 132.93L67.33 132.93L67.33 135.96L58.75 135.96L58.75 139.50L66.32 139.50L66.32 142.44L58.75 142.44L58.75 146.21L67.63 146.21L67.63 149.24ZM77.62 149.24L73.89 149.24L73.89 132.93L77.01 132.93L85.12 142.86L85.12 132.93L88.85 132.93L88.85 149.24L85.75 149.24L77.62 139.31L77.62 149.24ZM108.60 149.24L95.98 149.24L95.98 132.93L108.30 132.93L108.30 135.96L99.73 135.96L99.73 139.50L107.30 139.50L107.30 142.44L99.73 142.44L99.73 146.21L108.60 146.21L108.60 149.24ZM118.64 149.24L114.87 149.24L114.87 132.93L121.830 132.93Q125.24 132.93 127.12 134.51Q129.01 136.10 129.01 138.85L129.01 138.85Q129.01 140.67 128.14 141.98Q127.26 143.30 125.68 144.00L125.68 144.00L129.31 149.24L125.26 149.24L122.11 144.70Q122.02 144.70 121.93 144.70L121.93 144.70L118.64 144.70L118.64 149.24ZM118.64 136.01L118.64 141.69L121.72 141.69Q123.44 141.69 124.32 140.93Q125.19 140.18 125.19 138.85L125.19 138.85Q125.19 137.50 124.32 136.75Q123.44 136.01 121.72 136.01L121.72 136.01L118.64 136.01ZM143.13 149.52L143.13 149.52Q141.19 149.52 139.57 148.89Q137.95 148.26 136.75 147.13Q135.55 146.00 134.89 144.46Q134.22 142.93 134.22 141.09L134.22 141.09Q134.22 139.24 134.89 137.71Q135.55 136.17 136.76 135.04Q137.98 133.91 139.61 133.28Q141.24 132.65 143.20 132.65L143.20 132.65Q145.34 132.65 147.09 133.37Q148.83 134.09 150.02 135.47L150.02 135.47L147.60 137.71Q145.85 135.870 143.38 135.87L143.38 135.87Q141.80 135.87 140.60 136.52Q139.40 137.17 138.72 138.35Q138.05 139.52 138.05 141.09L138.05 141.09Q138.05 142.60 138.72 143.79Q139.40 144.98 140.59 145.64Q141.77 146.30 143.34 146.30L143.34 146.30Q144.10 146.30 144.84 146.15Q145.57 146.00 146.27 145.63L146.27 145.63L146.27 140.83L149.72 140.83L149.72 147.45Q148.37 148.47 146.62 149.00Q144.87 149.52 143.13 149.52ZM160.25 149.24L156.47 149.24L156.47 132.93L160.25 132.93L160.25 149.24ZM180 149.24L167.37 149.24L167.37 132.93L179.70 132.93L179.70 135.96L171.12 135.96L171.12 139.50L178.70 139.50L178.70 142.44L171.12 142.44L171.12 146.21L180 146.21L180 149.24Z"/>
+    <!-- RINNOVABILI: Montserrat Bold 31.71 px, spaziatura 0.94 -->
+    <path fill="#0f3b2c" d="M6.14 180.12L1 180.12L1 157.92L10.48 157.92Q15.11 157.92 17.68 160.08Q20.25 162.23 20.25 165.98L20.25 165.98Q20.25 168.45 19.06 170.24Q17.87 172.03 15.72 172.98L15.72 172.98L20.66 180.12L15.14 180.12L10.86 173.94Q10.74 173.94 10.61 173.94L10.61 173.94L6.14 173.94L6.14 180.12ZM6.14 162.11L6.14 169.84L10.32 169.84Q12.67 169.84 13.86 168.81Q15.05 167.78 15.05 165.98L15.05 165.98Q15.05 164.14 13.86 163.12Q12.67 162.11 10.32 162.11L10.32 162.11L6.14 162.11ZM30.38 180.12L25.25 180.12L25.25 157.92L30.38 157.92L30.38 180.12ZM41.66 180.12L36.58 180.12L36.58 157.92L40.83 157.92L51.87 171.43L51.87 157.92L56.95 157.92L56.95 180.12L52.73 180.12L41.66 166.61L41.66 180.12ZM68.22 180.12L63.15 180.12L63.15 157.92L67.40 157.92L78.43 171.43L78.43 157.92L83.51 157.92L83.51 180.12L79.29 180.12L68.22 166.61L68.22 180.12ZM100.46 180.50L100.46 180.50Q97.83 180.50 95.62 179.64Q93.42 178.79 91.77 177.23Q90.12 175.68 89.22 173.59Q88.31 171.49 88.31 169.02L88.31 169.02Q88.31 166.55 89.22 164.45Q90.12 162.36 91.77 160.81Q93.42 159.25 95.62 158.40Q97.83 157.54 100.46 157.54L100.46 157.54Q103.09 157.54 105.29 158.40Q107.50 159.25 109.15 160.79Q110.80 162.33 111.70 164.44Q112.60 166.55 112.60 169.02L112.60 169.02Q112.60 171.49 111.70 173.60Q110.80 175.71 109.15 177.25Q107.50 178.79 105.29 179.64Q103.09 180.50 100.46 180.50ZM100.46 176.12L100.46 176.12Q102.42 176.12 103.99 175.22Q105.56 174.32 106.48 172.71Q107.40 171.11 107.40 169.02L107.40 169.02Q107.40 166.93 106.48 165.33Q105.56 163.72 103.99 162.82Q102.42 161.92 100.46 161.92L100.46 161.92Q98.49 161.92 96.92 162.82Q95.35 163.72 94.43 165.33Q93.51 166.93 93.51 169.02L93.51 169.02Q93.51 171.11 94.43 172.71Q95.35 174.32 96.92 175.22Q98.49 176.12 100.46 176.12ZM129.14 180.12L124.07 180.12L114.49 157.92L120.04 157.92L126.80 173.78L133.65 157.92L138.75 157.92L129.14 180.12ZM144.35 180.12L139.09 180.12L148.98 157.92L154.06 157.92L163.98 180.12L158.59 180.12L156.63 175.36L146.32 175.36L144.35 180.12ZM151.49 162.99L147.94 171.46L155.01 171.46L151.49 162.99ZM178.72 180.12L167.23 180.12L167.23 157.92L178.08 157.92Q182.27 157.92 184.38 159.51Q186.49 161.09 186.49 163.69L186.49 163.69Q186.49 165.37 185.71 166.61Q184.93 167.85 183.57 168.58L183.57 168.58Q185.41 169.18 186.50 170.57Q187.60 171.97 187.60 174.06L187.60 174.06Q187.60 176.92 185.34 178.52Q183.09 180.12 178.72 180.12L178.72 180.12ZM172.34 170.76L172.34 176.25L178.33 176.25Q180.33 176.25 181.38 175.60Q182.43 174.95 182.43 173.52L182.43 173.52Q182.43 170.76 178.33 170.76L178.33 170.76L172.34 170.76ZM172.34 161.79L172.34 167.02L177.45 167.02Q181.32 167.02 181.32 164.39L181.32 164.39Q181.32 161.79 177.45 161.79L177.45 161.79L172.34 161.79ZM197.57 180.12L192.43 180.12L192.43 157.92L197.57 157.92L197.57 180.12ZM220.04 180.12L203.77 180.12L203.77 157.92L208.91 157.92L208.91 175.93L220.04 175.93L220.04 180.12ZM229.00 180.12L223.86 180.12L223.86 157.92L229.00 157.92L229.00 180.12Z"/>
+    <!-- ITALIA: Montserrat Medium 17.71 px, spaziatura 3.4 -->
+    <path fill="url(#italia)" d="M82.77 199.11L81 199.11L81 186.71L82.77 186.71L82.77 199.11ZM94.11 199.11L92.35 199.11L92.35 188.25L88.10 188.25L88.10 186.71L98.36 186.71L98.36 188.25L94.11 188.25L94.11 199.11ZM103.64 199.11L101.81 199.11L107.43 186.71L109.18 186.71L114.82 199.11L112.96 199.11L111.59 196.01L105.00 196.01L103.64 199.11ZM108.30 188.52L105.62 194.59L110.97 194.59L108.30 188.52ZM128.54 199.11L120.06 199.11L120.06 186.71L121.83 186.71L121.83 197.57L128.54 197.57L128.54 199.11ZM135.75 199.11L133.98 199.11L133.98 186.71L135.75 186.71L135.75 199.11ZM142.82 199.11L141.00 199.11L146.61 186.71L148.37 186.71L154 199.11L152.14 199.11L150.78 196.01L144.19 196.01L142.82 199.11ZM147.48 188.52L144.81 194.59L150.16 194.59L147.48 188.52Z"/>
+  </g>
+</svg>

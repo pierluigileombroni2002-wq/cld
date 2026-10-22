@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Genera scritte logo</title>
+<style>body { font:13px system-ui, sans-serif; margin:12px; } textarea { width:100%; height:240px; }</style>
+</head>
+<body>
+<p>Converte le scritte del logo in tracciati (Montserrat, OFL). Le misure vengono da <code>logo/originale.png</code>:
+altezza delle maiuscole, linea di base e bordi dell'inchiostro di ogni riga. Il risultato va nel gruppo <code>#scritte</code> di
+<code>logo/ufficiale/logo-eri-originale.svg</code>.</p>
+<textarea id="out"></textarea>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/opentype.js/1.3.4/opentype.min.js"></script>
+<script type="module">
+// Misure in pixel dell'originale (233 × 202): bordi x dell'inchiostro, linea di base, altezza delle maiuscole
+const RIGHE = [
+  { testo: 'ENERGIE',     peso: 'Bold',   x0: 55, x1: 180, base: 149.24, cap: 16.31, colore: '#0f3b2c' },
+  { testo: 'RINNOVABILI', peso: 'Bold',   x0: 1,  x1: 229, base: 180.12, cap: 22.2,  colore: '#0f3b2c' },
+  { testo: 'ITALIA',      peso: 'Medium', x0: 81, x1: 154, base: 199.11, cap: 12.4,  colore: 'url(#italia)' },
+];
+const URL_FONT = p => `https://cdn.jsdelivr.net/gh/JulietaUla/Montserrat@master/fonts/ttf/Montserrat-${p}.ttf`;
+const font = {};
+for (const r of RIGHE) font[r.peso] ??= opentype.parse(await (await fetch(URL_FONT(r.peso))).arrayBuffer());
+
+const n2 = v => +v.toFixed(2);
+
+function riga(r) {
+  const f = font[r.peso], size = r.cap / (f.tables.os2.sCapHeight / f.unitsPerEm);
+  const glifi = f.stringToGlyphs(r.testo), k = size / f.unitsPerEm;
+  // larghezza naturale dell'inchiostro (da bordo sinistro del primo glifo a bordo destro dell'ultimo), con crenatura
+  let x = 0; const pos = [];
+  glifi.forEach((g, i) => { pos.push(x); x += g.advanceWidth * k; if (i < glifi.length - 1) x += f.getKerningValue(g, glifi[i + 1]) * k; });
+  const sx = glifi[0].getBoundingBox().x1 * k;
+  const dx = pos.at(-1) + glifi.at(-1).getBoundingBox().x2 * k;
+  const spazio = ((r.x1 - r.x0) - (dx - sx)) / (glifi.length - 1);
+  // ogni glifo spostato: x0 - sx + pos + i·spazio
+  const d = glifi.map((g, i) => g.getPath(r.x0 - sx + pos[i] + i * spazio, r.base, size).toPathData(2)).join('');
+  return { d, size: n2(size), spazio: n2(spazio) };
+}
+
+const out = RIGHE.map(r => { const o = riga(r); return `    <!-- ${r.testo}: Montserrat ${r.peso} ${o.size} px, spaziatura ${o.spazio} -->\n    <path fill="${r.colore}" d="${o.d}"/>`; }).join('\n');
+document.getElementById('out').value = out;
+window.__scritte = out;
+</script>
+</body>
+</html>
