@@ -3,6 +3,23 @@
 Questo file serve a una **nuova sessione** per riprendere il sito nuovo (versione 2) da dove è stato lasciato.
 Leggilo tutto prima di scrivere codice.
 
+> ## Aggiornamento 22/10/2026 (sessione su PC Windows dell'utente)
+> **Fatto e approvato dal cliente** (branch `claude/charming-planck-l43o5q`, ultimo commit della tappa 4 `243f6fa`):
+> - **Logo** originale ricostruito in vettoriale: `logo/ufficiale/logo-eri-originale.svg` (strumenti in `strumenti/logo-*.html`).
+> - **Tema chiaro "Alba luminosa"** (palette B): DESIGN.md §2.1 aggiornato; linee "a inchiostro" (non più luce sommata); crepuscolo chiaro al posto della notte.
+> - **Terreno realistico ovunque** (`MATERIALI.terreno.stile = 'naturale'`, `mondo/terreno-natura.js` + erba 3D `mondo/terreno-erba.js`); altri stili con `?stile=`.
+> - **Tappa 3**: tracker FV/agri (`impianti/tracker*.js`, moduli in **vetro realistico**), **grano dorato** sotto l'agrivoltaico (`impianti/agri-grano.js`).
+> - **Tappa 4**: valle in **plastico bianco**, tre turbine **Pelton, Francis, Kaplan** distinte, stile **inox** (`idro/*`).
+>
+> **Direzione del cliente (vincolante):** effetto WOW, "moderno, all'avanguardia e lussuoso"; se il realismo viene brutto, meglio stilizzato curato. Chiedere sempre con opzioni e **anteprime come immagini** (l'utente segue dal telefono: mandare le foto con SendUserFile, i link agli artifact non li apre). Foto per il cliente in qualità ultra: `strumenti/foto-v2.ps1 -Url "http://localhost:8790/v2/?nointro=1&q=ultra"` (server: `strumenti/server.ps1`; Git in `C:\Program Files\Git\cmd\git.exe`). Ambito "Medio" (niente viste esplose delle turbine).
+>
+> **Da fare:**
+> 1. **Tappa 5** (cantiere e gestione: `impianti/cantiere.js`) e **tappa 6** (finale: `ui/finale.js` 3D).
+> 2. **Rifinitura**: voli della camera nella valle che attraversano i muri (T 13,33–13,50 e 14,28–14,35), Pelton V4.3 meglio di tre quarti, HUD idro che copre la Kaplan nel 4e, etichette sui carter scuri, shader compilati dopo il warm-up (programmi che crescono durante il giro), terreno naturale ripassato in tutte le tappe 0–3, contrasto dei testi piccoli in oro, passata "lusso" generale.
+> 3. **Collaudo e pubblicazione** come artifact.
+>
+> **Costi osservati** (piano Max, blocchi da 5 ore): tema chiaro ~19%, tappa 3 ~14%, tappa 4 con 7 agenti ~75%. Prima di un lavoro grosso dare la stima e aspettare l'ok.
+
 ---
 
 ## 1. Regole di lavoro con l'utente (obbligatorie)
