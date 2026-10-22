@@ -1,0 +1,258 @@
+<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head><body><title>Palette sito ERI</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;1,6..96,400&family=IBM+Plex+Mono:wght@400;500&family=Jost:wght@300;400;500&display=swap">
+<style>
+  /* Pagina di confronto: una colonna di schede, ogni scheda è una scena finta 16:9 con la sua palette */
+  :root {
+    --fondo:#e8e6e1; --carta:#ffffff; --testo:#1c2420; --tenue:#5c6560; --filo:rgba(0,0,0,.12);
+    --f-titolo:'Bodoni Moda', Georgia, serif; --f-testo:Jost, 'Segoe UI', system-ui, sans-serif; --f-dati:'IBM Plex Mono', Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --fondo:#141716; --carta:#1e2321; --testo:#e9ece9; --tenue:#a3aca7; --filo:rgba(255,255,255,.14); color-scheme:dark; } }
+  :root[data-theme="dark"] { --fondo:#141716; --carta:#1e2321; --testo:#e9ece9; --tenue:#a3aca7; --filo:rgba(255,255,255,.14); color-scheme:dark; }
+  * { box-sizing:border-box; }
+  body { background:var(--fondo); color:var(--testo); font:15px/1.5 var(--f-testo); }
+  main { max-width:1280px; margin:0 auto; padding-block:28px 64px; padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px)); }
+  h1.pag { font:500 22px var(--f-testo); margin:0 0 4px; text-wrap:balance; }
+  p.nota { color:var(--tenue); margin:0 0 20px; max-width:68ch; }
+  .griglia { display:grid; grid-template-columns:repeat(auto-fit, minmax(min(560px, 100%), 1fr)); gap:22px; }
+  figure { margin:0; background:var(--carta); border-radius:12px; overflow:hidden; border:1px solid var(--filo); min-width:0; }
+  figcaption { padding:12px 16px 16px; }
+  figcaption b { font-weight:500; font-size:16px; }
+  figcaption p { margin:4px 0 10px; color:var(--tenue); font-size:14px; }
+  .campioni { display:flex; gap:10px; flex-wrap:wrap; }
+  .campioni span { display:inline-flex; align-items:center; gap:6px; font:400 11px var(--f-dati); color:var(--tenue); }
+  .campioni i { width:18px; height:18px; border-radius:4px; border:1px solid var(--filo); display:inline-block; }
+  /* scena finta: i colori qui dentro sono il contenuto (la palette), non il tema della pagina */
+  .scena { position:relative; aspect-ratio:16/9; max-width:100%; overflow:hidden; container-type:inline-size; }
+  .scena svg.mondo { position:absolute; inset:0; width:100%; height:100%; }
+  .scena .velo { position:absolute; inset:0; }
+  .scena header { position:absolute; left:3.2cqw; right:3.2cqw; top:2.6cqw; display:flex; justify-content:space-between; align-items:center; }
+  .scena header .marchio { display:flex; align-items:center; gap:1.4cqw; }
+  .scena header .marchio img { height:4.6cqw; }
+  .scena header .marchio span { font:400 2cqw var(--f-titolo); letter-spacing:.5em; }
+  .scena header .cta { font:400 1.05cqw var(--f-dati); letter-spacing:.14em; text-transform:uppercase; padding:1cqw 1.6cqw; border:1px solid; }
+  .scena .colonna { position:absolute; left:6cqw; top:30%; width:44%; }
+  .scena .occhiello { font:400 1.05cqw var(--f-dati); letter-spacing:.24em; text-transform:uppercase; margin:0 0 1.6cqw; }
+  .scena h2 { font:400 5.6cqw/0.98 var(--f-titolo); margin:0 0 2cqw; letter-spacing:-.01em; }
+  .scena h2 em { font-style:italic; }
+  .scena .testo { font:300 1.45cqw/1.6 var(--f-testo); margin:0; max-width:34cqw; }
+  .scena .hud { position:absolute; left:3.2cqw; bottom:2.6cqw; font:400 .95cqw var(--f-dati); letter-spacing:.1em; text-transform:uppercase; }
+  .scena .hud b { font-weight:400; }
+  h2.sez { font:500 19px var(--f-testo); margin:44px 0 4px; text-wrap:balance; }
+  .griglia.tre { grid-template-columns:repeat(auto-fit, minmax(min(360px, 100%), 1fr)); }
+  .plastico { display:block; width:100%; height:auto; aspect-ratio:720/460; max-width:100%; }
+</style>
+
+<main>
+  <h1 class="pag">Sfondo e palette · 4 proposte</h1>
+  <p class="nota">Prova veloce in 2D. Testi e logo sono gli stessi in tutte e quattro: cambiano solo cielo, terreno, linee e testi. Serve a scegliere la direzione; dopo la scelta preparo le anteprime vere in 3D.</p>
+  <div class="griglia" id="griglia"></div>
+
+  <h2 class="sez">Il plastico della valle · 3 esempi</h2>
+  <p class="nota">Tappa dell’idroelettrico: la valle diventa un modello tagliato, con il lago, la diga, la condotta e la centrale. Stesso disegno, tre materiali diversi. La pagina intorno resta chiara (palette B).</p>
+  <div class="griglia tre" id="plastici"></div>
+</main>
+
+<script>
+const LOGO_B64 = 'PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMzMgMjAyIiByb2xlPSJpbWciIGFyaWEtbGFiZWw9IkVuZXJnaWUgUmlubm92YWJpbGkgSXRhbGlhIj4KICA8ZGVmcz4KICAgIDwhLS0gZmFjY2UgZGVpIHBldGFsaTogc2Z1bWF0dXJhIGRhbGxhIHB1bnRhICgwKSBhbGxhIGJhc2UgKDEpIC0tPgogICAgPGxpbmVhckdyYWRpZW50IGlkPSJhcmFuY2lvLXN4LWEiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIiB4MT0iMTMuNiIgeTE9IjY2IiB4Mj0iNzEiIHkyPSI5MS44Ij48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNkODlhMTIiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNkNTk5MGUiLz48L2xpbmVhckdyYWRpZW50PgogICAgPGxpbmVhckdyYWRpZW50IGlkPSJhcmFuY2lvLXN4LWIiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIiB4MT0iMTMuNiIgeTE9IjY2IiB4Mj0iNzEiIHkyPSI5MS44Ij48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNkMDhiMGMiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNkNTg5MGQiLz48L2xpbmVhckdyYWRpZW50PgogICAgPGxpbmVhckdyYWRpZW50IGlkPSJnaWFsbG8tc3gtYSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiIHgxPSIzOS40IiB5MT0iMzEiIHgyPSI4MS44IiB5Mj0iNzYuNSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZGVjMjEyIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGViYjEwIi8+PC9saW5lYXJHcmFkaWVudD4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iZ2lhbGxvLXN4LWIiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIiB4MT0iMzkuNCIgeTE9IjMxIiB4Mj0iODEuOCIgeTI9Ijc2LjUiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2RjYjgwZSIvPjxzdG9wIG9mZnNldD0iLjU1IiBzdG9wLWNvbG9yPSIjZGJhYjBkIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGQ5YjBiIi8+PC9saW5lYXJHcmFkaWVudD4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0ibGltZS1hIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgeDE9IjczLjQiIHkxPSI4LjgiIHgyPSI5Ny42IiB5Mj0iNjYuMTUiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2I2YjgwZSIvPjxzdG9wIG9mZnNldD0iLjUiIHN0b3AtY29sb3I9IiNiZmI4MGYiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNhNGIyMTAiLz48L2xpbmVhckdyYWRpZW50PgogICAgPGxpbmVhckdyYWRpZW50IGlkPSJsaW1lLWIiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIiB4MT0iNzMuNCIgeTE9IjguOCIgeDI9Ijk3LjYiIHkyPSI2Ni4xNSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjOGNhYTEwIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjOGFhODEwIi8+PC9saW5lYXJHcmFkaWVudD4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iYXJhbmNpby1hIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgeDE9IjExNy40IiB5MT0iMC42IiB4Mj0iMTE2LjU1IiB5Mj0iNjIuMTUiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2UwOGEwZiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI2RmODIwZSIvPjwvbGluZWFyR3JhZGllbnQ+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImFyYW5jaW8tYiIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiIHgxPSIxMTcuNCIgeTE9IjAuNiIgeDI9IjExNi41NSIgeTI9IjYyLjE1Ij48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNkZjgzMGMiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNkZTdiMGIiLz48L2xpbmVhckdyYWRpZW50PgogICAgPGxpbmVhckdyYWRpZW50IGlkPSJyb3Nzby1hIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgeDE9IjE1OS4zIiB5MT0iOC4yIiB4Mj0iMTM1LjM1IiB5Mj0iNjUuMDUiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2RiNWYwYSIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI2Q4NTkwOSIvPjwvbGluZWFyR3JhZGllbnQ+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9InJvc3NvLWIiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIiB4MT0iMTU5LjMiIHkxPSI4LjIiIHgyPSIxMzUuMzUiIHkyPSI2NS4wNSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZDk1YjA5Ii8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZDY1NjA4Ii8+PC9saW5lYXJHcmFkaWVudD4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iZ2lhbGxvLWR4LWEiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIiB4MT0iMTc2IiB5MT0iNDAuNiIgeDI9IjE1MS4yNSIgeTI9Ijc1LjA1Ij48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNlNGMzMTMiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNlMmIxMGUiLz48L2xpbmVhckdyYWRpZW50PgogICAgPGxpbmVhckdyYWRpZW50IGlkPSJnaWFsbG8tZHgtYiIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiIHgxPSIxNzYiIHkxPSI0MC42IiB4Mj0iMTUxLjI1IiB5Mj0iNzUuMDUiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2U0YzIxNSIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI2UyYWMxMCIvPjwvbGluZWFyR3JhZGllbnQ+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9InZlcmRlIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgeDE9IjEiIHkxPSIwIiB4Mj0iNjciIHkyPSIwIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiMzZTZlMDgiLz48c3RvcCBvZmZzZXQ9Ii40NSIgc3RvcC1jb2xvcj0iIzQxNzcwNyIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzQzNzkwYSIvPjwvbGluZWFyR3JhZGllbnQ+CiAgICA8IS0tIHN0ZWxvOiBkYWxsJ2FyYW5jaW8gZGVsbGEgcHVudGEgYWwgbGltZSBkZWxsYSBsYW1hIChsdW5nbyBsYSBkaWFnb25hbGUgcHVudGEg4oaSIGxhbWEpIC0tPgogICAgPGxpbmVhckdyYWRpZW50IGlkPSJzdGVsbyIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiIHgxPSIxMiIgeTE9IjEyMCIgeDI9IjE5MCIgeTI9IjM1Ij4KICAgICAgPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjYzk1NTFmIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iLjE0IiBzdG9wLWNvbG9yPSIjYzY2YjFiIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iLjI2IiBzdG9wLWNvbG9yPSIjY2Q4YTEyIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iLjM1IiBzdG9wLWNvbG9yPSIjYmY5YzE0Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iLjQyIiBzdG9wLWNvbG9yPSIjYTM5ZDEwIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iLjUwIiBzdG9wLWNvbG9yPSIjODY5OTBmIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iLjYwIiBzdG9wLWNvbG9yPSIjNzQ5NTFlIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iLjcyIiBzdG9wLWNvbG9yPSIjNWY5NzI4Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iLjg0IiBzdG9wLWNvbG9yPSIjOWZiNTE0Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzhiYWUxOCIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iZm9nbGlhIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgeDE9Ijk2IiB5MT0iMTI1IiB4Mj0iMTYwIiB5Mj0iMTAwIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjNGY3YTM2Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzU3YTEzNSIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iY29sbGluYSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiIHgxPSI5MCIgeTE9IjAiIHgyPSIyMzIiIHkyPSIwIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjMWM0YTJhIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iLjM1IiBzdG9wLWNvbG9yPSIjMDg0MjJhIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzBhNGEzMCIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iaXRhbGlhIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgeDE9IjAiIHkxPSIxODYuNyIgeDI9IjAiIHkyPSIxOTkuMSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2M0NjQyZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNhODQ3MmEiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgoKICA8IS0tIHBldGFsaSBkZWwgc29sZTogb2duaSBwZXRhbG8gaGEgZHVlIGZhY2NlIChsYSBwaWVnYSB2YSBkYWxsYSBwdW50YSBhbCBjZW50cm8gZGVsbGEgYmFzZSkuCiAgICAgICBQcmltYSBpbCBwZXRhbG8gaW50ZXJvIGNvbiBpbCBjb2xvcmUgZGVsbGEgZmFjY2lhIEIsIHBvaSBzb3ByYSBsYSBmYWNjaWEgQS4gQ29sb3JpIG1pc3VyYXRpIGFsbCdpbnRlcm5vIGRlbGwnb3JpZ2luYWxlLiAtLT4KICA8ZyBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9Ii42Ij4KICAgIDxnIGlkPSJwLWFyYW5jaW8tc3giPgogICAgICA8cGF0aCBmaWxsPSJ1cmwoI2FyYW5jaW8tc3gtYikiIHN0cm9rZT0idXJsKCNhcmFuY2lvLXN4LWIpIiBkPSJNMTMuNiw2NiBMNDYuNiw2Ni4zIEw3My4zLDg2LjMgTDY4LjcsOTcuMyBMMzkuNSw5MSBMMjMuNCw3Ny43IFoiLz4KICAgICAgPHBhdGggZmlsbD0idXJsKCNhcmFuY2lvLXN4LWEpIiBkPSJNMTMuNiw2NiBMNDYuNiw2Ni4zIEw3My4zLDg2LjMgTDcxLDkxLjggWiIvPgogICAgPC9nPgogICAgPGcgaWQ9InAtZ2lhbGxvLXN4Ij4KICAgICAgPHBhdGggZmlsbD0idXJsKCNnaWFsbG8tc3gtYikiIHN0cm9rZT0idXJsKCNnaWFsbG8tc3gtYikiIGQ9Ik0zOS40LDMxIEw2OC42LDQ1LjQgTDg2LjYsNzIgTDc3LDgxIEw1Mi40LDYzLjUgWiIvPgogICAgICA8cGF0aCBmaWxsPSJ1cmwoI2dpYWxsby1zeC1hKSIgZD0iTTM5LjQsMzEgTDY4LjYsNDUuNCBMODYuNiw3MiBMODEuOCw3Ni41IFoiLz4KICAgIDwvZz4KICAgIDxnIGlkPSJwLWxpbWUiPgogICAgICA8cGF0aCBmaWxsPSJ1cmwoI2xpbWUtYikiIHN0cm9rZT0idXJsKCNsaW1lLWIpIiBkPSJNNzMuNCw4LjggTDkxLjksMjYuMiBMOTguOCwzNC45IEwxMDQuNyw2My4xIEw5MC41LDY5LjIgTDc1LjYsNDUuOCBaIi8+CiAgICAgIDxwYXRoIGZpbGw9InVybCgjbGltZS1hKSIgZD0iTTczLjQsOC44IEw5MS45LDI2LjIgTDk4LjgsMzQuOSBMMTA0LjcsNjMuMSBMOTcuNiw2Ni4xNSBaIi8+CiAgICA8L2c+CiAgICA8ZyBpZD0icC1hcmFuY2lvIj4KICAgICAgPHBhdGggZmlsbD0idXJsKCNhcmFuY2lvLWIpIiBzdHJva2U9InVybCgjYXJhbmNpby1iKSIgZD0iTTExNy40LDAuNiBMMTI3LDIwLjggTDEyOS42LDMxLjggTDEyMy40LDYyLjEgTDEwOS43LDYyLjIgTDEwNC40LDM1LjMgWiIvPgogICAgICA8cGF0aCBmaWxsPSJ1cmwoI2FyYW5jaW8tYSkiIGQ9Ik0xMTcuNCwwLjYgTDEyNywyMC44IEwxMjkuNiwzMS44IEwxMjMuNCw2Mi4xIEwxMTYuNTUsNjIuMTUgWiIvPgogICAgPC9nPgogICAgPGcgaWQ9InAtcm9zc28iPgogICAgICA8cGF0aCBmaWxsPSJ1cmwoI3Jvc3NvLWIpIiBzdHJva2U9InVybCgjcm9zc28tYikiIGQ9Ik0xNTkuMyw4LjIgTDE1OS4zLDQwLjggTDE0MS44LDY3LjUgTDEyOC45LDYyLjYgTDEzMy45LDM2LjcgWiIvPgogICAgICA8cGF0aCBmaWxsPSJ1cmwoI3Jvc3NvLWEpIiBkPSJNMTU5LjMsOC4yIEwxNTkuMyw0MC44IEwxNDEuOCw2Ny41IEwxMzUuMzUsNjUuMDUgWiIvPgogICAgPC9nPgogICAgPGcgaWQ9InAtZ2lhbGxvLWR4Ij4KICAgICAgPHBhdGggZmlsbD0idXJsKCNnaWFsbG8tZHgtYikiIHN0cm9rZT0idXJsKCNnaWFsbG8tZHgtYikiIGQ9Ik0xNzYsNDAuNiBMMTY4LjIsNjcuOCBMMTU1LjksNzkuNSBMMTQ2LjYsNzAuNiBMMTYyLjcsNDYuOCBaIi8+CiAgICAgIDxwYXRoIGZpbGw9InVybCgjZ2lhbGxvLWR4LWEpIiBkPSJNMTc2LDQwLjYgTDE2OC4yLDY3LjggTDE1NS45LDc5LjUgTDE1MS4yNSw3NS4wNSBaIi8+CiAgICA8L2c+CiAgICA8cGF0aCBpZD0icC12ZXJkZSIgZmlsbD0idXJsKCN2ZXJkZSkiIHN0cm9rZT0idXJsKCN2ZXJkZSkiIGQ9Ik0xLjIsMTE1LjIgQzgsMTA5IDIwLDEwMC41IDM1LDk2LjQgTDY3LDEwMiBMNjcuNiwxMTYuMiBMMzEuNywxMTcuNyBRMTQsMTE3LjMgMS4yLDExNS4yIFoiLz4KICA8L2c+CgogIDwhLS0gY29sbGluYSwgc3RlbG8gKGNvbiBsYSBsYW1hKSwgZm9nbGlhOiBpbiBxdWVzdCdvcmRpbmUsIGRhbCBmb25kbyAtLT4KICA8cGF0aCBpZD0iY29sbGluYSIgZmlsbD0idXJsKCNjb2xsaW5hKSIgZD0iTTkwLDEyNy40IEMxMDUsMTIzIDEzNSwxMTQgMTUxLDExMCBDMTYwLDEwNS41IDE3MiwxMDEuNiAxODIsOTkuOCBDMTkwLDk4LjQgMTk3LDk3LjIgMjAzLDk4LjIgQzIxMiwxMDAgMjI0LDEwOSAyMzIuNiwxMTYgQzIxNSwxMTUuMiAxOTUsMTE0LjkgMTgyLDExNS43IEMxNjUsMTE3IDEzNSwxMjIuMyAxMTAsMTI2LjcgQzEwMiwxMjcuNCA5NSwxMjcuNSA5MCwxMjcuNCBaIi8+CiAgPHBhdGggaWQ9InN0ZWxvIiBmaWxsPSJ1cmwoI3N0ZWxvKSIgZD0iTTEyLDExOS40IEMyNSwxMjEgMzgsMTIyLjYgNTAsMTIyLjkgQzc1LDEyMi45IDEwMCwxMjAgMTIyLDExMy44IEMxMzQsMTEwLjggMTQ4LDEwMi41NSAxNTgsOTMuMyBDMTYzLDg4LjcgMTcxLjksNzQgMTc0LjksNjYgQzE3Ni42LDU5IDE4MC44LDQ1IDE4MS45LDM4IFExODIuNSwzMy41IDE5MS40LDMyIEwxOTUsMzEuMyBDMTk0LjIsNDAgMTg5LDU4IDE4NCw2NiBDMTc4LDgwIDE2NSw5NSAxNTAsMTA0IEMxMzUsMTEzIDExOCwxMjEgMTA0LDEyNC40IEM5OCwxMjUuNiA5MCwxMjYuOCA4MCwxMjYuOSBDNjAsMTI2LjYgMzUsMTI0LjMgMTIsMTE5LjQgWiIvPgogIDxwYXRoIGlkPSJmb2dsaWEiIGZpbGw9InVybCgjZm9nbGlhKSIgZD0iTTIxOS42LDY1LjYgQzIxNi41LDcxLjUgMTk1LjUsODcuMyAxODUuMyw5MiBMMTY1LjksMTAwIFExNjAuNSwxMDIuNyAxNTQsMTA3LjUgQzE0MCwxMTQuNSAxMjAsMTIxLjUgOTYsMTI1LjQgQzExMCwxMjMgMTI4LDExNyAxNDAsMTEwLjUgQzE0NiwxMDcuNSAxNDksMTA0IDE1MSwxMDEgQzE1NCw5NyAxNTgsOTMuMyAxNjEuMSw5MCBDMTYzLjUsODcgMTY1LDg1IDE2Ni41LDgyLjUgTDE3Miw3NyBDMTc3LDcyIDE4Miw2Ny41IDE4Ni41LDY1LjUgTDIxOC42LDY1LjUgWiIvPgoKICA8IS0tIHNjcml0dGUgKHRyYWNjaWF0aSBnZW5lcmF0aSBkYSBzdHJ1bWVudGkvbG9nby1nZW5lcmEuaHRtbCkgLS0+CiAgPGcgaWQ9InNjcml0dGUiPgogICAgPCEtLSBFTkVSR0lFOiBNb250c2VycmF0IEJvbGQgMjMuMyBweCwgc3BhemlhdHVyYSAzLjI2IC0tPgogICAgPHBhdGggZmlsbD0iIzBmM2IyYyIgZD0iTTY3LjYzIDE0OS4yNEw1NSAxNDkuMjRMNTUgMTMyLjkzTDY3LjMzIDEzMi45M0w2Ny4zMyAxMzUuOTZMNTguNzUgMTM1Ljk2TDU4Ljc1IDEzOS41MEw2Ni4zMiAxMzkuNTBMNjYuMzIgMTQyLjQ0TDU4Ljc1IDE0Mi40NEw1OC43NSAxNDYuMjFMNjcuNjMgMTQ2LjIxTDY3LjYzIDE0OS4yNFpNNzcuNjIgMTQ5LjI0TDczLjg5IDE0OS4yNEw3My44OSAxMzIuOTNMNzcuMDEgMTMyLjkzTDg1LjEyIDE0Mi44Nkw4NS4xMiAxMzIuOTNMODguODUgMTMyLjkzTDg4Ljg1IDE0OS4yNEw4NS43NSAxNDkuMjRMNzcuNjIgMTM5LjMxTDc3LjYyIDE0OS4yNFpNMTA4LjYwIDE0OS4yNEw5NS45OCAxNDkuMjRMOTUuOTggMTMyLjkzTDEwOC4zMCAxMzIuOTNMMTA4LjMwIDEzNS45Nkw5OS43MyAxMzUuOTZMOTkuNzMgMTM5LjUwTDEwNy4zMCAxMzkuNTBMMTA3LjMwIDE0Mi40NEw5OS43MyAxNDIuNDRMOTkuNzMgMTQ2LjIxTDEwOC42MCAxNDYuMjFMMTA4LjYwIDE0OS4yNFpNMTE4LjY0IDE0OS4yNEwxMTQuODcgMTQ5LjI0TDExNC44NyAxMzIuOTNMMTIxLjgzMCAxMzIuOTNRMTI1LjI0IDEzMi45MyAxMjcuMTIgMTM0LjUxUTEyOS4wMSAxMzYuMTAgMTI5LjAxIDEzOC44NUwxMjkuMDEgMTM4Ljg1UTEyOS4wMSAxNDAuNjcgMTI4LjE0IDE0MS45OFExMjcuMjYgMTQzLjMwIDEyNS42OCAxNDQuMDBMMTI1LjY4IDE0NC4wMEwxMjkuMzEgMTQ5LjI0TDEyNS4yNiAxNDkuMjRMMTIyLjExIDE0NC43MFExMjIuMDIgMTQ0LjcwIDEyMS45MyAxNDQuNzBMMTIxLjkzIDE0NC43MEwxMTguNjQgMTQ0LjcwTDExOC42NCAxNDkuMjRaTTExOC42NCAxMzYuMDFMMTE4LjY0IDE0MS42OUwxMjEuNzIgMTQxLjY5UTEyMy40NCAxNDEuNjkgMTI0LjMyIDE0MC45M1ExMjUuMTkgMTQwLjE4IDEyNS4xOSAxMzguODVMMTI1LjE5IDEzOC44NVExMjUuMTkgMTM3LjUwIDEyNC4zMiAxMzYuNzVRMTIzLjQ0IDEzNi4wMSAxMjEuNzIgMTM2LjAxTDEyMS43MiAxMzYuMDFMMTE4LjY0IDEzNi4wMVpNMTQzLjEzIDE0OS41MkwxNDMuMTMgMTQ5LjUyUTE0MS4xOSAxNDkuNTIgMTM5LjU3IDE0OC44OVExMzcuOTUgMTQ4LjI2IDEzNi43NSAxNDcuMTNRMTM1LjU1IDE0Ni4wMCAxMzQuODkgMTQ0LjQ2UTEzNC4yMiAxNDIuOTMgMTM0LjIyIDE0MS4wOUwxMzQuMjIgMTQxLjA5UTEzNC4yMiAxMzkuMjQgMTM0Ljg5IDEzNy43MVExMzUuNTUgMTM2LjE3IDEzNi43NiAxMzUuMDRRMTM3Ljk4IDEzMy45MSAxMzkuNjEgMTMzLjI4UTE0MS4yNCAxMzIuNjUgMTQzLjIwIDEzMi42NUwxNDMuMjAgMTMyLjY1UTE0NS4zNCAxMzIuNjUgMTQ3LjA5IDEzMy4zN1ExNDguODMgMTM0LjA5IDE1MC4wMiAxMzUuNDdMMTUwLjAyIDEzNS40N0wxNDcuNjAgMTM3LjcxUTE0NS44NSAxMzUuODcwIDE0My4zOCAxMzUuODdMMTQzLjM4IDEzNS44N1ExNDEuODAgMTM1Ljg3IDE0MC42MCAxMzYuNTJRMTM5LjQwIDEzNy4xNyAxMzguNzIgMTM4LjM1UTEzOC4wNSAxMzkuNTIgMTM4LjA1IDE0MS4wOUwxMzguMDUgMTQxLjA5UTEzOC4wNSAxNDIuNjAgMTM4LjcyIDE0My43OVExMzkuNDAgMTQ0Ljk4IDE0MC41OSAxNDUuNjRRMTQxLjc3IDE0Ni4zMCAxNDMuMzQgMTQ2LjMwTDE0My4zNCAxNDYuMzBRMTQ0LjEwIDE0Ni4zMCAxNDQuODQgMTQ2LjE1UTE0NS41NyAxNDYuMDAgMTQ2LjI3IDE0NS42M0wxNDYuMjcgMTQ1LjYzTDE0Ni4yNyAxNDAuODNMMTQ5LjcyIDE0MC44M0wxNDkuNzIgMTQ3LjQ1UTE0OC4zNyAxNDguNDcgMTQ2LjYyIDE0OS4wMFExNDQuODcgMTQ5LjUyIDE0My4xMyAxNDkuNTJaTTE2MC4yNSAxNDkuMjRMMTU2LjQ3IDE0OS4yNEwxNTYuNDcgMTMyLjkzTDE2MC4yNSAxMzIuOTNMMTYwLjI1IDE0OS4yNFpNMTgwIDE0OS4yNEwxNjcuMzcgMTQ5LjI0TDE2Ny4zNyAxMzIuOTNMMTc5LjcwIDEzMi45M0wxNzkuNzAgMTM1Ljk2TDE3MS4xMiAxMzUuOTZMMTcxLjEyIDEzOS41MEwxNzguNzAgMTM5LjUwTDE3OC43MCAxNDIuNDRMMTcxLjEyIDE0Mi40NEwxNzEuMTIgMTQ2LjIxTDE4MCAxNDYuMjFMMTgwIDE0OS4yNFoiLz4KICAgIDwhLS0gUklOTk9WQUJJTEk6IE1vbnRzZXJyYXQgQm9sZCAzMS43MSBweCwgc3BhemlhdHVyYSAwLjk0IC0tPgogICAgPHBhdGggZmlsbD0iIzBmM2IyYyIgZD0iTTYuMTQgMTgwLjEyTDEgMTgwLjEyTDEgMTU3LjkyTDEwLjQ4IDE1Ny45MlExNS4xMSAxNTcuOTIgMTcuNjggMTYwLjA4UTIwLjI1IDE2Mi4yMyAyMC4yNSAxNjUuOThMMjAuMjUgMTY1Ljk4UTIwLjI1IDE2OC40NSAxOS4wNiAxNzAuMjRRMTcuODcgMTcyLjAzIDE1LjcyIDE3Mi45OEwxNS43MiAxNzIuOThMMjAuNjYgMTgwLjEyTDE1LjE0IDE4MC4xMkwxMC44NiAxNzMuOTRRMTAuNzQgMTczLjk0IDEwLjYxIDE3My45NEwxMC42MSAxNzMuOTRMNi4xNCAxNzMuOTRMNi4xNCAxODAuMTJaTTYuMTQgMTYyLjExTDYuMTQgMTY5Ljg0TDEwLjMyIDE2OS44NFExMi42NyAxNjkuODQgMTMuODYgMTY4LjgxUTE1LjA1IDE2Ny43OCAxNS4wNSAxNjUuOThMMTUuMDUgMTY1Ljk4UTE1LjA1IDE2NC4xNCAxMy44NiAxNjMuMTJRMTIuNjcgMTYyLjExIDEwLjMyIDE2Mi4xMUwxMC4zMiAxNjIuMTFMNi4xNCAxNjIuMTFaTTMwLjM4IDE4MC4xMkwyNS4yNSAxODAuMTJMMjUuMjUgMTU3LjkyTDMwLjM4IDE1Ny45MkwzMC4zOCAxODAuMTJaTTQxLjY2IDE4MC4xMkwzNi41OCAxODAuMTJMMzYuNTggMTU3LjkyTDQwLjgzIDE1Ny45Mkw1MS44NyAxNzEuNDNMNTEuODcgMTU3LjkyTDU2Ljk1IDE1Ny45Mkw1Ni45NSAxODAuMTJMNTIuNzMgMTgwLjEyTDQxLjY2IDE2Ni42MUw0MS42NiAxODAuMTJaTTY4LjIyIDE4MC4xMkw2My4xNSAxODAuMTJMNjMuMTUgMTU3LjkyTDY3LjQwIDE1Ny45Mkw3OC40MyAxNzEuNDNMNzguNDMgMTU3LjkyTDgzLjUxIDE1Ny45Mkw4My41MSAxODAuMTJMNzkuMjkgMTgwLjEyTDY4LjIyIDE2Ni42MUw2OC4yMiAxODAuMTJaTTEwMC40NiAxODAuNTBMMTAwLjQ2IDE4MC41MFE5Ny44MyAxODAuNTAgOTUuNjIgMTc5LjY0UTkzLjQyIDE3OC43OSA5MS43NyAxNzcuMjNROTAuMTIgMTc1LjY4IDg5LjIyIDE3My41OVE4OC4zMSAxNzEuNDkgODguMzEgMTY5LjAyTDg4LjMxIDE2OS4wMlE4OC4zMSAxNjYuNTUgODkuMjIgMTY0LjQ1UTkwLjEyIDE2Mi4zNiA5MS43NyAxNjAuODFROTMuNDIgMTU5LjI1IDk1LjYyIDE1OC40MFE5Ny44MyAxNTcuNTQgMTAwLjQ2IDE1Ny41NEwxMDAuNDYgMTU3LjU0UTEwMy4wOSAxNTcuNTQgMTA1LjI5IDE1OC40MFExMDcuNTAgMTU5LjI1IDEwOS4xNSAxNjAuNzlRMTEwLjgwIDE2Mi4zMyAxMTEuNzAgMTY0LjQ0UTExMi42MCAxNjYuNTUgMTEyLjYwIDE2OS4wMkwxMTIuNjAgMTY5LjAyUTExMi42MCAxNzEuNDkgMTExLjcwIDE3My42MFExMTAuODAgMTc1LjcxIDEwOS4xNSAxNzcuMjVRMTA3LjUwIDE3OC43OSAxMDUuMjkgMTc5LjY0UTEwMy4wOSAxODAuNTAgMTAwLjQ2IDE4MC41MFpNMTAwLjQ2IDE3Ni4xMkwxMDAuNDYgMTc2LjEyUTEwMi40MiAxNzYuMTIgMTAzLjk5IDE3NS4yMlExMDUuNTYgMTc0LjMyIDEwNi40OCAxNzIuNzFRMTA3LjQwIDE3MS4xMSAxMDcuNDAgMTY5LjAyTDEwNy40MCAxNjkuMDJRMTA3LjQwIDE2Ni45MyAxMDYuNDggMTY1LjMzUTEwNS41NiAxNjMuNzIgMTAzLjk5IDE2Mi44MlExMDIuNDIgMTYxLjkyIDEwMC40NiAxNjEuOTJMMTAwLjQ2IDE2MS45MlE5OC40OSAxNjEuOTIgOTYuOTIgMTYyLjgyUTk1LjM1IDE2My43MiA5NC40MyAxNjUuMzNROTMuNTEgMTY2LjkzIDkzLjUxIDE2OS4wMkw5My41MSAxNjkuMDJROTMuNTEgMTcxLjExIDk0LjQzIDE3Mi43MVE5NS4zNSAxNzQuMzIgOTYuOTIgMTc1LjIyUTk4LjQ5IDE3Ni4xMiAxMDAuNDYgMTc2LjEyWk0xMjkuMTQgMTgwLjEyTDEyNC4wNyAxODAuMTJMMTE0LjQ5IDE1Ny45MkwxMjAuMDQgMTU3LjkyTDEyNi44MCAxNzMuNzhMMTMzLjY1IDE1Ny45MkwxMzguNzUgMTU3LjkyTDEyOS4xNCAxODAuMTJaTTE0NC4zNSAxODAuMTJMMTM5LjA5IDE4MC4xMkwxNDguOTggMTU3LjkyTDE1NC4wNiAxNTcuOTJMMTYzLjk4IDE4MC4xMkwxNTguNTkgMTgwLjEyTDE1Ni42MyAxNzUuMzZMMTQ2LjMyIDE3NS4zNkwxNDQuMzUgMTgwLjEyWk0xNTEuNDkgMTYyLjk5TDE0Ny45NCAxNzEuNDZMMTU1LjAxIDE3MS40NkwxNTEuNDkgMTYyLjk5Wk0xNzguNzIgMTgwLjEyTDE2Ny4yMyAxODAuMTJMMTY3LjIzIDE1Ny45MkwxNzguMDggMTU3LjkyUTE4Mi4yNyAxNTcuOTIgMTg0LjM4IDE1OS41MVExODYuNDkgMTYxLjA5IDE4Ni40OSAxNjMuNjlMMTg2LjQ5IDE2My42OVExODYuNDkgMTY1LjM3IDE4NS43MSAxNjYuNjFRMTg0LjkzIDE2Ny44NSAxODMuNTcgMTY4LjU4TDE4My41NyAxNjguNThRMTg1LjQxIDE2OS4xOCAxODYuNTAgMTcwLjU3UTE4Ny42MCAxNzEuOTcgMTg3LjYwIDE3NC4wNkwxODcuNjAgMTc0LjA2UTE4Ny42MCAxNzYuOTIgMTg1LjM0IDE3OC41MlExODMuMDkgMTgwLjEyIDE3OC43MiAxODAuMTJMMTc4LjcyIDE4MC4xMlpNMTcyLjM0IDE3MC43NkwxNzIuMzQgMTc2LjI1TDE3OC4zMyAxNzYuMjVRMTgwLjMzIDE3Ni4yNSAxODEuMzggMTc1LjYwUTE4Mi40MyAxNzQuOTUgMTgyLjQzIDE3My41MkwxODIuNDMgMTczLjUyUTE4Mi40MyAxNzAuNzYgMTc4LjMzIDE3MC43NkwxNzguMzMgMTcwLjc2TDE3Mi4zNCAxNzAuNzZaTTE3Mi4zNCAxNjEuNzlMMTcyLjM0IDE2Ny4wMkwxNzcuNDUgMTY3LjAyUTE4MS4zMiAxNjcuMDIgMTgxLjMyIDE2NC4zOUwxODEuMzIgMTY0LjM5UTE4MS4zMiAxNjEuNzkgMTc3LjQ1IDE2MS43OUwxNzcuNDUgMTYxLjc5TDE3Mi4zNCAxNjEuNzlaTTE5Ny41NyAxODAuMTJMMTkyLjQzIDE4MC4xMkwxOTIuNDMgMTU3LjkyTDE5Ny41NyAxNTcuOTJMMTk3LjU3IDE4MC4xMlpNMjIwLjA0IDE4MC4xMkwyMDMuNzcgMTgwLjEyTDIwMy43NyAxNTcuOTJMMjA4LjkxIDE1Ny45MkwyMDguOTEgMTc1LjkzTDIyMC4wNCAxNzUuOTNMMjIwLjA0IDE4MC4xMlpNMjI5LjAwIDE4MC4xMkwyMjMuODYgMTgwLjEyTDIyMy44NiAxNTcuOTJMMjI5LjAwIDE1Ny45MkwyMjkuMDAgMTgwLjEyWiIvPgogICAgPCEtLSBJVEFMSUE6IE1vbnRzZXJyYXQgTWVkaXVtIDE3LjcxIHB4LCBzcGF6aWF0dXJhIDMuNCAtLT4KICAgIDxwYXRoIGZpbGw9InVybCgjaXRhbGlhKSIgZD0iTTgyLjc3IDE5OS4xMUw4MSAxOTkuMTFMODEgMTg2LjcxTDgyLjc3IDE4Ni43MUw4Mi43NyAxOTkuMTFaTTk0LjExIDE5OS4xMUw5Mi4zNSAxOTkuMTFMOTIuMzUgMTg4LjI1TDg4LjEwIDE4OC4yNUw4OC4xMCAxODYuNzFMOTguMzYgMTg2LjcxTDk4LjM2IDE4OC4yNUw5NC4xMSAxODguMjVMOTQuMTEgMTk5LjExWk0xMDMuNjQgMTk5LjExTDEwMS44MSAxOTkuMTFMMTA3LjQzIDE4Ni43MUwxMDkuMTggMTg2LjcxTDExNC44MiAxOTkuMTFMMTEyLjk2IDE5OS4xMUwxMTEuNTkgMTk2LjAxTDEwNS4wMCAxOTYuMDFMMTAzLjY0IDE5OS4xMVpNMTA4LjMwIDE4OC41MkwxMDUuNjIgMTk0LjU5TDExMC45NyAxOTQuNTlMMTA4LjMwIDE4OC41MlpNMTI4LjU0IDE5OS4xMUwxMjAuMDYgMTk5LjExTDEyMC4wNiAxODYuNzFMMTIxLjgzIDE4Ni43MUwxMjEuODMgMTk3LjU3TDEyOC41NCAxOTcuNTdMMTI4LjU0IDE5OS4xMVpNMTM1Ljc1IDE5OS4xMUwxMzMuOTggMTk5LjExTDEzMy45OCAxODYuNzFMMTM1Ljc1IDE4Ni43MUwxMzUuNzUgMTk5LjExWk0xNDIuODIgMTk5LjExTDE0MS4wMCAxOTkuMTFMMTQ2LjYxIDE4Ni43MUwxNDguMzcgMTg2LjcxTDE1NCAxOTkuMTFMMTUyLjE0IDE5OS4xMUwxNTAuNzggMTk2LjAxTDE0NC4xOSAxOTYuMDFMMTQyLjgyIDE5OS4xMVpNMTQ3LjQ4IDE4OC41MkwxNDQuODEgMTk0LjU5TDE1MC4xNiAxOTQuNTlMMTQ3LjQ4IDE4OC41MloiLz4KICA8L2c+Cjwvc3ZnPgo=';
+const PALETTE = [
+  {
+    nome: 'A · Carta tecnica',
+    cosa: 'Avorio e grigio caldo, come un plastico d’architetto. Linee verde scuro e oro brunito. Molto pulito e serio.',
+    cielo: ['#dfe3e1', '#f3efe6'], bagliore: '#fff6e6', terreno: ['#ece6d9', '#d9d2c3'],
+    isoipse: '#a77a2a', isoipseAlfa: .75, direttrici: '#7c5a1c', griglia: '#55665e', grigliaAlfa: .35, fiume: '#9fb6bd',
+    titolo: '#13251e', em: '#a77a2a', testo: '#33433c', occhiello: '#8a6420', hud: '#55625c', valore: '#13251e',
+    velo: '243,239,230', logoScuro: false, bagliorLinee: 0,
+  },
+  {
+    nome: 'B · Alba luminosa',
+    cosa: 'Cielo vero del mattino, dall’azzurro al pesca. Terreno luminoso e naturale. Linee d’oro caldo. Più emozionale.',
+    cielo: ['#a9c3d6', '#f4d9bd'], bagliore: '#ffe2b8', terreno: ['#b9b48d', '#8f9a74'],
+    isoipse: '#b9831f', isoipseAlfa: .85, direttrici: '#8d5f12', griglia: '#f7f3ea', grigliaAlfa: .55, fiume: '#7ea3b5',
+    titolo: '#10241c', em: '#9a5a1e', testo: '#25362f', occhiello: '#8d5f12', hud: '#2f3f38', valore: '#10241c',
+    velo: '246,236,222', logoScuro: false, bagliorLinee: 0,
+  },
+  {
+    nome: 'C · Ardesia media',
+    cosa: 'Grigio-blu medio, né chiaro né scuro. L’oro resta luminoso, i testi sono chiari. Elegante e tecnico.',
+    cielo: ['#56636c', '#8d989e'], bagliore: '#c9b08a', terreno: ['#6b7671', '#59645f'],
+    isoipse: '#efcf8a', isoipseAlfa: .9, direttrici: '#ffe6ad', griglia: '#dfe5e8', grigliaAlfa: .35, fiume: '#3e5560',
+    titolo: '#f7f3ea', em: '#f1dfb3', testo: '#e3e7e8', occhiello: '#efcf8a', hud: '#d4dadc', valore: '#f1dfb3',
+    velo: '64,74,81', logoScuro: true, bagliorLinee: 1.2,
+  },
+  {
+    nome: 'D · Petrolio morbido',
+    cosa: 'Scuro ma non nero: blu petrolio con l’orizzonte che si schiarisce. È la più vicina al sito di oggi.',
+    cielo: ['#1d2c34', '#4a5d63'], bagliore: '#b08a5c', terreno: ['#2c3a3d', '#233034'],
+    isoipse: '#d8b878', isoipseAlfa: .9, direttrici: '#f1dfb3', griglia: '#c9d0d4', grigliaAlfa: .3, fiume: '#16252c',
+    titolo: '#f4efe4', em: '#f1dfb3', testo: '#c9d0d4', occhiello: '#d8b878', hud: '#8fa0a6', valore: '#f1dfb3',
+    velo: '24,36,42', logoScuro: true, bagliorLinee: 1.6,
+  },
+];
+
+// logo: versione normale e versione con le scritte chiare per gli sfondi scuri
+const svgLogo = new TextDecoder().decode(Uint8Array.from(atob(LOGO_B64), c => c.charCodeAt(0)));
+const dataSvg = t => 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(t)));
+const LOGO = { chiaro: dataSvg(svgLogo), scuro: dataSvg(svgLogo.replaceAll('#0f3b2c', '#f4efe4')) };
+
+// mondo finto in prospettiva: orizzonte, griglia catastale, fiume, isoipse ondulate
+function mondo(P, n) {
+  const W = 1600, H = 900, oy = 360, vx = 1000;
+  const prosp = k => oy + (H - oy) * Math.pow(k, 2.2);
+  let s = `<svg class="mondo" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
+    <defs>
+      <linearGradient id="cielo${n}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${P.cielo[0]}"/><stop offset="1" stop-color="${P.cielo[1]}"/></linearGradient>
+      <radialGradient id="bag${n}" cx="${vx / W}" cy="${oy / H}" r=".55"><stop offset="0" stop-color="${P.bagliore}" stop-opacity=".9"/><stop offset="1" stop-color="${P.bagliore}" stop-opacity="0"/></radialGradient>
+      <linearGradient id="ter${n}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${P.terreno[1]}"/><stop offset="1" stop-color="${P.terreno[0]}"/></linearGradient>
+      <filter id="glow${n}" x="-5%" y="-5%" width="110%" height="110%"><feGaussianBlur stdDeviation="${2.2 * P.bagliorLinee}" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    </defs>
+    <rect width="${W}" height="${oy + 2}" fill="url(#cielo${n})"/>
+    <rect width="${W}" height="${H}" fill="url(#bag${n})"/>
+    <rect y="${oy}" width="${W}" height="${H - oy}" fill="url(#ter${n})"/>`;
+  let g = '';
+  for (let i = 1; i <= 22; i++) { const y = prosp(i / 22); g += `M0 ${y.toFixed(1)}H${W}`; }
+  for (let i = -26; i <= 26; i++) g += `M${vx + i * 6} ${oy}L${vx + i * 140} ${H}`;
+  s += `<path d="${g}" stroke="${P.griglia}" stroke-opacity="${P.grigliaAlfa}" stroke-width="1.2" fill="none"/>`;
+  s += `<path d="M${vx - 30} ${oy} C ${vx - 80} ${oy + 120}, ${vx - 420} ${oy + 220}, ${vx - 260} ${H}" stroke="${P.fiume}" stroke-width="34" fill="none" stroke-linecap="round" opacity=".9"/>`;
+  let iso = '', dir = '';
+  for (let i = 0; i < 30; i++) {
+    const k = (i + .5) / 30, y0 = prosp(k), amp = 6 + 70 * k * k;
+    let d = `M-20 ${y0.toFixed(1)}`;
+    for (let x = 0; x <= W + 40; x += 40) {
+      const y = y0 + Math.sin(x / (180 + 60 * k) + i * 1.7) * amp * .5 + Math.sin(x / 70 + i) * amp * .12;
+      d += `L${x} ${y.toFixed(1)}`;
+    }
+    if (i % 5 === 0) dir += d; else iso += d;
+  }
+  s += `<g filter="${P.bagliorLinee ? `url(#glow${n})` : 'none'}" fill="none">
+      <path d="${iso}" stroke="${P.isoipse}" stroke-opacity="${P.isoipseAlfa}" stroke-width="1.6"/>
+      <path d="${dir}" stroke="${P.direttrici}" stroke-opacity="${P.isoipseAlfa}" stroke-width="2.8"/>
+    </g></svg>`;
+  return s;
+}
+
+// ---------------------------------------------------------------- plastici della valle
+// Blocco tagliato in assonometria: faccia superiore (versanti con isoipse), faccia di taglio davanti (profilo a V e strati),
+// lago dietro la diga, condotta forzata sul versante, centrale a valle, fiume verso il taglio.
+const PLASTICI = [
+  {
+    nome: 'Plastico bianco', cosa: 'Come i modelli degli architetti: tutto bianco-avorio, linee d’oro sottili, acqua azzurra. Molto elegante.',
+    fondo: ['#f2efe9', '#e6e2da'], sopra: ['#fbfaf7', '#ebe7df'], isoipse: '#c4a36a', isoAlfa: .8,
+    taglio: '#e2ddd3', strati: '#c9b48a', tratteggio: '#c4a36a', lato: '#d6d0c5', acqua: '#8fb7c9', acquaRiva: '#6f9fb6',
+    diga: '#ffffff', centrale: '#ffffff', condotta: '#9b7b42', ombra: 'rgba(60,50,30,.16)', testo: '#2b2f2c',
+  },
+  {
+    nome: 'Plastico naturale', cosa: 'Colori veri: prati, roccia, terra negli strati del taglio. Più realistico, meno “museo”.',
+    fondo: ['#dfe9ef', '#eef0ea'], sopra: ['#93a86d', '#6f8a4f'], isoipse: '#4f6436', isoAlfa: .45,
+    taglio: '#a07d55', strati: '#7d5f3f', tratteggio: '#6e5236', lato: '#8a6a47', acqua: '#4f8fb0', acquaRiva: '#3c7896',
+    diga: '#c9c4ba', centrale: '#d8d3c8', condotta: '#5d6266', ombra: 'rgba(30,40,20,.22)', testo: '#2b2f2c',
+  },
+  {
+    nome: 'Plastico in pietra scura', cosa: 'Grafite opaca dentro una stanza chiara: l’unico punto scuro del sito, con l’oro che risalta.',
+    fondo: ['#efede8', '#e2dfd8'], sopra: ['#3a4144', '#2a3033'], isoipse: '#d8b878', isoAlfa: .85,
+    taglio: '#23292c', strati: '#3b4347', tratteggio: '#b8995e', lato: '#1c2124', acqua: '#8fb7c9', acquaRiva: '#6f9fb6',
+    diga: '#cfd3d4', centrale: '#cfd3d4', condotta: '#d8b878', ombra: 'rgba(0,0,0,.28)', testo: '#2b2f2c',
+  },
+];
+
+function plastico(P, n) {
+  // geometria del blocco (viewBox 720×460): faccia superiore A-B-C-D, taglio davanti D-C-C2-D2, fianco sinistro A-D-D2-A2
+  const A = [70, 170], B = [380, 70], C = [660, 190], D = [350, 290], H = 100;
+  const giu = p => [p[0], p[1] + H];
+  // punto sulla faccia superiore: u lungo A→B (0 davanti-sinistra … 1 dietro), v lungo A→D (0 sinistra … 1 destra)
+  const sup = (u, v) => [A[0] + (B[0] - A[0]) * u + (D[0] - A[0]) * v, A[1] + (B[1] - A[1]) * u + (D[1] - A[1]) * v];
+  // quota del versante (in px verso l'alto) per u, v: valle a V lungo v = 0,5 che sale verso il fondo
+  const quota = (u, v) => 70 * Math.pow(Math.abs(v - .5) * 2, 1.25) + 18 * u + 6 * Math.sin(u * 9 + v * 4);
+  const pt = (u, v) => { const p = sup(u, v); return [p[0], p[1] - quota(u, v)]; };
+  const L = a => a.map(p => p.map(x => x.toFixed(1)).join(',')).join(' ');
+  let s = `<svg class="plastico" viewBox="0 0 720 460" role="img" aria-label="${P.nome}">
+    <defs>
+      <linearGradient id="pf${n}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${P.fondo[0]}"/><stop offset="1" stop-color="${P.fondo[1]}"/></linearGradient>
+      <linearGradient id="ps${n}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${P.sopra[0]}"/><stop offset="1" stop-color="${P.sopra[1]}"/></linearGradient>
+      <pattern id="pt${n}" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="7" stroke="${P.tratteggio}" stroke-width="1" opacity=".55"/></pattern>
+    </defs>
+    <rect width="720" height="460" fill="url(#pf${n})"/>
+    <ellipse cx="370" cy="415" rx="300" ry="26" fill="${P.ombra}"/>`;
+  // superficie: griglia di quadrilateri dal fondo verso il davanti (ordine del pittore)
+  const NU = 22, NV = 26;
+  let quad = '';
+  for (let i = NU - 1; i >= 0; i--) for (let j = 0; j < NV; j++) {
+    const u0 = i / NU, u1 = (i + 1) / NU, v0 = j / NV, v1 = (j + 1) / NV;
+    const q = [pt(u0, v0), pt(u1, v0), pt(u1, v1), pt(u0, v1)];
+    // luce da sinistra: versante sinistro più chiaro
+    const lum = j < NV / 2 ? 1 : .86;
+    quad += `<polygon points="${L(q)}" fill="url(#ps${n})" stroke="url(#ps${n})" stroke-width=".6" style="filter:brightness(${lum})"/>`;
+  }
+  s += quad;
+  // isoipse: per ogni quota, segmenti dove la superficie la attraversa (marcia sui lati della griglia)
+  let iso = '';
+  for (let z = 10; z < 95; z += 7) {
+    for (let i = 0; i < NU * 2; i++) for (let j = 0; j < NV * 2; j++) {
+      const u0 = i / (NU * 2), u1 = (i + 1) / (NU * 2), v0 = j / (NV * 2), v1 = (j + 1) / (NV * 2);
+      const c = [[u0, v0], [u1, v0], [u1, v1], [u0, v1]], h = c.map(([u, v]) => quota(u, v) - z), x = [];
+      for (let k = 0; k < 4; k++) { const a = h[k], b = h[(k + 1) % 4]; if ((a < 0) !== (b < 0)) { const t = a / (a - b), p = c[k], q = c[(k + 1) % 4]; x.push(pt(p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t)); } }
+      if (x.length >= 2) iso += `M${x[0][0].toFixed(1)} ${x[0][1].toFixed(1)}L${x[1][0].toFixed(1)} ${x[1][1].toFixed(1)}`;
+    }
+  }
+  s += `<path d="${iso}" stroke="${P.isoipse}" stroke-opacity="${P.isoAlfa}" stroke-width=".9" fill="none"/>`;
+  // lago (dietro la diga, u 0,62–1) e fiume (davanti)
+  const lago = [], fiume = [];
+  for (let k = 0; k <= 12; k++) { const u = .62 + .38 * k / 12; lago.push(pt(u, .5 - .17 * (.4 + .6 * k / 12))); }
+  for (let k = 12; k >= 0; k--) { const u = .62 + .38 * k / 12; lago.push(pt(u, .5 + .17 * (.4 + .6 * k / 12))); }
+  s += `<polygon points="${L(lago)}" fill="${P.acqua}" stroke="${P.acquaRiva}" stroke-width="1"/>`;
+  for (let k = 0; k <= 10; k++) fiume.push(pt(.5 * k / 10, .5 + .02 * Math.sin(k)));
+  s += `<polyline points="${L(fiume)}" fill="none" stroke="${P.acqua}" stroke-width="5" stroke-linecap="round"/>`;
+  // diga ad arco sulla valle (u ≈ 0,62)
+  const diga = []; for (let k = 0; k <= 10; k++) { const v = .38 + .24 * k / 10; const p = pt(.62 - .03 * Math.sin(Math.PI * k / 10), v); diga.push(p); }
+  const digaAlta = diga.map(p => [p[0], p[1] - 16]);
+  s += `<polygon points="${L(diga.concat(digaAlta.slice().reverse()))}" fill="${P.diga}" stroke="${P.ombra}" stroke-width="1"/>`;
+  // condotta forzata dal lago alla centrale lungo il versante destro, poi la centrale
+  const cond = [pt(.66, .62), pt(.55, .64), pt(.42, .6), pt(.3, .56)];
+  s += `<polyline points="${L(cond)}" fill="none" stroke="${P.condotta}" stroke-width="3" stroke-linecap="round"/>`;
+  const c0 = pt(.27, .54);
+  s += `<g transform="translate(${c0[0].toFixed(1)},${c0[1].toFixed(1)})"><polygon points="-14,-4 10,-12 22,-6 -2,2" fill="${P.centrale}" stroke="${P.ombra}"/><polygon points="-14,-4 -2,2 -2,14 -14,8" fill="${P.centrale}" style="filter:brightness(.9)"/><polygon points="-2,2 22,-6 22,6 -2,14" fill="${P.centrale}" style="filter:brightness(.8)"/></g>`;
+  // taglio davanti: profilo del terreno lungo u = 0 e strati
+  const prof = []; for (let k = 0; k <= 40; k++) prof.push(pt(0, k / 40));
+  const taglio = prof.concat([giu(D), giu(A)]);
+  s += `<polygon points="${L(taglio)}" fill="${P.taglio}"/>`;
+  s += `<polygon points="${L(taglio)}" fill="url(#pt${n})"/>`;
+  for (let z = 20; z < 100; z += 20) s += `<line x1="${A[0]}" y1="${A[1] + z}" x2="${D[0]}" y2="${D[1] + z}" stroke="${P.strati}" stroke-width="1" opacity=".7"/>`;
+  // fianco destro: profilo lungo v = 1
+  const fianco = []; for (let k = 0; k <= 30; k++) fianco.push(pt(k / 30, 1));
+  s += `<polygon points="${L(fianco.slice().reverse().concat([giu(D), giu(C)]).reverse())}" fill="${P.lato}"/>`;
+  s += `<text x="24" y="440" font-family="'IBM Plex Mono', monospace" font-size="11" letter-spacing="1.5" fill="${P.testo}" opacity=".6">VALLE · SEZIONE AL PIEDE DELLA DIGA · 1:25 000</text>`;
+  return s + '</svg>';
+}
+
+document.getElementById('plastici').innerHTML = PLASTICI.map((P, n) => `
+  <figure>
+    ${plastico(P, n)}
+    <figcaption><b>${P.nome}</b><p>${P.cosa}</p></figcaption>
+  </figure>`).join('');
+
+const campione = (c, nome) => `<span><i style="background:${c}"></i>${nome}</span>`;
+
+document.getElementById('griglia').innerHTML = PALETTE.map((P, n) => `
+  <figure>
+    <div class="scena">
+      ${mondo(P, n)}
+      <div class="velo" style="background:linear-gradient(90deg, rgba(${P.velo},.86) 0%, rgba(${P.velo},.72) 26%, rgba(${P.velo},.34) 40%, rgba(${P.velo},0) 54%)"></div>
+      <header>
+        <div class="marchio"><img src="${P.logoScuro ? LOGO.scuro : LOGO.chiaro}" alt="Logo Energie Rinnovabili Italia"><span style="color:${P.titolo}">ERI</span></div>
+        <div class="cta" style="color:${P.titolo};border-color:${P.occhiello}">Parliamo del progetto</div>
+      </header>
+      <div class="colonna">
+        <p class="occhiello" style="color:${P.occhiello}">Energie Rinnovabili Italia</p>
+        <h2 style="color:${P.titolo}">Dalla particella<br><em style="color:${P.em}">al&nbsp;Ready to Build.</em></h2>
+        <p class="testo" style="color:${P.testo}">Sviluppiamo impianti fotovoltaici, agrivoltaici e idroelettrici. Dal primo esame del terreno al progetto autorizzato, pronto da costruire.</p>
+      </div>
+      <div class="hud" style="color:${P.hud}">Maturità del progetto · <b style="color:${P.valore}">5 %</b> &nbsp;&nbsp; Fase · territorio</div>
+    </div>
+    <figcaption>
+      <b>${P.nome}</b>
+      <p>${P.cosa}</p>
+      <div class="campioni">${campione(P.cielo[0], 'cielo')}${campione(P.terreno[0], 'terreno')}${campione(P.isoipse, 'linee')}${campione(P.titolo, 'titoli')}${campione(P.em, 'accento')}</div>
+    </figcaption>
+  </figure>`).join('');
+</script>
+</body></html>
