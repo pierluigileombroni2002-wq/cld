@@ -171,10 +171,15 @@ html.contesto-perso .velo-messaggio{ display:block; }
 /* ---------------------------------------------------------------- §5.4 indice delle tappe */
 .indice{ position:fixed; right:var(--margine-dx); top:50%; transform:translateY(-50%); z-index:20; text-align:right;
   transition:opacity .9s var(--expo-out), visibility 0s; }
-.indice ol{ display:flex; flex-direction:column; align-items:flex-end; }
+/* tema chiaro: sopra la campagna un alone chiaro sfoca il testo; meglio una banda morbida color carta dietro all'elenco */
+.indice ol{ display:flex; flex-direction:column; align-items:flex-end; padding:10px 0 10px 28px;
+  background:linear-gradient(270deg, rgba(var(--fondo-rgb),.82) 0%, rgba(var(--fondo-rgb),.66) 70%, rgba(var(--fondo-rgb),0) 100%);
+  -webkit-mask-image:var(--sfuma-alto-basso); mask-image:var(--sfuma-alto-basso); transition:background .35s linear; }
+:root{ --sfuma-alto-basso:linear-gradient(180deg, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%); }
+.indice.attenuato:not(:hover):not(:focus-within) ol{ background:transparent; }
 .indice a[data-tappa]{ display:flex; align-items:center; justify-content:flex-end; gap:12px; padding:5px 0;
-  font:400 11px/1.4 var(--f-mono); letter-spacing:.1em; text-transform:uppercase; color:var(--grigio); text-decoration:none;
-  text-shadow:0 0 2px rgba(var(--fondo-rgb),.9), 0 0 10px rgba(var(--fondo-rgb),.75); transition:color .4s; }
+  font:400 11px/1.4 var(--f-mono); letter-spacing:.1em; text-transform:uppercase; color:var(--platino); text-decoration:none;
+  transition:color .4s; }
 .indice .indice-n{ color:inherit; opacity:.7; font-variant-numeric:tabular-nums; }
 .indice .indice-n,.indice .indice-nome{ transition:opacity .35s linear; }
 .indice-linea{ position:relative; flex:none; width:18px; height:1px; background:var(--platino-24);
@@ -381,7 +386,10 @@ html.contesto-perso .velo-messaggio{ display:block; }
   font-variant-numeric:tabular-nums; text-shadow:0 0 3px rgba(var(--fondo-rgb),.95), 0 0 12px rgba(var(--fondo-rgb),.85); transition:opacity .9s var(--expo-out); }
 .hud b{ font-weight:400; color:var(--oro-chiaro); text-transform:none; }   /* valori: le unità (m, m³/s, MWh) non si maiuscolano */
 .hud .str-nota b{ text-transform:uppercase; }
-.hud-sx{ position:absolute; left:var(--colonna-sx); bottom:0; display:flex; align-items:flex-end; gap:26px; white-space:nowrap; }
+.hud-sx{ position:absolute; left:var(--colonna-sx); bottom:0; display:flex; align-items:flex-end; gap:26px; white-space:nowrap;
+  padding:6px 32px 6px 0; margin-left:-12px; padding-left:12px;   /* tema chiaro: banda color carta quando sotto non c'è il velo della colonna */
+  background:linear-gradient(90deg, rgba(var(--fondo-rgb),.8) 0%, rgba(var(--fondo-rgb),.62) 80%, rgba(var(--fondo-rgb),0) 100%);
+  -webkit-mask-image:var(--sfuma-alto-basso); mask-image:var(--sfuma-alto-basso); }
 .hud-scala{ display:flex; align-items:flex-end; gap:10px; }
 .hud-barra{ display:block; width:120px; height:6px; border:1px solid var(--platino-40); border-top:0; }
 .hud-rapporto:empty{ display:none; }
@@ -389,6 +397,10 @@ html.contesto-perso .velo-messaggio{ display:block; }
 .bandierina{ position:absolute; right:var(--margine-dx); bottom:0; padding:3px 8px 2px; border:1px solid var(--oro);
   font:400 10px/1.4 var(--f-mono); letter-spacing:.16em; color:var(--oro); white-space:nowrap; background:rgba(var(--fondo-rgb),.6); }
 .hud-strumento{ position:absolute; left:64%; right:var(--margine-dx); bottom:32px; display:flex; justify-content:flex-end; }
+/* tema chiaro: lo strumento sta sopra la scena, a destra, fuori dal velo della colonna: banda color carta dietro */
+.hud-strumento > *{ padding:6px 0 6px 24px; text-shadow:none;
+  background:linear-gradient(270deg, rgba(var(--fondo-rgb),.82) 0%, rgba(var(--fondo-rgb),.66) 75%, rgba(var(--fondo-rgb),0) 100%);
+  -webkit-mask-image:var(--sfuma-alto-basso); mask-image:var(--sfuma-alto-basso); }
 .strumento{ display:none; flex-direction:column; align-items:flex-end; gap:8px; text-align:right; }
 .strumento.attivo{ display:flex; animation:compare .6s var(--expo-out) both; }
 @keyframes compare{ from{ opacity:0; transform:translateY(6px); } to{ opacity:1; transform:none; } }

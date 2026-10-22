@@ -69,7 +69,7 @@ export const FONT = {
 // ---------------------------------------------------------------- §2.6 materiali
 // Tema chiaro: mondo luminoso e naturale (terreno chiaro, acqua lucida azzurro-ardesia, verdi caldi e polverosi).
 export const MATERIALI = {
-  terreno: { envMapIntensity: 0.45, metalness: 0, roughness: 1, albedo: 0.9, saturazione: 0.9,
+  terreno: { envMapIntensity: 0.45, metalness: 0, roughness: 1, albedo: 1.25, saturazione: 1.0,   // tema chiaro: campagna luminosa
              ripetizioneErba: 6.0, ripetizioneCampo: 4.6, macro: 0.13, rocciaPendenza: [0.18, 0.35] },
   fiume: { color: '#3d6f86', roughness: 0.06, metalness: 0, clearcoat: 0.6, clearcoatRoughness: 0.04,
            envMapIntensity: 1.4, normalScale: 0.35 },
@@ -123,7 +123,7 @@ export const OVERLAY = {
   // Aree non idonee: su chiaro si VELANO verso la carta (mai verso il nero). Valore = quota di contrasto che resta:
   // c = mix(cartaLuce, c, mix(1, sottrazioneLuminanza, uSottrazione)), cartaLuce = velatura × luce della scena
   // (richiede la patch negli shader di terreno, contorno-comune e fiume: oggi moltiplicano per questo valore).
-  sottrazioneLuminanza: 0.35,
+  sottrazioneLuminanza: 0.72,   // tema chiaro: velo al 28 % verso la carta (sotto 0,6 le aree diventavano blocchi bianchi)
   velatura: PALETTE.carta,
   cartaOmbreggiatura: { direzione: [-0.5, 0.707, -0.5], emissione: 0.08 },  // ombreggiatura a inchiostro del modo carta
   fiumeCarta: { riempimento: 0.3, bordo: 0.8, mezzaLarghezza: 2.07 },
@@ -145,7 +145,7 @@ export const HDRI = {
 // La cupola e la nebbia li riportano in HDR con l'inversa di ACES e dell'esposizione (luce/nebbia.js versoScena),
 // così il cielo non dipende da STATO.esposizione e il terreno svanisce esattamente nell'orizzonte.
 export const CIELO_PRESET = {
-  tramonto:    { zenit: '#9db8cf', orizzonte: '#f3cfa8', bagliore: '#ffc38a', k: 0.5, disco: 'el>-0.5' },  // ora d'oro luminosa
+  tramonto:    { zenit: '#9db8cf', orizzonte: '#ece3d8', bagliore: '#ffd9b0', k: 0.3, disco: 'el>-0.5' },  // ora d'oro luminosa (orizzonte crema: la nebbia pesca virava tutto all'arancio)
   oraBlu:      { zenit: '#9fb0d0', orizzonte: '#dcd3e3', bagliore: '#f2c7b0', k: 0.3, disco: false },      // crepuscolo chiaro
   alba:        { zenit: '#a9c3d6', orizzonte: '#f4d9bd', bagliore: '#ffd9a8', k: 0.6, disco: true },
   giornoScuro: { zenit: '#8fb3d3', orizzonte: '#e6edf0', bagliore: '#fff1d8', k: 0.25, disco: false },     // ora è "giorno"
@@ -212,13 +212,14 @@ export const AMBIENTE_VALLE = { a: 'kloofendal', b: null, mix: 0, azA: 210 };
 export const NEBBIA = {
   densita: { panoramiche: 0.0018, medie: 0.003, primiPiani: 0.006, valleGenerale: 0.00025, vallePrimiPiani: 0.004, foschia: 0.02 },
   basePianura: 0, baseValle: 20, decadimento: 0.08,   // nebbia in quota (§6.3)
-  sole: 0.6, esponenteSole: 8,
+  sole: 0.3, esponenteSole: 8,   // tema chiaro: diffusione del sole più leggera (la nebbia pesca diventava arancio)
 };
 
 export const SOLE = {
   giorno: 172, lat: 42.0, lon: 12.5, fuso: 2,          // 21 giugno 2026, ora legale (§4.4)
   // §6.3: colore del sole per elevazione (interpolato in spazio lineare)
-  colori: [[-1, '#ff7a3c'], [2, '#ff9a55'], [5, '#ffb46b'], [10, '#ffc98a'], [20, '#ffe0b5'], [35, '#fff1df']],
+  // tema chiaro: stessi passaggi di §6.3 ma meno saturi (il sole basso tingeva di arancio tutta la campagna)
+  colori: [[-1, '#ffa877'], [2, '#ffbb85'], [5, '#ffc993'], [10, '#ffd6a8'], [20, '#ffe6c4'], [35, '#fff4e6']],
   intensitaMax: 3.4,
   emisfera: { cielo: '#a9c3d6', suolo: '#cfc3ad' },   // tema chiaro: cielo del mattino, rimbalzo della campagna
   ombra: { bias: -0.0003, normalBias: 0.005, radius: 3, near: 1, far: 600, distanza: 300 },
@@ -649,7 +650,7 @@ export const STATO_INIZIALE = {
   // tema chiaro: niente buio. La luce del cielo (emisfera + ambiente) regge da sola la campagna quando il sole è
   // radente o sotto l'orizzonte; esposizione mai sotto 0,88 (il cielo non ne dipende: luce/nebbia.js versoScena)
   // [ARCH] obiettivo: un cartoncino grigio 18 % in piano esce a ≈ sRGB 0,55 anche col sole a 4° (luce del cielo ≈ 1,0)
-  sole: { el: 4, az: 295, int: 2.0, col: '#ffbd7d' }, emisfera: 2.0, envGlobale: 1.4, esposizione: 1.1,
+  sole: { el: 4, az: 295, int: 2.0, col: '#ffd3a3' }, emisfera: 2.0, envGlobale: 1.4, esposizione: 1.1,
   mixHDRI: 0, nebbia: 0.0004 /* [ARCH] K0.0 vista da 1 150 u: 0,0018 la nasconderebbe */, velo: 0, saturazione: 1, maturita: 0,
 
   // ---- estensioni [ARCH] ----
@@ -736,7 +737,7 @@ export const TRACCE = {
   'sole.int':   [[2.00, 4.95, 2.0, 1.2], [4.95, 5.25, 1.2, 0], [7.60, 8.10, 0, 1.6],
                  [11.50, 11.50, null, 2.6], [15.50, 15.50, null, 3.0], [16.50, 16.60, 3.0, 3.3], [17.45, 18.30, 3.3, 1.6]],
   // tema chiaro: ora d'oro luminosa, sole caldo ma meno saturo (con l'arancio pieno la campagna diventava terra bruciata)
-  'sole.col':   [[1.55, 2.00, '#ffbd7d', '#ffb070'] /* [ARCH] */, [2.00, 5.00, '#ffb070', '#ffa063'], [7.60, 8.10, '#ff9e62', '#ffad70'],
+  'sole.col':   [[1.55, 2.00, '#ffd3a3', '#ffcb98'] /* [ARCH] */, [2.00, 5.00, '#ffcb98', '#ffc48e'], [7.60, 8.10, '#ffc08a', '#ffcd9c'],
                  [11.50, 11.50, null, '#fff1df'], [15.50, 15.50, null, '#ffe2bf'], [16.50, 16.60, '#ffe2bf', '#fff1df']],
   soleAuto:     [[8.70, 8.70, null, 1], [11.50, 11.50, null, 0], [17.45, 17.45, null, 2]],
   ora:          [[7.60, 8.70, 5 + 34 / 60, 6.0], [8.70, 9.15, 6.0, 6 + 10 / 60], [9.15, 9.55, 6 + 10 / 60, 9 + 40 / 60], [9.55, 9.95, 9 + 40 / 60, 13 + 11 / 60],
@@ -757,11 +758,12 @@ export const TRACCE = {
                  [11.50, 11.50, null, 'museale'], [15.50, 15.50, null, 'pomeriggio'], [17.80, 18.30, 'pomeriggio', 'tramonto']],
   discoSole:    [[18.30, 18.52, 1, 0.3, 'expo.out']],
   // densità (1/u) per inquadratura; [ARCH] dove DESIGN non fissa il T
-  nebbia:       [[0.15, 1.55, 0.0004, 0.0018, P2IO], [3.30, 3.55, 0.0018, 0.003], [4.95, 5.25, 0.003, 0.0018], [7.45, 7.60, 0.0018, 0.003],
-                 [7.90, 8.10, 0.003, 0.006], [8.70, 8.95, 0.006, 0.003], [11.32, 11.50, 0.003, 0.02, 'power2.in'],
+  // tema chiaro: nella PIANURA la nebbia è chiara e velerebbe tutto; densità ~0,55 di §2.5 (la foschia 0,02 e la VALLE restano)
+  nebbia:       [[0.15, 1.55, 0.0004, 0.001, P2IO], [3.30, 3.55, 0.001, 0.0018], [4.95, 5.25, 0.0018, 0.001], [7.45, 7.60, 0.001, 0.0018],
+                 [7.90, 8.10, 0.0018, 0.0035], [8.70, 8.95, 0.0035, 0.0018], [11.32, 11.50, 0.0018, 0.02, 'power2.in'],
                  [11.50, 11.65, 0.02, 0.00025, 'power2.out'], [12.05, 12.55, 0.00025, 0.003], [12.55, 12.80, 0.003, 0.006],
                  [13.30, 13.55, 0.006, 0.002], [13.55, 13.80, 0.002, 0.004], [14.75, 15.00, 0.004, 0.00025],
-                 [15.50, 15.50, null, 0.003], [17.40, 18.30, 0.003, 0.0018]],
+                 [15.50, 15.50, null, 0.0018], [17.40, 18.30, 0.0018, 0.001]],
   velo:         [[11.42, 11.50, 0, 1], [11.50, 11.65, 1, 0, 'power2.out'], [15.40, 15.47, 0, 1], [15.52, 15.62, 1, 0]],
 
   // ---------------- tappa 2 (§4.3)
