@@ -84,6 +84,17 @@ export const MATERIALI = {
   moduloFronte: { roughness: 0.32, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.05, ior: 1.5,
                   envMapIntensity: 1.25, iridescence: 0.12, iridescenceIOR: 1.3, iridescenceThicknessRange: [180, 320] },
   moduloRetro: { color: '#1a2230', roughness: 0.4, clearcoat: 0.8 },
+  // stile di moduli e strutture dei tracker (anteprima: ?moduli=vetro|blu|plastico). Per ogni stile: celle e fughe della
+  // texture del fronte, retro, telaio, acciaio di pali e tubi, e i parametri del vetro (il clearcoat fa l'onda di riflessi).
+  moduli: {
+    stile: (typeof location !== 'undefined' && new URLSearchParams(location.search).get('moduli')) || 'vetro',
+    vetro:    { cella: '#0a1220', fuga: '#c9d2dc', busbar: '#aab4be', retro: '#1a2230', telaio: '#a9afb3', acciaio: '#9aa1a5',
+                metalloStrutture: 1.0, roughness: 0.32, clearcoat: 1.0 },
+    blu:      { cella: '#2c4a78', fuga: '#dfe6ee', busbar: '#8fa3bf', retro: '#5b6f8c', telaio: '#d8dcdd', acciaio: '#c3c8ca',
+                metalloStrutture: 0.35, roughness: 0.42, clearcoat: 0.7 },
+    plastico: { cella: '#ece7de', fuga: '#c4a36a', busbar: '#d9cbb0', retro: '#e2dccf', telaio: '#f3efe8', acciaio: '#ebe6dc',
+                metalloStrutture: 0.0, roughness: 0.75, clearcoat: 0.25 },
+  },
   telaio: { color: '#a9afb3', metalness: 1, roughness: 0.35, envMapIntensity: 1 },
   acciaio: { color: '#9aa1a5', metalness: 1, roughness: 0.45, envMapIntensity: 0.9 },
   inox: { color: '#c8ccd0', metalness: 1, roughness: 0.18, anisotropy: 0.6, envMapIntensity: 1.3 }, // MAI oro né bronzo

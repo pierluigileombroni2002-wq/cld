@@ -2,7 +2,7 @@
 
 Questo documento è il contratto tecnico fra i pacchetti di lavoro. Vale insieme a `DESIGN.md`, che resta normativo per i contenuti, i numeri e la coreografia. Se i due documenti non sono d'accordo su un'interfaccia, vale questo. Se non sono d'accordo su un numero o su un contenuto, vale `DESIGN.md`. In entrambi i casi la discrepanza va segnalata al lead.
 
-Stato attuale (integrazione delle fondamenta): tutti i file esistono. Sono completi `config.js`, `geo.js`, `regia/stato.js`, `main.js`, i pacchetti BASE-RENDER (luce e render), BASE-REGIA (camera, scroll, testi, test) e BASE-UI (markup, stile e interfaccia), più una prima versione di `ui/finale.js` (solo 2D). Restano stub i mondi 3D: PIANURA (`mondo/*`), FV (`impianti/tracker.js`, `agri.js`), FINALE 3D (`impianti/cantiere.js`) e VALLE (`idro/*`). Senza di loro la pagina gira dall'inizio alla fine senza errori: preloader, intro, storia T 0 → 19 (cielo, luce, nebbia, testi, HUD, etichette, petali) e sezioni HTML. Sotto l'orizzonte la cupola del cielo scende in una piana scura (`config.CIELO.suolo`), così il mondo vuoto resta intenzionale; il mondo di prova esiste solo con `?debug=1`.
+Stato attuale (integrazione delle fondamenta): tutti i file esistono. Sono completi `config.js`, `geo.js`, `regia/stato.js`, `main.js`, i pacchetti BASE-RENDER (luce e render), BASE-REGIA (camera, scroll, testi, test) e BASE-UI (markup, stile e interfaccia), più una prima versione di `ui/finale.js` (solo 2D). Restano stub i mondi 3D: PIANURA (`mondo/*`), FV (`impianti/tracker.js`, `agri.js`), FINALE 3D (`impianti/cantiere.js`) e VALLE (`idro/*`). Senza di loro la pagina gira dall'inizio alla fine senza errori: preloader, intro, storia T 0 → 19 (cielo, luce, nebbia, testi, HUD, etichette, petali) e sezioni HTML. Sotto l'orizzonte la cupola del cielo scende in una piana chiara (`config.CIELO.suolo`), così il mondo vuoto resta intenzionale; il mondo di prova esiste solo con `?debug=1`.
 
 ---
 
@@ -392,7 +392,7 @@ A runtime il governatore cambia solo la scala interna, il GTAO, la taglia dell'o
 | `config`, `versione`, `errori`, `guasti`, `moduli()` | diagnostica (`moduli()` restituisce `ok`, `assente` o `guasto` per ogni modulo) |
 | `ctx` | solo con `?test=1` o `?debug=1` |
 
-`test.js` aggiunge `soste()`, `composizione(aspetto?)` (App. C con la posa pura), `contrasto(idBattuta)`, `sonde()` (centro non nero, oro, riflessi del campo) e `prove(opz?)` (le prove di §6.13; il risultato resta in `esitoProve`). Non ridefinisce i membri qui sopra. Con `?debug=1`: pannello (D dettagli), ← → tra le soste, G mondo di prova (automatico finché il mondo vero non c'è), C carta grigia 18 % e freccia verso `ctx.cielo.azAmbiente`.
+`test.js` aggiunge `soste()`, `composizione(aspetto?)` (App. C con la posa pura), `contrasto(idBattuta)`, `sonde()` (centro non vuoto: luce e distanza dal colore del fondo; oro-inchiostro su chiaro; riflessi del campo) e `prove(opz?)` (le prove di §6.13; il risultato resta in `esitoProve`). Non ridefinisce i membri qui sopra. Con `?debug=1`: pannello (D dettagli), ← → tra le soste, G mondo di prova (automatico finché il mondo vero non c'è), C carta grigia 18 % e freccia verso `ctx.cielo.azAmbiente`.
 
 ---
 
@@ -437,7 +437,7 @@ Le voci sono marcate `[ARCH]` in `config.js` e si possono rivedere.
 - **Velo `.scrim`** più largo e più denso di §4.0 (`config.COLONNA.scrimFermate`: 0,86 → 0,72 a 26 % → 0,34 a 40 % → 0 a 54 %): con il gradiente di DESIGN il contrasto del testo sul cielo chiaro scendeva a 2:1 (3a, 3c, 6). Unica fonte: config (testi.js scrive `--scrim`, test.js misura con le stesse fermate).
 - **Nodo "Titolo" del diagramma 2a** acceso a 5,90 – 5,96 invece che a 7,00: a 7,00 la battuta 2a è già uscita (6,00).
 - **K3.7 – K3.8**: vale la quota minima 0,3 sul suolo (§4.0), non 0,25 della tabella (scarto di composizione ≈ 0,003).
-- **Suolo della cupola** (`config.CIELO.suolo`): sotto l'orizzonte la cupola scende in una piana scura (verso il nadir l'inchiostro `#0b0f12`) invece di ripetere il colore dell'orizzonte. Il mondo vero la copre; la fascia fino a h0 = −0,006 resta del colore della nebbia, così il bordo dell'anello del terreno non si vede.
+- **Suolo della cupola** (`config.CIELO.suolo`): sotto l'orizzonte la cupola scende in una piana chiara del colore della nebbia (verso il nadir `PALETTE.carta2`, tema chiaro) invece di ripetere il colore dell'orizzonte. Il mondo vero la copre; la fascia fino a h0 = −0,006 resta del colore della nebbia, così il bordo dell'anello del terreno non si vede.
 - **Avviso di mezzogiorno** nell'HUD: l'elevazione si calcola con `posizioneSole(13:11)` (71,45° → "71,5°"), la stessa funzione dell'HUD.
 - **Unità**: dati delle etichette, valori dell'HUD e piastra non passano più da `text-transform: uppercase` (m, m³/s, MWp, MWh restano unità corrette).
 - **Tarature promosse in config** (erano costanti locali `// TARATURA`): `CIELO.ibl`, `CIELO.tintaDisco`, `CIELO.aureola`, `CIELO.suolo`, `SCROLL`, `RIG.riduciDissolvenzaMs`, `TESTI_REGIA.{bloccoRitardo, bloccoSfalsamento, spento, accensione, auFrazione, saltoT}`, `ETICHETTE_REGOLE.{spazioTestoPx, marginePx, testataPx, areaPiccolo, saltoT, lambdaAlzata}`, `HUD.{scaleFiniM, barraLimitiPx, solare.pianoAgriT, maturita.completoT, scalaApertura.{da,a,passo}, idro.{turbine, discesa, confrontoT, scala}, gantt.{T, fineT}}`, `CAMBIO_MONDO.{ritardoValleMs, costruisciDaT, veloAttesaMs}`, `RENDER.{contestoAttesaMs, pellicola.granaCiclo}`, `COLONNA.{scrimPiccolo, scrimPiccoloFermate}`, `INTRO.{rivela, breve}`, `CONTATTI.chiusuraMs`, `QUALITA.benchmark.{maxS, minimo}`. Nuova chiave di STATO: `giranteHover`.
@@ -467,7 +467,7 @@ node /tmp/claude-0/-home-user-cld/c3d21a17-32c2-5d77-985f-ab05129798fb/scratchpa
   "http://localhost:8790/v2/?test=1" <cartella> "T:1.8,T:9.95,T:13.1" 960 540 3000
 ```
 
-Senza i mondi 3D le prove di `__eri.prove()` che guardano il contenuto ("centro non nero", oro in K1.1/K2.2, riflessi in K3.5) non possono passare: sono il criterio di fatto dei pacchetti PIANURA, FV e VALLE, non delle fondamenta. Tutte le altre (composizione, contrasto, programmi stabili, errori, moduli) passano.
+Senza i mondi 3D le prove di `__eri.prove()` che guardano il contenuto ("centro non vuoto", oro in K1.1/K2.2, riflessi in K3.5) non possono passare: sono il criterio di fatto dei pacchetti PIANURA, FV e VALLE, non delle fondamenta. Tutte le altre (composizione, contrasto, programmi stabili, errori, moduli) passano.
 
 Un pacchetto è fatto quando valgono tutte queste condizioni:
 

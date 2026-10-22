@@ -54,24 +54,35 @@ Questo documento è la specifica di costruzione del sito 3D ERI v2. Lo usano ing
 
 ### 2.1 Palette (token CSS = uniform GLSL)
 
+> **Tema chiaro "Alba luminosa" (scelto dal cliente il 22/10/2026).** Il nero-oro originale non piaceva: la palette qui sotto
+> sostituisce quella scura. Decisioni prese insieme al cliente:
+> - fondo carta, cielo chiaro del mattino, testi verde-inchiostro, accento rame-bruno;
+> - le linee del "gemello" sono **inchiostro** (scure su chiaro, mescolate nel colore), non più luce sommata con bloom;
+> - territorio **stilizzato ad acquerello** (`MATERIALI.terreno.stile`): niente texture fotografiche, che mostravano il mosaico delle particelle;
+> - al posto della notte della tappa 2 un **crepuscolo chiaro**; la valle della tappa 4 è un **plastico bianco** da architetto;
+> - logo: l'originale ricostruito in vettoriale (`logo/ufficiale/logo-eri-originale.svg`);
+> - idroelettrico: le **tre turbine diverse** (Pelton, Francis, Kaplan) restano obbligatorie.
+>
+> I valori normativi sono in `config.PALETTE`, `config.CIELO_PRESET` e nei token di `css/stile.css`. Dove il resto del documento
+> parla di "nero", "notte americana", emissione HDR o bloom delle linee, vale questa sezione.
+
 ```css
 :root{
-  --nero:#050607;        /* fondo, cielo allo zenit, nebbia nei vuoti */
-  --inchiostro:#0b0f12;  /* terreno in "modalità carta" */
-  --grafite:#0d1012;     /* pannelli, piani, base del plastico */
-  --grafite-2:#15191c;   /* campitura delle sezioni */
-  --bordo:rgba(216,184,120,.16);
-  --oro:#d8b878;         /* isoipse, linee dati, occhielli */
-  --oro-chiaro:#f1dfb3;  /* corsivi dei titoli, valori attivi, punta della penna */
-  --avorio:#f4efe4;      /* titoli */
-  --platino:#c9d0d4;     /* testo, griglia catastale */
-  --grigio:#8a949a;      /* dati secondari */
-  --smeraldo:#36c39a;    /* aree idonee (solo come dato) */
-  --vincolo:#e0644f;     /* vincoli: sempre tratteggio, mai pieno */
-  --acqua:#8fb7c9;       /* acqua, linee di corrente, idroelettrico */
+  --fondo:#f3ece2;       /* fondo della pagina e della scena, velo pieno, preloader */
+  --carta:#efe7da;       /* terreno in "modalità carta", superfici del plastico */
+  --carta2:#e4dbcc;      /* pannelli, campiture, facce di sezione */
+  --inchiostro:#10241c;  /* titoli e testo forte (alias: --nero, --avorio) */
+  --platino:#2c3b34;     /* testo corrente */
+  --grigio:#5b665f;      /* dati secondari (≥ 4,5:1 sul fondo) */
+  --griglia:#6f7a72;     /* confini catastali e linee neutre 3D */
+  --oro:#8d5f12;         /* oro-inchiostro: occhielli, dati, linee sottili */
+  --oro-linea:#b9831f;   /* oro delle linee e dei decori 3D più spessi */
+  --oro-chiaro:#9a4f1c;  /* accento: corsivi dei titoli, valori attivi */
+  --bordo:rgba(141,95,18,.32);
+  --smeraldo:#1e7f5c; --vincolo:#c0412c; --acqua:#2f6f8c;
   --rame:#b8572a;        /* SOLO: sigillo READY TO BUILD, cavidotto acceso, CTA premuta (dal "ITALIA" del logo) */
-  --ambra:#e8a33d;       /* SOLO: stringa 14-B in manutenzione (tappa 5b) */
-  --oro-3d-emissivo:#d6a454; /* oro per le emissioni 3D: dopo ACES torna percepito come --oro */
+  --ambra:#a8650f;       /* SOLO: stringa 14-B in manutenzione (tappa 5b) */
+  --su-oro:#fbf7f0;      /* testo sopra i riempimenti oro e rame */
 }
 ```
 
