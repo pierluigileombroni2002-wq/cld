@@ -70,6 +70,13 @@ export const FONT = {
 // Tema chiaro: mondo luminoso e naturale (terreno chiaro, acqua lucida azzurro-ardesia, verdi caldi e polverosi).
 export const MATERIALI = {
   terreno: { envMapIntensity: 0.45, metalness: 0, roughness: 1, albedo: 1.25, saturazione: 1.0,   // tema chiaro: campagna luminosa
+             // stile del territorio "vero": 'pbr' (texture fotografiche), 'acquerello' (tinte piatte morbide),
+             // 'plastico' (bianco con la sola vegetazione in verde), 'carta' (la mappa chiara anche nelle tappe reali).
+             // Anteprima: ?stile=… nell'URL.
+             // scelta del cliente (22/10/2026): acquerello; con le texture si vedeva il mosaico delle particelle
+             stile: (typeof location !== 'undefined' && new URLSearchParams(location.search).get('stile')) || 'acquerello',
+             stilizzato: { salvia: '#aebc8c', prato: '#c8d1a0', grano: '#dccc9c', ocra: '#cfb68a', bosco: '#93a77c',
+                           ghiaia: '#d8d0c2', asfalto: '#a7a39b', bianco: '#f3efe8', verdePlastico: '#b9c8a2', grigioPlastico: '#d9d4cb' },
              ripetizioneErba: 6.0, ripetizioneCampo: 4.6, macro: 0.13, rocciaPendenza: [0.18, 0.35] },
   fiume: { color: '#3d6f86', roughness: 0.06, metalness: 0, clearcoat: 0.6, clearcoatRoughness: 0.04,
            envMapIntensity: 1.4, normalScale: 0.35 },

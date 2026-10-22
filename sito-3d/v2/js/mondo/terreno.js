@@ -45,6 +45,8 @@ const cop = v => f(v > 1 ? Math.min(v / 2.4, 1) : v);
 // TARATURA: proporre in config — normali appiattite in modo carta (0 = luce vera, 1 = carta piatta) e forza del rilievo
 // (OVERLAY.cartaOmbreggiatura.emissione è la copertura della grafite sui versanti opposti a NO, qui × 2,5)
 const PIATTO = 0.85, RILIEVO = Math.min(1, OV.cartaOmbreggiatura.emissione * 2.5);
+// stile del territorio vero (config.MATERIALI.terreno.stile): 0 pbr, 1 acquerello, 2 plastico, 3 carta
+const STILE = { pbr: 0, acquerello: 1, plastico: 2, carta: 3 }[MT.stile] ?? 0, ST = MT.stilizzato;
 
 // ---------------------------------------------------------------- GLSL
 const V_DICH = `attribute float aAltezza;\n${SOLLEVAMENTO_GLSL}`;
@@ -183,10 +185,23 @@ float ruv = mix( arm.g, 1.0, wRoccia * 0.25 );
 ruv = mix( ruv, 0.95, ghi ); ruv = mix( ruv, ${f(MATERIALI.asfalto.roughness)}, asf );
 nT = normalize( mix( nT, vec3( 0.0, 0.0, 1.0 ), max( asf, ghi * 0.6 ) ) );
 albedo *= mix( 1.0, arm.r, 0.5 );                                            // cavità dall'AO della mappa ARM
+${STILE === 1 ? `// acquerello: tinte piatte che sfumano col rumore, niente texture né mosaico dei campi
+float nA = vnoise( xz * 0.012 ) * 0.6 + vnoise( xz * 0.05 + 7.0 ) * 0.4;
+vec3 aS = mix( ${vec3Lin(ST.salvia)}, ${vec3Lin(ST.prato)}, nA );
+aS = mix( aS, ${vec3Lin(ST.grano)}, 0.18 * smoothstep( 0.2, 0.8, masc.r + ( vnoise( xz * 0.08 ) - 0.5 ) * 0.9 ) );
+aS = mix( aS, ${vec3Lin(ST.ocra)}, wRoccia * 0.7 );
+aS = mix( aS, ${vec3Lin(ST.bosco)}, masc.b * 0.6 );
+aS = mix( aS, ${vec3Lin(ST.ghiaia)}, ghi );
+aS = mix( aS, ${vec3Lin(ST.asfalto)}, asf );
+albedo = aS; ruv = 1.0; nT = vec3( 0.0, 0.0, 1.0 );` : ''}${STILE === 2 ? `// plastico: modello bianco, verde solo per la vegetazione, strade appena più grigie
+vec3 aS = ${vec3Lin(ST.bianco)} * ( 0.97 + 0.03 * vnoise( xz * 0.03 ) );
+aS = mix( aS, ${vec3Lin(ST.verdePlastico)}, masc.b * 0.85 );
+aS = mix( aS, ${vec3Lin(ST.grigioPlastico)}, max( asf, ghi ) );
+albedo = aS; ruv = 1.0; nT = vec3( 0.0, 0.0, 1.0 );` : ''}
 // carta chiara ↔ territorio PBR; fronte circolare da SITO_C (alba della materia)
 float dSito = distance( xz, uSitoC.xz );
-float realta = uRealta;
-if ( uFronteRealta > 0.0 ) realta = max( realta, 1.0 - smoothstep( uFronteRealta - 4.0, uFronteRealta, dSito ) );
+float realta = ${STILE === 3 ? '0.0;   // stile carta: la mappa resta anche nelle tappe reali' : 'uRealta;'}
+${STILE === 3 ? '' : 'if ( uFronteRealta > 0.0 ) realta = max( realta, 1.0 - smoothstep( uFronteRealta - 4.0, uFronteRealta, dSito ) );'}
 diffuseColor.rgb *= mix( CARTA, albedo, realta );
 // rilievo della carta: velo di grafite sui versanti opposti a NO (moltiplicativo, solo carta)
 float ombraC = clamp( ( CARTA_DIR.y - dot( nM, CARTA_DIR ) ) / 0.25, 0.0, 1.0 );
@@ -407,7 +422,7 @@ export async function crea(ctx) {
   };
   const materiale = nuovoMateriale(THREE.MeshStandardMaterial, {
     color: 0xffffff, map: erba.diff, normalMap: erba.nor, roughness: MT.roughness, metalness: MT.metalness, envMapIntensity: MT.envMapIntensity,
-  }, { patch: patchTerreno, chiave: 'terreno-v2' });
+  }, { patch: patchTerreno, chiave: `terreno-v2-s${STILE}` });
   const patchSolo = (normale) => sh => { sh.uniforms.uOnda = U.uOnda; sh.uniforms.uSitoC = U.uSitoC; patchVertice(sh, false, normale); };
   const profondita = nuovoMateriale(THREE.MeshDepthMaterial, { depthPacking: THREE.RGBADepthPacking }, { patch: patchSolo(false), chiave: 'terreno-profondita' });
   const normali = nuovoMateriale(THREE.MeshNormalMaterial, {}, { patch: patchSolo(true), chiave: 'terreno-normali' });
