@@ -20,13 +20,18 @@
 //  export { altezza } da ../geo.js (riesportata, NON ridefinita).
 //  export const SOLLEVAMENTO_GLSL: string — funzione GLSL lift(vec2 xz) condivisa (uniform uOnda, uSitoC).
 //  crea(ctx): legge ctx.dati.catasto (tStati, tVincoli, tMaschere; se assenti usa texture neutre 1×1);
-//             pubblica ctx.dati.terreno = { mesh, anello, materiale }.
-//  aggiorna(ctx, T, t, dt): nulla da fare (tutto è uniform condivisa).
+//             pubblica ctx.dati.terreno = { mesh, anello, materiale, erba }.
+//  aggiorna(ctx, T, t, dt): vento (fermo con riduci movimento) e piastrelle dell'erba 3D (stili naturale e primipiani);
+//             il resto è uniform condivisa.
+//  Stili (?stile=): acquerello (predefinito), pbr, plastico, carta, naturale (campagna realistica ovunque, erba 3D
+//  vicino alla camera), primipiani (acquerello da lontano, naturale ed erba 3D entro VICINO u dalla camera).
 // =============================================================================
 import * as THREE from 'three';
 import { PIANURA, OVERLAY, PALETTE, MATERIALI } from '../config.js';
 import { altezza, fbm, ss } from '../geo.js';
 import { nuovoMateriale } from '../luce/nebbia.js';
+import { SUOLO_GLSL, F_NATURA_FUNZ, F_NATURA } from './terreno-natura.js';
+import { creaErba } from './terreno-erba.js';
 export { altezza } from '../geo.js';
 export const MONDO = 'pianura';
 
@@ -45,8 +50,12 @@ const cop = v => f(v > 1 ? Math.min(v / 2.4, 1) : v);
 // TARATURA: proporre in config — normali appiattite in modo carta (0 = luce vera, 1 = carta piatta) e forza del rilievo
 // (OVERLAY.cartaOmbreggiatura.emissione è la copertura della grafite sui versanti opposti a NO, qui × 2,5)
 const PIATTO = 0.85, RILIEVO = Math.min(1, OV.cartaOmbreggiatura.emissione * 2.5);
-// stile del territorio vero (config.MATERIALI.terreno.stile): 0 pbr, 1 acquerello, 2 plastico, 3 carta
-const STILE = { pbr: 0, acquerello: 1, plastico: 2, carta: 3 }[MT.stile] ?? 0, ST = MT.stilizzato;
+// stile del territorio vero (config.MATERIALI.terreno.stile): 0 pbr, 1 acquerello, 2 plastico, 3 carta,
+// 4 naturale (campagna realistica ovunque, erba 3D vicino alla camera: terreno-natura.js, terreno-erba.js),
+// 5 primipiani (acquerello da lontano, naturale ed erba 3D vicino alla camera)
+const STILE = { pbr: 0, acquerello: 1, plastico: 2, carta: 3, naturale: 4, primipiani: 5 }[MT.stile] ?? 0, ST = MT.stilizzato;
+// TARATURA: proporre in config — primipiani: il naturale sfuma nell'acquerello fra queste distanze dalla camera (u)
+const VICINO = [25, 40];
 
 // ---------------------------------------------------------------- GLSL
 const V_DICH = `attribute float aAltezza;\n${SOLLEVAMENTO_GLSL}`;
@@ -136,10 +145,12 @@ float tratt( vec2 p, vec2 dir, float passo, float w ) { float t = dot( p, dir ) 
 // inchiostro sottrattivo con copertura a (0..1): sulla carta dà esattamente col, sul territorio vero scurisce sempre
 // (trasmittanza col / CARTA), così la linea resta scura anche dove il terreno è più scuro dell'oro
 void inch( inout vec3 c, vec3 col, float a ) { c *= mix( vec3( 1.0 ), col / CARTA, clamp( a, 0.0, 1.0 ) ); }
+${STILE >= 4 ? `uniform float uTempoV, uVentoT, uErbaR;\n${SUOLO_GLSL}\n${F_NATURA_FUNZ}` : ''}
 `;
 
-// Splat PBR (sostituisce map_fragment): calcola albedo, armSplat, norSplat e le grandezze riusate dagli overlay.
-const F_SPLAT = /* glsl */`
+// Splat (sostituisce map_fragment): calcola albedo, armSplat, norSplat e le grandezze riusate dagli overlay.
+// Intestazione comune; poi lo splat PBR (stili 0–3) o quello naturale (stili 4–5, terreno-natura.js).
+const F_TESTA = /* glsl */`
 vec2 xz = vPosMondo.xz;
 vec3 nM = normalize( vNorMondo );
 float pend = 1.0 - nM.y;
@@ -148,6 +159,8 @@ vec4 masc = texture2D( tMaschere, uvM );
 vec2 gC = vec2( CA * xz.x - SA * xz.y, SA * xz.x + CA * xz.y ) / CELLA + NCELLE * 0.5;
 vec2 cellaC = floor( gC );
 float hC = hash12( cellaC + 17.0 );
+`;
+const F_PBR = /* glsl */`
 // erba-roccia nelle coordinate della mesh (stessa orientazione del TBN), una ripetizione ogni ${MT.ripetizioneErba} u
 vec2 uvE = vMapUv * RIP_E;
 float kE = smoothstep( 0.35, 0.65, vnoise( uvE * 0.07 ) );
@@ -185,7 +198,9 @@ float ruv = mix( arm.g, 1.0, wRoccia * 0.25 );
 ruv = mix( ruv, 0.95, ghi ); ruv = mix( ruv, ${f(MATERIALI.asfalto.roughness)}, asf );
 nT = normalize( mix( nT, vec3( 0.0, 0.0, 1.0 ), max( asf, ghi * 0.6 ) ) );
 albedo *= mix( 1.0, arm.r, 0.5 );                                            // cavità dall'AO della mappa ARM
-${STILE === 1 ? `// acquerello: tinte piatte che sfumano col rumore, niente texture né mosaico dei campi
+`;
+// acquerello: tinte piatte che sfumano col rumore, niente texture né mosaico dei campi
+const F_ACQUERELLO = /* glsl */`
 float nA = vnoise( xz * 0.012 ) * 0.6 + vnoise( xz * 0.05 + 7.0 ) * 0.4;
 vec3 aS = mix( ${vec3Lin(ST.salvia)}, ${vec3Lin(ST.prato)}, nA );
 aS = mix( aS, ${vec3Lin(ST.grano)}, 0.18 * smoothstep( 0.2, 0.8, masc.r + ( vnoise( xz * 0.08 ) - 0.5 ) * 0.9 ) );
@@ -193,7 +208,12 @@ aS = mix( aS, ${vec3Lin(ST.ocra)}, wRoccia * 0.7 );
 aS = mix( aS, ${vec3Lin(ST.bosco)}, masc.b * 0.6 );
 aS = mix( aS, ${vec3Lin(ST.ghiaia)}, ghi );
 aS = mix( aS, ${vec3Lin(ST.asfalto)}, asf );
-albedo = aS; ruv = 1.0; nT = vec3( 0.0, 0.0, 1.0 );` : ''}${STILE === 2 ? `// plastico: modello bianco, verde solo per la vegetazione, strade appena più grigie
+`;
+const F_SPLAT = F_TESTA + (STILE >= 4 ? F_NATURA : F_PBR) + /* glsl */`
+${STILE === 1 ? F_ACQUERELLO + 'albedo = aS; ruv = 1.0; nT = vec3( 0.0, 0.0, 1.0 );' : ''}${STILE === 5 ? F_ACQUERELLO + `// primipiani: naturale vicino alla camera, acquerello da lontano
+float kVic = 1.0 - smoothstep( ${f(VICINO[0])}, ${f(VICINO[1])}, distance( cameraPosition, vPosMondo ) );
+albedo = mix( aS, albedo, kVic ); ruv = mix( 1.0, ruv, kVic ); nT = normalize( mix( vec3( 0.0, 0.0, 1.0 ), nT, kVic ) );
+arm.r = mix( 1.0, arm.r, kVic );` : ''}${STILE === 2 ? `// plastico: modello bianco, verde solo per la vegetazione, strade appena più grigie
 vec3 aS = ${vec3Lin(ST.bianco)} * ( 0.97 + 0.03 * vnoise( xz * 0.03 ) );
 aS = mix( aS, ${vec3Lin(ST.verdePlastico)}, masc.b * 0.85 );
 aS = mix( aS, ${vec3Lin(ST.grigioPlastico)}, max( asf, ghi ) );
@@ -409,6 +429,8 @@ export async function crea(ctx) {
     tStati: { value: cat?.tStati || neutra(0, 0, 0, 0) }, tVincoli: { value: cat?.tVincoli || neutra(0, 0, 0, 0) },
     tMaschere: { value: cat?.tMaschere || neutra(0, 0, 0, 0) },
     tCampoDiff: { value: campoTex.diff }, tCampoNor: { value: campoTex.nor }, tCampoArm: { value: campoTex.arm }, tErbaArm: { value: erba.arm },
+    uTempoV: U.uTempo, uVentoT: { value: 1 },   // naturale: onde del vento sul grano (ferme con riduci movimento)
+    uErbaR: { value: 0 },                       // naturale: raggio dell'erba 3D (0 = niente erba)
   };
   const patchTerreno = sh => {
     Object.assign(sh.uniforms, uni);
@@ -434,9 +456,21 @@ export async function crea(ctx) {
   const anello = new THREE.Mesh(creaAnello(), materiale);
   anello.name = 'terreno.anello'; anello.receiveShadow = true; anello.castShadow = false; anello.userData.materialeNormali = normali;
   ctx.scene.pianura.add(mesh, anello);
-  ctx.dati.terreno = { mesh, anello, materiale };
-  st = { mesh, anello, materiale };
+  // naturale e primipiani: fili d'erba 3D attorno alla camera (dal livello media in su)
+  const erbaGL = STILE >= 4 ? creaErba(ctx, {
+    alt: mesh.geometry.attributes.aAltezza.array, S, sollevamento: SOLLEVAMENTO_GLSL,
+    uni: { uOnda: U.uOnda, uSitoC: U.uSitoC, uRealta: U.uRealta, uFronteRealta: U.uFronteRealta, uCantiere: uni.uCantiere,
+           tStati: uni.tStati, tMaschere: uni.tMaschere },
+    rMax: STILE === 5 ? VICINO[0] + 5 : undefined,
+  }) : null;
+  uni.uErbaR.value = erbaGL?.rMax ?? 0;
+  ctx.dati.terreno = { mesh, anello, materiale, erba: erbaGL };
+  st = { mesh, anello, materiale, uni, erba: erbaGL };
 }
 
-/** Ogni fotogramma: nulla (tutte le grandezze animate sono uniform condivise collegate per riferimento). */
-export function aggiorna(/* ctx, T, t, dt */) {}
+/** Ogni fotogramma: vento (fermo con riduci movimento) ed erba 3D; il resto sono uniform condivise per riferimento. */
+export function aggiorna(ctx) {
+  if (!st) return;
+  st.uni.uVentoT.value = ctx.flags?.riduci ? 0 : 1;
+  st.erba?.aggiorna(ctx);
+}

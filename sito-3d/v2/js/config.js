@@ -73,8 +73,9 @@ export const MATERIALI = {
              // stile del territorio "vero": 'pbr' (texture fotografiche), 'acquerello' (tinte piatte morbide),
              // 'plastico' (bianco con la sola vegetazione in verde), 'carta' (la mappa chiara anche nelle tappe reali).
              // Anteprima: ?stile=… nell'URL.
-             // scelta del cliente (22/10/2026): acquerello; con le texture si vedeva il mosaico delle particelle
-             stile: (typeof location !== 'undefined' && new URLSearchParams(location.search).get('stile')) || 'acquerello',
+             // scelta del cliente (22/10/2026): prima acquerello (le vecchie texture mostravano il mosaico delle particelle),
+             // poi "realistico ovunque" dopo aver visto in ultra lo stile naturale con l'erba 3D
+             stile: (typeof location !== 'undefined' && new URLSearchParams(location.search).get('stile')) || 'naturale',
              stilizzato: { salvia: '#aebc8c', prato: '#c8d1a0', grano: '#dccc9c', ocra: '#cfb68a', bosco: '#93a77c',
                            ghiaia: '#d8d0c2', asfalto: '#a7a39b', bianco: '#f3efe8', verdePlastico: '#b9c8a2', grigioPlastico: '#d9d4cb' },
              ripetizioneErba: 6.0, ripetizioneCampo: 4.6, macro: 0.13, rocciaPendenza: [0.18, 0.35] },
@@ -98,6 +99,14 @@ export const MATERIALI = {
   telaio: { color: '#a9afb3', metalness: 1, roughness: 0.35, envMapIntensity: 1 },
   acciaio: { color: '#9aa1a5', metalness: 1, roughness: 0.45, envMapIntensity: 0.9 },
   inox: { color: '#c8ccd0', metalness: 1, roughness: 0.18, anisotropy: 0.6, envMapIntensity: 1.3 }, // MAI oro né bronzo
+  // stile delle macchine idro (anteprima: ?turbine=inox|bianco|verniciato). Le giranti restano SEMPRE inox (§2.6).
+  // cassa = chiocciola, distributore, carter, coperchi; dettagli = flange, bulloni, servomotori
+  turbine: {
+    stile: (typeof location !== 'undefined' && new URLSearchParams(location.search).get('turbine')) || 'inox',
+    inox:       { cassa: '#bfc4c7', cassaMetallo: 0.85, cassaRoughness: 0.32, dettagli: '#9aa1a5', dettagliMetallo: 1.0 },
+    bianco:     { cassa: '#f3efe8', cassaMetallo: 0.0,  cassaRoughness: 0.75, dettagli: '#d9d2c4', dettagliMetallo: 0.0 },
+    verniciato: { cassa: '#2f6b77', cassaMetallo: 0.15, cassaRoughness: 0.42, dettagli: '#d7b24a', dettagliMetallo: 0.2 },
+  },
   casse: { color: '#2a2f33', metalnessDaArm: 0.8, envMapIntensity: 0.8 },
   calcestruzzo: { color: '#b9b4ab', uvScala: 0.25, envMapIntensity: 0.6 },
   cabine: { color: '#8e8a83' },

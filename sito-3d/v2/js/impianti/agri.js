@@ -35,8 +35,15 @@ import { LAYOUT, PIANURA, PALETTE, MATERIALI, OVERLAY, TRACCE, CAMERA, CAMBIO_MO
 import { altezza, rumore, mulberry32, clamp, ss } from '../geo.js';
 import { nuovoMateriale } from '../luce/nebbia.js';
 import { fase, sostaVicina } from '../regia/stato.js';
+import { descriviCampo, glslCampo, uniformiCampo, percorsoCamera, cullaIstanze, DENSITA_Q } from './agri-campo.js';
+import { creaGrano } from './agri-grano.js';
 
 export const MONDO = 'pianura';
+
+// Coltura sotto i tracker: grano dorato (scelta del cliente, 22/10/2026, agri-grano.js).
+// ?coltura=strisce torna alle strisce acquerello qui sotto (riserva per i livelli più leggeri o per confronto).
+const VARIANTI = { grano: creaGrano };
+const COLTURA = (typeof location !== 'undefined' && new URLSearchParams(location.search).get('coltura')) || 'grano';
 
 const A = LAYOUT.agri, CO = LAYOUT.colture, TR = LAYOUT.trattore, VIC = PIANURA.vicoloAgri, MU = UNITA.metriPerU;
 
@@ -268,7 +275,19 @@ function patchFrammentoColture(u) {
   };
 }
 
+/** Coltura realistica (agri-*.js): suolo, volumi e istanze; crescono con comparsaAgri su tutti i livelli. */
+function creaColturaVera(ctx, tipo) {
+  const campo = descriviCampo(ctx), U = uniformiCampo(ctx);
+  const livello = ctx.qualita?.livello || (ctx.qualita?.Q?.coltureSoloVicolo ? 'base' : 'media');
+  const K = { campo, U, glsl: glslCampo(campo), kQ: DENSITA_Q[livello] ?? DENSITA_Q.media, livello, P: percorsoCamera(ctx) };
+  const { gruppo, n, istanze } = VARIANTI[tipo](ctx, K);
+  gruppo.visible = false;
+  ctx.scene.pianura.add(gruppo);
+  return { mesh: gruppo, u: U, vera: tipo, soloVicolo: false, n, istanze };
+}
+
 function creaColture(ctx) {
+  if (VARIANTI[COLTURA]) return creaColturaVera(ctx, COLTURA);
   const soloVicolo = !!ctx.qualita?.Q?.coltureSoloVicolo;
   const voci = righeColture(ctx, soloVicolo);
   // chiave dell'onda: distanza da AGRI_C normalizzata sull'intero campo (uguale in tutti i livelli)
@@ -494,7 +513,12 @@ export function aggiorna(ctx, T /*, t, dt */) {
   const cresce = c.soloVicolo ? (tappa3 ? -0.1 + 1.2 * fase(Te, c.tDa, c.tA) : -0.1) : S.comparsaAgri;
   c.u.uCrescita.value = cresce;
   c.u.uTempoV.value = riduci ? 0 : U.uTempo.value;
-  c.mesh.visible = c.n > 0 && cresce > 0;
+  c.mesh.visible = (c.n > 0 || c.vera) && cresce > 0;
+  if (c.vera) {   // u per pixel a distanza 1 (nastri delle piante mai più sottili di ~1 px) e blocchi di istanze in vista
+    const cam = ctx.camera, h = Math.max(1, U.uRisoluzione.value.y);
+    c.u.uPxAng.value = 2 * Math.tan((cam?.fov ?? 45) * Math.PI / 360) / h;
+    cullaIstanze(c.istanze, cam, c.mesh.visible);
+  }
 
   // ---- linee: px CSS × uPx sul buffer interno
   const res = U.uRisoluzione.value, px = U.uPx.value;
