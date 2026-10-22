@@ -10,9 +10,10 @@
 //    quota del bordo che sfuma in colline lontane dentro la nebbia. Stesso materiale: gli overlay si spengono fuori dal foglio.
 //  - materiale: MeshStandardMaterial (nuovoMateriale) + patch: sollevamento radiale uOnda nel vertice (stessa patch per
 //    customDepthMaterial e per il materiale delle normali del GTAO), splat erba-roccia / campo (solchi allineati alla
-//    particella) / strade / bosco / piazzali con noTile, carta d'inchiostro ↔ PBR (uRealta, fronte uFronteRealta),
-//    gemello d'oro in totalEmissiveRadiance (isoipse, confini catastali, stati, vincoli, fiume carta, onde), sottrazione e
-//    nuvole prima di opaque_fragment.
+//    particella) / strade / bosco / piazzali con noTile, carta chiara ↔ PBR (uRealta, fronte uFronteRealta),
+//    gemello d'oro A INCHIOSTRO sull'albedo, prima della luce (isoipse, confini catastali, stati, vincoli, fiume carta,
+//    onde: copertura 0..1 verso il colore della linea, mai luce sommata), velatura dei non idonei verso la carta,
+//    normali appiattite in modo carta (niente luce radente a chiazze), nuvole prima di opaque_fragment.
 //  - tutte le uniform condivise si collegano PER RIFERIMENTO a ctx.U; quelle private del pacchetto stanno in ctx.dati.catasto.U.
 //
 // Contratto (vincolante, vedi ARCHITETTURA.md):
@@ -39,6 +40,11 @@ const LATO = PIANURA.lato, MEZZO = LATO / 2;
 const MT = MATERIALI.terreno, OV = OVERLAY;
 const f = v => (+v).toFixed(5);
 const vec3Lin = (hex, k = 1) => { const c = new THREE.Color(hex).multiplyScalar(k); return `vec3(${f(c.r)}, ${f(c.g)}, ${f(c.b)})`; };
+// copertura d'inchiostro 0..1 dai fattori di OVERLAY (ripiego se un valore fosse ancora un'emissione HDR > 1)
+const cop = v => f(v > 1 ? Math.min(v / 2.4, 1) : v);
+// TARATURA: proporre in config — normali appiattite in modo carta (0 = luce vera, 1 = carta piatta) e forza del rilievo
+// (OVERLAY.cartaOmbreggiatura.emissione è la copertura della grafite sui versanti opposti a NO, qui × 2,5)
+const PIATTO = 0.85, RILIEVO = Math.min(1, OV.cartaOmbreggiatura.emissione * 2.5);
 
 // ---------------------------------------------------------------- GLSL
 const V_DICH = `attribute float aAltezza;\n${SOLLEVAMENTO_GLSL}`;
@@ -78,11 +84,14 @@ ${V_VARYING}
 #define FW0 ${f(FW[0])}
 #define FW1 ${f(FW[1])}
 const vec3 LUMA = vec3( 0.2126, 0.7152, 0.0722 );
-const vec3 INCHIOSTRO = ${vec3Lin(PALETTE.inchiostro)};
+const vec3 CARTA = ${vec3Lin(PALETTE.carta)};
+const vec3 VELATURA = ${vec3Lin(OV.velatura || PALETTE.carta)};
+const vec3 GRAFITE = ${vec3Lin(PALETTE.grafite)};
 const vec3 ORO = ${vec3Lin(PALETTE.oro)};
-const vec3 ORO_E = ${vec3Lin('#d6a454')};
+const vec3 ORO_LINEA = ${vec3Lin(PALETTE.oroLinea || PALETTE.oro3d)};
 const vec3 ORO_CHIARO = ${vec3Lin(PALETTE.oroChiaro)};
 const vec3 PLATINO = ${vec3Lin(PALETTE.platino)};
+const vec3 GRIGLIA = ${vec3Lin(PALETTE.griglia)};
 const vec3 SMERALDO = ${vec3Lin(PALETTE.smeraldo)};
 const vec3 VINCOLO = ${vec3Lin(PALETTE.vincolo)};
 const vec3 ACQUA = ${vec3Lin(PALETTE.acqua)};
@@ -122,6 +131,9 @@ float lineaP( float v, float w ) {
 float maschera( float v ) { return clamp( ( v - 0.5 ) / max( fwidth( v ), 1e-4 ) + 0.5, 0.0, 1.0 ); }
 float bordoM( float v, float w ) { return lineaD( abs( v - 0.5 ) / max( fwidth( v ), 1e-4 ), w ); }
 float tratt( vec2 p, vec2 dir, float passo, float w ) { float t = dot( p, dir ) / passo; return lineaD( abs( fract( t - 0.5 ) - 0.5 ) * passo, w ); }
+// inchiostro sottrattivo con copertura a (0..1): sulla carta dà esattamente col, sul territorio vero scurisce sempre
+// (trasmittanza col / CARTA), così la linea resta scura anche dove il terreno è più scuro dell'oro
+void inch( inout vec3 c, vec3 col, float a ) { c *= mix( vec3( 1.0 ), col / CARTA, clamp( a, 0.0, 1.0 ) ); }
 `;
 
 // Splat PBR (sostituisce map_fragment): calcola albedo, armSplat, norSplat e le grandezze riusate dagli overlay.
@@ -171,26 +183,35 @@ float ruv = mix( arm.g, 1.0, wRoccia * 0.25 );
 ruv = mix( ruv, 0.95, ghi ); ruv = mix( ruv, ${f(MATERIALI.asfalto.roughness)}, asf );
 nT = normalize( mix( nT, vec3( 0.0, 0.0, 1.0 ), max( asf, ghi * 0.6 ) ) );
 albedo *= mix( 1.0, arm.r, 0.5 );                                            // cavità dall'AO della mappa ARM
-// carta d'inchiostro ↔ territorio PBR; fronte circolare da SITO_C (alba della materia)
+// carta chiara ↔ territorio PBR; fronte circolare da SITO_C (alba della materia)
 float dSito = distance( xz, uSitoC.xz );
 float realta = uRealta;
 if ( uFronteRealta > 0.0 ) realta = max( realta, 1.0 - smoothstep( uFronteRealta - 4.0, uFronteRealta, dSito ) );
-diffuseColor.rgb *= mix( INCHIOSTRO, albedo, realta );
+diffuseColor.rgb *= mix( CARTA, albedo, realta );
+// rilievo della carta: velo di grafite sui versanti opposti a NO (moltiplicativo, solo carta)
+float ombraC = clamp( ( CARTA_DIR.y - dot( nM, CARTA_DIR ) ) / 0.25, 0.0, 1.0 );
+diffuseColor.rgb = mix( diffuseColor.rgb, GRAFITE, ${f(RILIEVO)} * ombraC * ( 1.0 - realta ) );
 vec4 armSplat = vec4( arm.r, mix( 1.0, ruv, realta ), 0.0, 1.0 );
 vec3 norSplat = normalize( mix( vec3( 0.0, 0.0, 1.0 ), nT, realta ) ) * 0.5 + 0.5;
 `;
 
-// Overlay del gemello d'oro (dopo emissivemap_fragment): tutto in totalEmissiveRadiance, spessori in px CSS × uPx.
+// In modo carta la normale si appiattisce verso l'alto: la carta prende luce quasi uniforme, senza chiazze radenti.
+const F_NORMALE_CARTA = `
+normal = normalize( mix( normal, normalize( ( viewMatrix * vec4( 0.0, 1.0, 0.0, 0.0 ) ).xyz ), ( 1.0 - realta ) * ${f(PIATTO)} ) );`;
+
+// Overlay del gemello a INCHIOSTRO (subito dopo lo splat): ogni strato scurisce l'albedo verso il colore della linea
+// con la sua copertura (fattori di config.OVERLAY, 0..1), prima della luce: linee scure su chiaro, niente bloom.
+// Spessori in px CSS × uPx.
 const F_OVERLAY = /* glsl */`
 vec2 pCss = gl_FragCoord.xy / uPx;
 float upx = max( length( fwidth( xz ) ) * 0.70710678, 1e-5 );               // u per pixel del buffer
 float dentro = 1.0 - smoothstep( MEZZO - 12.0, MEZZO - 2.0, max( abs( xz.x ), abs( xz.y ) ) );
 // isoipse sulla quota originale: ordinarie ogni ${OV.isoipse.passo * 10} m, direttrici ogni ${OV.direttrici.passo * 10} m
-float iso = max( lineaP( vAlt / ${f(OV.isoipse.passo)}, ${f(OV.isoipse.px)} * uPx ) * ${f(OV.isoipse.emissione)},
-                 lineaP( vAlt / ${f(OV.direttrici.passo)}, ${f(OV.direttrici.px)} * uPx ) * ${f(OV.direttrici.emissione)} );
-float zonaLift = vLift * ( 1.0 - vLift ) * 4.0;                              // le isoipse si accendono mentre salgono
-float rit = 1.0;
-if ( uRitraccia > 0.0 ) { float dd = ( dSito - uRitraccia ) / 4.0; rit += ${f(OV.ritraccia.emissione)} * exp( - dd * dd ) * ( 1.0 - smoothstep( 280.0, 320.0, uRitraccia ) ); }
+float lIso = lineaP( vAlt / ${f(OV.isoipse.passo)}, ${f(OV.isoipse.px)} * uPx );
+float lDir = lineaP( vAlt / ${f(OV.direttrici.passo)}, ${f(OV.direttrici.px)} * uPx );
+float zonaLift = vLift * ( 1.0 - vLift ) * 4.0;                              // le isoipse si ripassano mentre salgono
+float rit = 0.0;                                                             // ripassata (finale): verso il rame-bruno
+if ( uRitraccia > 0.0 ) { float dd = ( dSito - uRitraccia ) / 4.0; rit = ${cop(OV.ritraccia.emissione)} * exp( - dd * dd ) * ( 1.0 - smoothstep( 280.0, 320.0, uRitraccia ) ); }
 // catasto: cella corrente e vicini più prossimi in x e in y (tStati, NearestFilter)
 vec2 fG = gC - cellaC;
 vec2 fwG = max( fwidth( gC ), vec2( 1e-5 ) );
@@ -211,16 +232,12 @@ float ido0 = bitDi( b0, 1.0 ) * inGriglia, sit0 = bitDi( b0, 2.0 ) * inGriglia, 
 float bIdo = max( lineaD( dB.x, wI ) * abs( ido0 - bitDi( bX, 1.0 ) ), lineaD( dB.y, wI ) * abs( ido0 - bitDi( bY, 1.0 ) ) ) * fadeG;
 float bSit = max( lineaD( dB.x, wS ) * abs( sit0 - bitDi( bX, 2.0 ) ), lineaD( dB.y, wS ) * abs( sit0 - bitDi( bY, 2.0 ) ) );
 float bAgr = max( lineaD( dB.x, wS ) * abs( agr0 - bitDi( bX, 4.0 ) ), lineaD( dB.y, wS ) * abs( agr0 - bitDi( bY, 4.0 ) ) );
-// stati: idonee, sito (C in trattativa pulsa, poi si firma con un lampo ×2), hover, agrivoltaico, proprietari
+// stati: idonee, sito (C in trattativa pulsa, poi si firma con un lampo), hover, agrivoltaico, proprietari
 float kTr = mix( 0.35 + 0.65 * uPulsa, uLampoFirma, uTrattativaFirmata );
 float kSito = mix( 1.0, kTr, trt0 );
-vec3 eStati = SMERALDO * uIdonee * ( ${f(OV.idonee.riempimento)} * ido0 + ${f(OV.idonee.bordo)} * bIdo )
-            + ORO * uSito * ( ${f(OV.sito.riempimento)} * sit0 + ${f(OV.sito.bordo)} * bSit ) * kSito
-            + ORO * uAgriSel * ( ${f(OV.sito.riempimento)} * agr0 + ${f(OV.sito.bordo)} * bAgr );
 float hov = ( 1.0 - step( 0.5, abs( i0 - uHover ) ) ) * step( 0.5, uHover ) * ( 1.0 - smoothstep( 30.0, 40.0, distance( xz, uHoverPos ) ) ) * inGriglia;
-eStati += ORO_CHIARO * hov * ( 0.3 + 2.0 * max( lineaD( dB.x, wS ) * diffX, lineaD( dB.y, wS ) * diffY ) );
+float bHov = max( lineaD( dB.x, wS ) * diffX, lineaD( dB.y, wS ) * diffY );
 float own = floor( s0.b * 255.0 / 64.0 + 0.5 );
-eStati += ( own < 0.5 ? vec3( 0.0 ) : own < 1.5 ? ORO : own < 2.5 ? ORO_CHIARO : own < 3.5 ? PLATINO : ORO ) * 0.3 * uProprietari * inGriglia;
 // vincoli: tratteggi in coordinate schermo (px CSS), cerchi in coordinate mondo
 vec4 vin = texture2D( tVincoli, uvM );
 float h45 = tratt( pCss, vec2( 0.70710678, 0.70710678 ), ${f(OV.paesaggistico.passoPx)}, ${f(OV.paesaggistico.px)} );
@@ -238,42 +255,59 @@ float c8 = lineaD( abs( rA - ${f(VIN.archeologico.raggio)} ) / upx, wA ) * step(
 float c12 = lineaD( abs( rA - ${f(VIN.archeologico.rispetto)} ) / upx, wA ) * step( fract( angA * ${f(VIN.archeologico.rispetto)} / periodoA ), 0.5 );
 float vA = c8 + 0.8 * c12 + ( 1.0 - smoothstep( ${f(VIN.archeologico.raggio)} - upx, ${f(VIN.archeologico.raggio)} + upx, rA ) ) * h45f * 0.45;
 float vB = maschera( masc.b ) * max( h45f, h135f ) * 0.7 + bordoM( masc.b, ${f(OV.ambientale.px)} * uPx );
-vec3 eVinc = VINCOLO * ( ${f(OV.paesaggistico.emissione)} * vP * uV[0] * uLampo[0] + ${f(OV.fluviale.emissione)} * vF * uV[1] * uLampo[1]
-           + ${f(OV.pai.emissione)} * vI * uV[2] * uLampo[2] + ${f(OV.archeologico.emissione)} * vA * uV[3] * uLampo[3]
-           + ${f(OV.ambientale.emissione)} * vB * uV[4] * uLampo[4] );
+float aVinc = ${cop(OV.paesaggistico.emissione)} * vP * uV[0] * uLampo[0] + ${cop(OV.fluviale.emissione)} * vF * uV[1] * uLampo[1]
+           + ${cop(OV.pai.emissione)} * vI * uV[2] * uLampo[2] + ${cop(OV.archeologico.emissione)} * vA * uV[3] * uLampo[3]
+           + ${cop(OV.ambientale.emissione)} * vB * uV[4] * uLampo[4];
 // fiume disegnato sulla carta (passa il testimone al nastro d'acqua)
 float fxz = -62.0 + 16.0 * sin( xz.y * 0.017 ) + 6.0 * sin( xz.y * 0.045 + 1.3 );
 float dFz = abs( xz.x - fxz );
 float riempF = 1.0 - clamp( ( dFz - ${f(OV.fiumeCarta.mezzaLarghezza)} ) / upx + 0.5, 0.0, 1.0 );
-vec3 eFiume = ACQUA * ( ${f(OV.fiumeCarta.riempimento)} * riempF + ${f(OV.fiumeCarta.bordo)} * lineaD( abs( dFz - ${f(OV.fiumeCarta.mezzaLarghezza)} ) / upx, uPx ) ) * uFiumeMappa;
-// somma: isoipse e confini (ripassati da uRitraccia), stati, vincoli, fiume; spenti fuori dal foglio
-vec3 eOv = ( ORO_E * iso * uIso * ( 1.0 + 1.5 * zonaLift ) + PLATINO * ${f(OV.confini.emissione)} * confine * uGriglia ) * rit
-         + eStati + eVinc + eFiume;
-eOv *= dentro;
+float bFiume = lineaD( abs( dFz - ${f(OV.fiumeCarta.mezzaLarghezza)} ) / upx, uPx );
+// ---- composizione a inchiostro: velatura, campiture, vincoli, griglia, isoipse, bordi, fiume, cornice, onde
+vec3 cInk = diffuseColor.rgb;
+// sottrazione: le aree non idonee si velano verso la carta ("cancellate a matita"), le linee restano al 60 %
+float nonIdoneo = uSottrazione * ( 1.0 - ido0 );
+cInk = mix( VELATURA, cInk, mix( 1.0, ${f(OV.sottrazioneLuminanza)}, nonIdoneo ) );
+float kOv = dentro * mix( 1.0, 0.6, nonIdoneo );                             // spenti fuori dal foglio
+inch( cInk, SMERALDO, ${cop(OV.idonee.riempimento)} * ido0 * uIdonee * kOv );
+inch( cInk, ORO, ${cop(OV.sito.riempimento)} * sit0 * uSito * kSito * kOv );
+inch( cInk, ORO, ${cop(OV.sito.riempimento)} * agr0 * uAgriSel * kOv );
+if ( own > 0.5 ) inch( cInk, own < 1.5 ? ORO : own < 2.5 ? ORO_CHIARO : own < 3.5 ? PLATINO : ORO, 0.22 * uProprietari * inGriglia * kOv );
+inch( cInk, ORO_CHIARO, 0.15 * hov * kOv );
+inch( cInk, ACQUA, ${cop(OV.fiumeCarta.riempimento)} * riempF * uFiumeMappa * kOv );
+inch( cInk, VINCOLO, aVinc * dentro );                                      // i vincoli restano leggibili nel velo
+// griglia catastale e isoipse (uRitraccia le ripassa a piena copertura, verso il rame-bruno)
+float kIso = uIso * ( 1.0 + 0.5 * zonaLift );
+inch( cInk, mix( GRIGLIA, ORO_CHIARO, rit ), max( ${cop(OV.confini.emissione)} * uGriglia, rit ) * confine * kOv );
+inch( cInk, mix( ORO_LINEA, ORO_CHIARO, rit ), max( ${cop(OV.isoipse.emissione)} * kIso, rit ) * lIso * kOv );
+inch( cInk, mix( ORO, ORO_CHIARO, rit ), max( ${cop(OV.direttrici.emissione)} * kIso, rit ) * lDir * kOv );
+// bordi degli stati e del fiume
+inch( cInk, SMERALDO, ${cop(OV.idonee.bordo)} * bIdo * uIdonee * kOv );
+inch( cInk, ORO, ${cop(OV.sito.bordo)} * bSit * uSito * kSito * kOv );
+inch( cInk, ORO, ${cop(OV.sito.bordo)} * bAgr * uAgriSel * kOv );
+inch( cInk, ORO_CHIARO, 0.9 * bHov * hov * kOv );
+inch( cInk, ACQUA, ${cop(OV.fiumeCarta.bordo)} * bFiume * uFiumeMappa * kOv );
 // cornice del foglio (carta): linea di squadratura a 3 u dal bordo
 float lim = max( abs( xz.x ), abs( xz.y ) );
-eOv += ORO * 1.2 * lineaD( abs( lim - ( MEZZO - 3.0 ) ) / upx, uPx ) * ( 1.0 - realta ) * uIso;
-// ombreggiatura cartografica da NO (solo carta)
-eOv += PLATINO * ${f(OV.cartaOmbreggiatura.emissione)} * clamp( dot( nM, CARTA_DIR ), 0.0, 1.0 ) * ( 1.0 - realta );
+inch( cInk, ORO, 0.9 * lineaD( abs( lim - ( MEZZO - 3.0 ) ) / upx, uPx ) * ( 1.0 - realta ) * uIso );
 // onde: anello di rame (sigillo), bordo d'oro del fronte della realtà, collaudo dal cancello
-vec3 eOnde = vec3( 0.0 );
 if ( uOndaRame > 0.0 ) {
   float dd = dSito - uOndaRame;
   float a = ( 1.0 - smoothstep( 0.0, ${f(OV.ondaRame.larghezza / 2)}, abs( dd ) ) ) + 0.3 * exp( dd / 6.0 ) * step( dd, 0.0 );
-  eOnde += RAME * ${f(OV.ondaRame.emissione)} * a * ( 1.0 - smoothstep( 110.0, 140.0, uOndaRame ) );
+  inch( cInk, RAME, ${cop(OV.ondaRame.emissione)} * a * ( 1.0 - smoothstep( 110.0, 140.0, uOndaRame ) ) );
 }
 if ( uFronteRealta > 0.0 ) {
   float dd = ( dSito - uFronteRealta ) / ${f(OV.fronteRealta.larghezza / 2)};
-  eOnde += ORO * ${f(OV.fronteRealta.emissione)} * exp( - dd * dd ) * ( 1.0 - smoothstep( 240.0, 300.0, uFronteRealta ) );
+  inch( cInk, ORO_LINEA, ${cop(OV.fronteRealta.emissione)} * exp( - dd * dd ) * ( 1.0 - smoothstep( 240.0, 300.0, uFronteRealta ) ) );
 }
 if ( uFronte >= 0.0 ) {
   float dd = distance( xz, CANCELLO ) - uFronte;
-  eOnde += ORO * 2.4 * ( 1.0 - smoothstep( 0.0, 1.0, abs( dd ) ) ) * ( 1.0 - smoothstep( 60.0, 80.0, uFronte ) );
+  inch( cInk, ORO, 0.9 * ( 1.0 - smoothstep( 0.0, 1.0, abs( dd ) ) ) * ( 1.0 - smoothstep( 60.0, 80.0, uFronte ) ) );
 }
-totalEmissiveRadiance += eOv + eOnde;
+diffuseColor.rgb = cInk;
 `;
 
-// Prima di opaque_fragment: sottrazione (non idoneo al 15 %) e ombre delle nuvole sulla sola luce del sole/cielo.
+// Prima di opaque_fragment: ombre delle nuvole (l'inchiostro è già nell'albedo e le segue).
 const F_FINALE = /* glsl */`
 float nuv = 1.0;
 if ( uNuvole > 0.0 ) {
@@ -281,9 +315,7 @@ if ( uNuvole > 0.0 ) {
   float nn = vnoise( qn ) * 0.65 + vnoise( qn * 2.3 + 4.1 ) * 0.35;
   nuv = 1.0 - uNuvole * smoothstep( 0.4, 0.7, nn );
 }
-float nonIdoneo = uSottrazione * ( 1.0 - ido0 );
-vec3 luceBase = outgoingLight - eOv - eOnde;
-outgoingLight = luceBase * mix( 1.0, ${f(OV.sottrazioneLuminanza)}, nonIdoneo ) * nuv + eOv * mix( 1.0, 0.6, nonIdoneo ) + eOnde;
+outgoingLight *= nuv;
 #include <opaque_fragment>`;
 
 // ---------------------------------------------------------------- texture neutre (moduli assenti o caricamento fallito)
@@ -368,15 +400,14 @@ export async function crea(ctx) {
     patchVertice(sh, true, true);
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', '#include <common>\n' + F_DICH)
-      .replace('#include <map_fragment>', F_SPLAT)
+      .replace('#include <map_fragment>', F_SPLAT + F_OVERLAY)
       .replace('#include <roughnessmap_fragment>', 'float roughnessFactor = roughness * armSplat.g;')
-      .replace('#include <normal_fragment_maps>', THREE.ShaderChunk.normal_fragment_maps.split('texture2D( normalMap, vNormalMapUv ).xyz').join('norSplat'))
-      .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n' + F_OVERLAY)
+      .replace('#include <normal_fragment_maps>', THREE.ShaderChunk.normal_fragment_maps.split('texture2D( normalMap, vNormalMapUv ).xyz').join('norSplat') + F_NORMALE_CARTA)
       .replace('#include <opaque_fragment>', F_FINALE);
   };
   const materiale = nuovoMateriale(THREE.MeshStandardMaterial, {
     color: 0xffffff, map: erba.diff, normalMap: erba.nor, roughness: MT.roughness, metalness: MT.metalness, envMapIntensity: MT.envMapIntensity,
-  }, { patch: patchTerreno, chiave: 'terreno-v1' });
+  }, { patch: patchTerreno, chiave: 'terreno-v2' });
   const patchSolo = (normale) => sh => { sh.uniforms.uOnda = U.uOnda; sh.uniforms.uSitoC = U.uSitoC; patchVertice(sh, false, normale); };
   const profondita = nuovoMateriale(THREE.MeshDepthMaterial, { depthPacking: THREE.RGBADepthPacking }, { patch: patchSolo(false), chiave: 'terreno-profondita' });
   const normali = nuovoMateriale(THREE.MeshNormalMaterial, {}, { patch: patchSolo(true), chiave: 'terreno-normali' });

@@ -3,14 +3,14 @@
 // Proprietario: [BASE-REGIA].
 // Specifica: DESIGN §6.13 (pannello: ms, fps, chiamate, triangoli, programmi, livello, scala, T, keyframe;
 // carta grigia 18 %; freccia verso azHDRI; ← → tra le soste; prove automatiche: zero errori, programmi
-// stabili, centro non nero, oro in K1.1/K2.2/K6.0, riflessi in K3.5 ≥ 0,5 %, contrasto ≥ 4,5:1),
+// stabili, centro non vuoto, oro in K1.1/K2.2/K6.0, riflessi in K3.5 ≥ 0,5 %, contrasto ≥ 4,5:1),
 // §6.9 punto 4 (programmi stabili), Appendice C (composizione ±0,03), ARCHITETTURA §14 e §17.
 //
 // window.__eri (main.js) viene ESTESO, mai ridefinito:
 //   soste()                 → [{id, mondo, t0, t1, T}] keyframe non 'via' con T centrale
 //   composizione(aspetto?)  → verifica di Appendice C con la posa pura del rig (indipendente dalla finestra)
 //   contrasto(id)           → {rapporto, testo, fondo, elemento} misurato sui pixel sotto la battuta
-//   sonde()                 → {centro, oro, riflessiCampo} sui pixel correnti della tela
+//   sonde()                 → {centro, deviazione, luce, oro, riflessiCampo} sui pixel correnti della tela
 //   prove(opz?)             → Promise<{ok, voci:[{nome, ok, valore, atteso}]}>  (anche con ?prove=1)
 // ?debug=1: pannello in alto a destra; tasti ← → soste, G mondo di prova (auto se il mondo non è
 // costruito), C carta grigia 18 % e freccia verso azHDRI.
@@ -54,7 +54,29 @@ const ORO_IN = ['K1.1', 'K2.2', 'K6.0'];
 // ---------------------------------------------------------------- utilità colore
 const lin = c => (c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
 const luminanza = (r, g, b) => 0.2126 * lin(r / 255) + 0.7152 * lin(g / 255) + 0.0722 * lin(b / 255);
-function rgbCss(s) { const m = /rgba?\(([^)]+)\)/.exec(s || ''); if (!m) return [255, 255, 255]; return m[1].split(',').slice(0, 3).map(v => parseFloat(v)); }
+let _pixel = null;                    // tela 1×1 per i colori CSS non rgb (oklab, color-mix…)
+/** [r, g, b] 0..255 da '#rrggbb', dal primo 'rgb(a)(…)' della stringa (anche dentro un gradiente), da
+ *  'color(srgb r g b)' (lo restituisce getComputedStyle con color-mix) o, in ultimo, da qualunque colore CSS. */
+function rgbDi(s, riserva = [255, 255, 255]) {
+  if (typeof s !== 'string') return riserva;
+  const ok = v => v.length === 3 && v.every(Number.isFinite);
+  const h = /^#([0-9a-f]{6})$/i.exec(s.trim());
+  if (h) { const n = parseInt(h[1], 16); return [n >> 16, (n >> 8) & 255, n & 255]; }
+  const m = /rgba?\(([^)]+)\)/.exec(s);
+  if (m) { const v = m[1].split(',').slice(0, 3).map(x => parseFloat(x)); return ok(v) ? v : riserva; }
+  const c = /color\(srgb\s+([-\d.e]+)\s+([-\d.e]+)\s+([-\d.e]+)/i.exec(s);
+  if (c) { const v = [c[1], c[2], c[3]].map(x => clamp(parseFloat(x), 0, 1) * 255); return ok(v) ? v : riserva; }
+  if (/gradient|var\(/i.test(s) || typeof document === 'undefined') return riserva;
+  try {
+    const g = (_pixel ||= document.createElement('canvas').getContext('2d', { willReadFrequently: true }));
+    g.fillStyle = '#010203'; g.fillStyle = s; if (g.fillStyle === '#010203') return riserva;   // colore non valido
+    g.clearRect(0, 0, 1, 1); g.fillRect(0, 0, 1, 1);
+    const d = g.getImageData(0, 0, 1, 1).data; return d[3] ? [d[0], d[1], d[2]] : riserva;
+  } catch { return riserva; }
+}
+const rgbCss = s => rgbDi(s);
+// colore del fondo (clear color, velo pieno): tema chiaro, PALETTE.fondo
+const FONDO = () => rgbDi(PALETTE.fondo || PALETTE.nero, [0, 0, 0]);
 
 export async function crea(ctx) {
   const E = window.__eri || (window.__eri = {});
@@ -108,7 +130,8 @@ export async function crea(ctx) {
       for (let i = 1; i < F.length; i++) if (f <= F[i][0]) return aScrim * (F[i - 1][1] + (F[i][1] - F[i - 1][1]) * (f - F[i - 1][0]) / (F[i][0] - F[i - 1][0]));
       return 0;
     };
-    const velo = ctx.velo || 0, N = [5, 6, 7];
+    // velo pieno = colore del fondo; velo .scrim = il colore del suo gradiente (config.COLONNA), riserva il fondo
+    const velo = ctx.velo || 0, N = FONDO(), Sc = rgbDi(piccolo ? COLONNA.scrimPiccolo : COLONNA.scrim, N);
     let peggiore = null;
     for (const el of art.querySelectorAll('h1, h2, em, .testo, .occhiello, .dato')) {
       const cs = getComputedStyle(el); if (cs.visibility === 'hidden' || +cs.opacity === 0) continue;
@@ -121,29 +144,52 @@ export async function crea(ctx) {
           const px = Math.floor(x * tela.sx), py = Math.floor(y * tela.sy); if (px < 0 || py < 0 || px >= tela.w || py >= tela.h) continue;
           const i = (py * tela.w + px) * 4; let R = tela.dati[i], G = tela.dati[i + 1], B = tela.dati[i + 2];
           R = R * (1 - velo) + N[0] * velo; G = G * (1 - velo) + N[1] * velo; B = B * (1 - velo) + N[2] * velo;
-          const a = alfaScrim(x, y); R = R * (1 - a) + N[0] * a; G = G * (1 - a) + N[1] * a; B = B * (1 - a) + N[2] * a;
+          const a = alfaScrim(x, y); R = R * (1 - a) + Sc[0] * a; G = G * (1 - a) + Sc[1] * a; B = B * (1 - a) + Sc[2] * a;
           fondi.push(luminanza(R, G, B));
         }
       }
       if (!fondi.length) continue;
       fondi.sort((p, q) => p - q);
-      const Lf = fondi[Math.floor(0.95 * (fondi.length - 1))];          // 95° percentile: fondo più chiaro
-      const rapporto = (Math.max(Lt, Lf) + 0.05) / (Math.min(Lt, Lf) + 0.05);
+      // testo scuro su chiaro: conta il fondo più scuro (5° percentile); testo chiaro: il più chiaro (95°). Il peggiore.
+      const rap = L => (Math.max(Lt, L) + 0.05) / (Math.min(Lt, L) + 0.05);
+      const L05 = fondi[Math.floor(0.05 * (fondi.length - 1))], L95 = fondi[Math.floor(0.95 * (fondi.length - 1))];
+      const Lf = rap(L05) <= rap(L95) ? L05 : L95, rapporto = rap(Lf);
       if (!peggiore || rapporto < peggiore.rapporto) peggiore = { rapporto: +rapporto.toFixed(2), testo: +Lt.toFixed(3), fondo: +Lf.toFixed(4), elemento: el.className || el.tagName.toLowerCase() };
     }
     return peggiore;
   }
 
-  /** Sonde sui pixel correnti: centro non nero, frazione d'oro, riflessi nel campo FV proiettato. */
+  /** Sonde sui pixel correnti: centro non vuoto, frazione d'oro-inchiostro, riflessi nel campo FV proiettato. */
   function sonde() {
     const tela = leggiTela(); if (!tela) return null;
     const { dati, w, h } = tela;
-    const c = ((h >> 1) * w + (w >> 1)) * 4;
-    let lc = 0; for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) { const i = c + (dy * w + dx) * 4; lc = Math.max(lc, luminanza(dati[i], dati[i + 1], dati[i + 2])); }
+    // centro (5×5 px): luminanza massima (non nero) e distanza massima dal colore del fondo (0..1, RGB euclideo)
+    const F = FONDO(), c = ((h >> 1) * w + (w >> 1)) * 4;
+    let lc = 0, dc = 0;
+    for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) {
+      const i = c + (dy * w + dx) * 4, R = dati[i], G = dati[i + 1], B = dati[i + 2];
+      lc = Math.max(lc, luminanza(R, G, B)); dc = Math.max(dc, Math.hypot(R - F[0], G - F[1], B - F[2]) / 441.67);
+    }
+    // deviazione: scarto quadratico della luminanza su una griglia 15×15 nel 10 % centrale (una tela vuota è uniforme)
+    let s1 = 0, s2 = 0;
+    for (let gy = 0; gy < 15; gy++) for (let gx = 0; gx < 15; gx++) {
+      const px = Math.floor(w * (0.45 + 0.1 * gx / 14)), py = Math.floor(h * (0.45 + 0.1 * gy / 14)), i = (py * w + px) * 4;
+      const L = luminanza(dati[i], dati[i + 1], dati[i + 2]); s1 += L; s2 += L * L;
+    }
+    const dev = Math.sqrt(Math.max(0, s2 / 225 - (s1 / 225) ** 2));
+    // oro-inchiostro su chiaro (≈ #8d5f12, #b9831f): tinta d'oro (22–50°, saturazione ≥ 0,45) E tratto sottile più
+    // scuro di ciò che ha intorno (a ±3 px in orizzontale o in verticale). Le terre ocra hanno la stessa tinta ma sono
+    // campiture: senza la prova del tratto conterebbero come oro.
+    const lumA = j => luminanza(dati[j], dati[j + 1], dati[j + 2]), OH = 3 * 4, OV = 3 * w * 4;
     let oro = 0, n = 0;
-    for (let i = 0; i < dati.length; i += 16) {
-      const R = dati[i], G = dati[i + 1], B = dati[i + 2]; n++;
-      if (R > 110 && R >= G && G > B && R - B > 45 && (R - G) < 0.6 * (R - B)) oro++;    // tinta oro (≈ #d8b878 e simili)
+    for (let py = 3; py < h - 3; py += 2) for (let px = 3; px < w - 3; px += 2) {
+      n++;
+      const i = (py * w + px) * 4, R = dati[i], G = dati[i + 1], B = dati[i + 2];
+      if (!(R >= G && G >= B && R > 70 && R < 235)) continue;
+      const d = R - B; if (d < 0.45 * R) continue;
+      const tinta = 60 * (G - B) / d; if (tinta < 22 || tinta > 50) continue;
+      const soglia = luminanza(R, G, B) * 1.25 + 0.01;
+      if ((lumA(i - OH) > soglia && lumA(i + OH) > soglia) || (lumA(i - OV) > soglia && lumA(i + OV) > soglia)) oro++;
     }
     // campo FV (x 2,2–41,2; z −18,5–29,3) proiettato con la camera corrente
     const v = new THREE.Vector3(); let x0 = 1, x1 = 0, y0 = 1, y1 = 0;
@@ -156,7 +202,8 @@ export async function crea(ctx) {
     for (let py = Math.floor(y0 * h); py < Math.floor(y1 * h); py += 2) for (let px = Math.floor(x0 * w); px < Math.floor(x1 * w); px += 2) {
       const i = (py * w + px) * 4; tot++; if (luminanza(dati[i], dati[i + 1], dati[i + 2]) > 0.9) chiari++;
     }
-    return { centro: +lc.toFixed(4), oro: +(oro / Math.max(1, n)).toFixed(5), riflessiCampo: +(chiari / Math.max(1, tot)).toFixed(5) };
+    return { centro: +dc.toFixed(4), deviazione: +dev.toFixed(4), luce: +lc.toFixed(4),
+             oro: +(oro / Math.max(1, n)).toFixed(5), riflessiCampo: +(chiari / Math.max(1, tot)).toFixed(5) };
   }
 
   /** Prove automatiche di §6.13 (lente su SwiftShader: da chiamare a mano o con ?prove=1). */
@@ -173,7 +220,9 @@ export async function crea(ctx) {
       await E.vaiT(s.T);
       if (!pixel) continue;
       const so = sonde(); if (!so) continue;
-      voce(`centro non nero ${s.id}`, so.centro > 0.002, so.centro, '> 0,002');
+      // tela non vuota: non nera e (lontana dal fondo oppure non uniforme)
+      voce(`centro non vuoto ${s.id}`, so.luce > 0.002 && (so.centro > 0.03 || so.deviazione > 0.003),
+        { centro: so.centro, deviazione: so.deviazione, luce: so.luce }, 'luce > 0,002 e (distanza dal fondo > 0,03 o deviazione > 0,003)');
       if (ORO_IN.includes(s.id)) voce(`oro presente ${s.id}`, so.oro > 0.0005, so.oro, '> 0,05 %');
       if (s.id === 'K3.5') voce('onda di riflessi K3.5', so.riflessiCampo >= 0.005, so.riflessiCampo, '≥ 0,5 % del campo');
     }
@@ -209,7 +258,8 @@ function creaDebug(ctx, soste) {
   const pannello = document.createElement('pre');
   pannello.className = 'pannello-debug';
   // in basso a sinistra, sotto la colonna del testo: non copre il soggetto (2/3 di destra, App. C)
-  pannello.style.cssText = 'position:fixed;left:8px;bottom:52px;z-index:99;margin:0;padding:6px 8px;background:rgba(5,6,7,.78);color:#d8b878;font:10px/1.4 "IBM Plex Mono",monospace;pointer-events:none;white-space:pre;border:1px solid rgba(216,184,120,.16)';
+  const [fr, fg, fb] = rgbDi(PALETTE.fondo || PALETTE.avorio);
+  pannello.style.cssText = `position:fixed;left:8px;bottom:52px;z-index:99;margin:0;padding:6px 8px;background:rgba(${fr},${fg},${fb},.88);color:${PALETTE.inchiostro};font:10px/1.4 "IBM Plex Mono",monospace;pointer-events:none;white-space:pre;border:1px solid ${PALETTE.bordo}`;
   document.body.appendChild(pannello);
 
   // ---- mondo di prova (terreno analitico, griglia, soggetti di App. C) e carta grigia 18 %
@@ -224,7 +274,7 @@ function creaDebug(ctx, soste) {
     const s = new T3.Mesh(gSfera, matCarta); s.castShadow = s.receiveShadow = true; g.add(s);
     const p = new T3.Mesh(gPiano, matCarta); p.position.set(2.6, 0, 0); p.receiveShadow = true; g.add(p);
     g.visible = false; ctx.scene[n].add(g); carte[n] = g;
-    const f = new T3.ArrowHelper(new T3.Vector3(1, 0, 0), new T3.Vector3(), 1, 0xd8b878, 0.25, 0.12);
+    const f = new T3.ArrowHelper(new T3.Vector3(1, 0, 0), new T3.Vector3(), 1, PALETTE.oro3d, 0.25, 0.12);
     f.line.material.fog = false; f.cone.material.fog = false; f.visible = false; ctx.scene[n].add(f); frecce[n] = f;
   }
   const stato = { prova: 'auto', carta: false, ultimo: -1, esteso: false };
@@ -300,7 +350,7 @@ function texturaGriglia(THREE_, lato, passo, forte) {
   const k = 2048 / lato;
   for (let u = 0; u <= lato; u += passo) {
     const x = Math.round(u * k) + 0.5, f = (u % forte) === 0;
-    g.fillStyle = f ? 'rgba(216,184,120,1)' : 'rgba(150,140,120,1)';
+    g.fillStyle = f ? (PALETTE.oroLinea || PALETTE.oro) : (PALETTE.griglia || PALETTE.grigio);
     const s = f ? 3 : 1; g.fillRect(x - s / 2, 0, s, 2048); g.fillRect(0, x - s / 2, 2048, s);
   }
   const t = new THREE_.CanvasTexture(c); t.colorSpace = THREE_.SRGBColorSpace; t.anisotropy = 4; return t;
@@ -310,10 +360,13 @@ function creaProvaPianura(THREE_) {
   const L = PIANURA.lato, S = 160;
   const geo = new THREE_.PlaneGeometry(L, L, S, S); geo.rotateX(-Math.PI / 2);
   const pos = geo.attributes.position, col = new Float32Array(pos.count * 3);
+  // tema chiaro: carta2 in basso → carta in alto, fiume color acqua (THREE.Color: sRGB → lineare)
+  const cB = new THREE_.Color(PALETTE.carta2 || PALETTE.grafite2), cA = new THREE_.Color(PALETTE.carta || PALETTE.avorio), cF = new THREE_.Color(PALETTE.acqua), c = new THREE_.Color();
   for (let i = 0; i < pos.count; i++) {
     const x = pos.getX(i), z = pos.getZ(i), y = altezza(x, z); pos.setY(i, y - 0.03);
     const k = clamp((y + 3) / 18, 0, 1), fiume = Math.abs(x - fiumeX(z)) < 2.1;
-    col[i * 3] = fiume ? 0.06 : 0.07 + 0.16 * k; col[i * 3 + 1] = fiume ? 0.12 : 0.08 + 0.14 * k; col[i * 3 + 2] = fiume ? 0.16 : 0.08 + 0.10 * k;
+    if (fiume) c.copy(cF); else c.lerpColors(cB, cA, k);
+    col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b;
   }
   geo.setAttribute('color', new THREE_.BufferAttribute(col, 3)); geo.computeVertexNormals();
   G.add(new THREE_.Mesh(geo, new THREE_.MeshBasicMaterial({ vertexColors: true, map: texturaGriglia(THREE_, L, 10, 50), fog: false })));
@@ -321,10 +374,10 @@ function creaProvaPianura(THREE_) {
   const fiume = []; for (let z = -180; z <= 180; z += 3) fiume.push([fiumeX(z), acqua(z) + 0.05, z]);
   G.add(polilinea(THREE_, fiume, PALETTE.acqua));
   const sopra = (pts, d = 0.15) => pts.map(([x, z]) => [x, altezza(x, z) + d, z]);
-  G.add(polilinea(THREE_, sopra(PIANURA.contornoFV), PALETTE.oroChiaro, true));
-  G.add(polilinea(THREE_, sopra(PIANURA.contornoAgri), PALETTE.oroChiaro, true));
-  G.add(polilinea(THREE_, sopra(PIANURA.strade.sp.punti), '#9aa1a5'));
-  G.add(polilinea(THREE_, sopra(PIANURA.strade.poderale.punti), '#6b6155'));
+  G.add(polilinea(THREE_, sopra(PIANURA.contornoFV), PALETTE.oroLinea || PALETTE.oro, true));
+  G.add(polilinea(THREE_, sopra(PIANURA.contornoAgri), PALETTE.oroLinea || PALETTE.oro, true));
+  G.add(polilinea(THREE_, sopra(PIANURA.strade.sp.punti), PALETTE.griglia || PALETTE.grigio));
+  G.add(polilinea(THREE_, sopra(PIANURA.strade.poderale.punti), PALETTE.grigio));
   G.add(polilinea(THREE_, sopra(PIANURA.cavidotto.punti, 0.2), PALETTE.rame));
   // soggetti
   G.add(segnaposto(THREE_, [SITO_C[0], SITO_C[1] + 0.8, SITO_C[2]], PALETTE.oro, 1.2));
@@ -351,15 +404,17 @@ function creaProvaValle(THREE_) {
   const geo = new THREE_.PlaneGeometry(B.x1 - B.x0, B.z1 - B.z0, nx, nz); geo.rotateX(-Math.PI / 2);
   geo.translate((B.x0 + B.x1) / 2, 0, (B.z0 + B.z1) / 2);
   const pos = geo.attributes.position, col = new Float32Array(pos.count * 3);
+  // plastico bianco: carta2 → carta con la quota
+  const cB = new THREE_.Color(PALETTE.carta2 || PALETTE.grafite2), cA = new THREE_.Color(PALETTE.carta || PALETTE.avorio), c = new THREE_.Color();
   for (let i = 0; i < pos.count; i++) {
     const x = pos.getX(i), z = pos.getZ(i), y = hValle(x, z); pos.setY(i, y);
-    const k = clamp(y / 90, 0, 1); col[i * 3] = 0.08 + 0.2 * k; col[i * 3 + 1] = 0.09 + 0.18 * k; col[i * 3 + 2] = 0.10 + 0.14 * k;
+    c.lerpColors(cB, cA, clamp(y / 90, 0, 1)); col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b;
   }
   geo.setAttribute('color', new THREE_.BufferAttribute(col, 3));
   G.add(new THREE_.Mesh(geo, new THREE_.MeshBasicMaterial({ vertexColors: true, fog: false, side: THREE_.DoubleSide })));
   const sezione = []; for (let x = B.x0; x <= B.x1; x += 2) sezione.push([x, fondoValle(x) + 0.05, 0.05]);
   G.add(polilinea(THREE_, sezione, PALETTE.oro));
-  const r = VALLE.righello; G.add(polilinea(THREE_, [[r.x, r.y0, 0.2], [r.x, r.y1, 0.2]], PALETTE.oroChiaro));
+  const r = VALLE.righello; G.add(polilinea(THREE_, [[r.x, r.y0, 0.2], [r.x, r.y1, 0.2]], PALETTE.oroLinea || PALETTE.oro));
   const cp = VALLE.condottaPelton; G.add(polilinea(THREE_, [[cp.da[0], cp.da[1], -0.2], [cp.a[0], cp.a[1], -0.2], cp.fine], PALETTE.acqua));
   G.add(segnaposto(THREE_, VALLE.girantePelton.centro, PALETTE.oro, 0.12));
   G.add(segnaposto(THREE_, VALLE.giranteFrancis.centro, PALETTE.oro, 0.12));

@@ -4,9 +4,10 @@
 // Specifica: DESIGN §6.3 (renderer, composer, GTAO, bloom, OutputPass, SMAA, PELLICOLA), §2.8 (grana,
 // vignettatura, grading), §6.8 (risoluzione interna adattiva, tela sempre nativa), config.RENDER.
 //
-// Catena: RenderPass (HalfFloat, MSAA 4 o 0) → GTAO (solo primi piani) → Bloom (soglia 1,0 in HDR lineare)
-//         → OutputPass (ACES/AgX + sRGB) → SMAA (se MSAA 0) → Pellicola (CAS, grading, vignetta, grana,
-//         dithering) disegnata sulla tela a risoluzione NATIVA. La risoluzione interna è dprNativo × scala.
+// Catena: RenderPass (HalfFloat, MSAA 4 o 0) → GTAO (solo primi piani) → Bloom (soglia RENDER.bloom.soglia in HDR
+//         lineare: tema chiaro, solo disco del sole e poche luci) → OutputPass (ACES/AgX + sRGB) → SMAA (se MSAA 0)
+//         → Pellicola (CAS, grading quasi neutro, vignetta e grana leggere, dithering) disegnata sulla tela a
+//         risoluzione NATIVA. La risoluzione interna è dprNativo × scala. Clear color = PALETTE.fondo.
 //
 // Contratto: creaRenderer(ctx) → WebGLRenderer; crea(ctx) pubblica ctx.pipeline = {
 //   impostaScena(nome), render(dt), ridimensiona(w, h), applicaQualita(R), scalaInterna,
@@ -23,7 +24,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { SMAAPass } from 'three/addons/postprocessing/SMAAPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
-import { RENDER, QUALITA, TAPPE } from '../config.js';
+import { RENDER, QUALITA, TAPPE, PALETTE } from '../config.js';
 
 export const MONDO = 'sistema';
 
@@ -31,6 +32,9 @@ export const MONDO = 'sistema';
 // Ingresso: buffer interno già in sRGB (dopo OutputPass/SMAA). Uscita: tela nativa.
 // Aggiunte rispetto al codice di §6.3, a valori neutri con ACES: uContrasto (AgX: +0,08) e il recupero del
 // ricampionamento quando la scala interna è < 1 (CAS più forte, già previsto da §2.8).
+// Tema chiaro: il grading "luci calde, ombre fredde" viene da config (RENDER.pellicola.gradingLuci/Ombre), quasi
+// neutro: sulla carta e sul cielo chiaro una dominante si vede subito come sporco.
+const GL = RENDER.pellicola.gradingLuci || [0.02, 0, -0.01], GO = RENDER.pellicola.gradingOmbre || [0, 0, 0.008];
 const PELLICOLA = {
   name: 'Pellicola',
   uniforms: {
@@ -39,6 +43,8 @@ const PELLICOLA = {
     uSpostamento: { value: RENDER.pellicola.spostamentoVignetta },
     uGrana: { value: RENDER.pellicola.grana }, uGranaEstremi: { value: RENDER.pellicola.granaEstremi / RENDER.pellicola.grana },
     uTempo: { value: 0 }, uSaturazione: { value: 1 }, uLato: { value: RENDER.pellicola.lato }, uContrasto: { value: 0 },
+    uGradingLuci: { value: new THREE.Vector3(...GL) }, uGradingOmbre: { value: new THREE.Vector3(...GO) },
+    uVignettaLuci: { value: RENDER.pellicola.vignettaLuci ?? 0 },
   },
   vertexShader: /* glsl */`
     varying vec2 vUv;
@@ -46,6 +52,7 @@ const PELLICOLA = {
   fragmentShader: /* glsl */`
     uniform sampler2D tDiffuse; uniform vec2 uTexel;
     uniform float uNitidezza, uVignetta, uSpostamento, uGrana, uGranaEstremi, uTempo, uSaturazione, uLato, uContrasto;
+    uniform vec3 uGradingLuci, uGradingOmbre; uniform float uVignettaLuci;
     varying vec2 vUv;
     float h12(vec2 p){ vec3 q = fract(vec3(p.xyx) * .1031); q += dot(q, q.yzx + 33.33); return fract((q.x + q.y) * q.z); }
     // nitidezza adattiva al contrasto (stile AMD CAS) sul ricampionamento dal buffer interno
@@ -63,9 +70,9 @@ const PELLICOLA = {
       float l = dot(c, vec3(.2126, .7152, .0722));
       c = mix(vec3(l), c, uSaturazione);                                   // saturazione per tappa
       c = clamp((c - .5) * (1. + uContrasto) + .5, 0., 1.);                 // contrasto (solo AgX)
-      c += vec3(.02, 0., -.01) * smoothstep(.6, 1., l) + vec3(0., 0., .008) * (1. - smoothstep(0., .15, l));  // luci calde, ombre fredde
+      c += uGradingLuci * smoothstep(.6, 1., l) + uGradingOmbre * (1. - smoothstep(0., .15, l));  // luci calde, ombre fredde
       vec2 q = vUv - vec2(.5 + uSpostamento * uLato, .5); q.x *= 1.15;       // vignetta ellittica, centro opposto al testo
-      c *= 1. - uVignetta * smoothstep(.35, .95, length(q) * 1.4);
+      c *= 1. - uVignetta * smoothstep(.35, .95, length(q) * 1.4) * (1. - uVignettaLuci * smoothstep(.55, .95, l));   // tema chiaro: risparmia cielo e carta
       c += (h12(gl_FragCoord.xy + floor(uTempo * 24.) * 17.) - .5) * uGrana * mix(uGranaEstremi, 1., 1. - abs(l * 2. - 1.));   // grana a 24 fps
       c += (h12(gl_FragCoord.xy * 1.37 + 3.1) + h12(gl_FragCoord.xy * .73 + 7.7) - 1.) / 255.;   // dithering triangolare
       gl_FragColor = vec4(c, 1.);
@@ -89,7 +96,7 @@ export function creaRenderer(ctx) {
   r.localClippingEnabled = true;
   r.setPixelRatio(ctx.dprNativo);
   r.setSize(ctx.vista.w, ctx.vista.h, false);      // dimensione CSS della tela: la decide stile.css (box reale, ctx.vista)
-  r.setClearColor(0x050607, 1);
+  r.setClearColor(new THREE.Color(PALETTE.fondo), 1);   // tema chiaro: fondo carta (anche sotto il velo pieno)
   r.info.autoReset = false;                        // le statistiche contano TUTTO il fotogramma (render.reset in render())
   ctx.renderer = r;
   return r;
@@ -151,7 +158,7 @@ export function crea(ctx) {
     }
   };
 
-  // ---- Bloom (soglia 1,0 in HDR lineare: fa bloom solo il dato emissivo) e uscita
+  // ---- Bloom (soglia alta in HDR lineare: la cupola chiara resta sotto, fioriscono disco del sole e luci) e uscita
   const bloom = new UnrealBloomPass(new THREE.Vector2(wInt, hInt), RENDER.bloom.forza, RENDER.bloom.raggio, RENDER.bloom.soglia);
   const uscita = new OutputPass();
   const smaa = new SMAAPass(wInt, hInt);

@@ -17,6 +17,9 @@ export function vec3Lin(hex, k = 1) {
 }
 const NO = OVERLAY.cartaOmbreggiatura.direzione;
 const NO_GLSL = `normalize(vec3(${NO[0]}, ${NO[1]}, ${NO[2]}))`;
+const NO_Y = (NO[1] / Math.hypot(NO[0], NO[1], NO[2])).toFixed(5);   // valore sul piano orizzontale (nessuna ombra)
+// TARATURA: proporre in config — copertura massima della grafite sui lati opposti a NO (edifici e alberi in carta)
+const RILIEVO_C = Math.min(1, OVERLAY.cartaOmbreggiatura.emissione * 4).toFixed(3);
 
 // ---------------------------------------------------------------- patch del vertice: sollevamento (§4.1)
 // La quota mondo si moltiplica per lift(xz), come il terreno (aAltezza·lift): in tappa 0 tutto nasce dalla carta.
@@ -47,8 +50,10 @@ export function patchLift(U) {
 }
 
 // ---------------------------------------------------------------- patch del frammento: carta / realtà / sottrazione
-// realtà = uRealta, oppure il fronte da SITO_C (§6.5). In carta l'albedo va alla grafite e si aggiunge
-// l'ombreggiatura cartografica da NO (platino × 0,06). La sottrazione porta tutto al 15 % (il contorno non è mai idoneo).
+// realtà = uRealta, oppure il fronte da SITO_C (§6.5). In carta l'albedo va alla carta2 e i lati opposti a NO prendono
+// un velo di grafite (ombreggiatura cartografica moltiplicativa, mai luce sommata). La sottrazione vela verso la carta
+// (il contorno non è mai idoneo); carta e velatura tolgono anche metallo e lucido: la carta è opaca.
+// Ganci: dopoColore (prima della carta), dopoCarta (albedo finale, prima della luce), primaUscita (dopo la luce).
 const CARTA_PARS = `
 uniform float uRealta; uniform float uFronteRealta; uniform float uSottrazione; uniform vec3 uSitoC;
 varying vec3 vPosMondoC;
@@ -58,9 +63,10 @@ float realtaC() {
   return r;
 }`;
 export function patchCarta(U, opz = {}) {
-  const carta = vec3Lin(opz.carta || PALETTE.grafite2);
+  const carta = vec3Lin(opz.carta || PALETTE.carta2);
   const sottr = OVERLAY.sottrazioneLuminanza.toFixed(3);
-  const extraPars = opz.pars || '', dopoColore = opz.dopoColore || '', primaUscita = opz.primaUscita || '';
+  const velo = vec3Lin(OVERLAY.velatura || PALETTE.carta), grafite = vec3Lin(PALETTE.grafite);
+  const extraPars = opz.pars || '', dopoColore = opz.dopoColore || '', dopoCarta = opz.dopoCarta || '', primaUscita = opz.primaUscita || '';
   return sh => {
     sh.uniforms.uRealta = U.uRealta; sh.uniforms.uFronteRealta = U.uFronteRealta;
     sh.uniforms.uSottrazione = U.uSottrazione; sh.uniforms.uSitoC = U.uSitoC;
@@ -71,11 +77,19 @@ export function patchCarta(U, opz = {}) {
   float kRealta = realtaC();
   ${dopoColore}
   diffuseColor.rgb = mix(${carta}, diffuseColor.rgb, kRealta);`)
+      // dopo le normali, prima della luce: ombreggiatura a inchiostro, velatura, carta opaca
+      .replace('#include <emissivemap_fragment>', `
+  { vec3 nMondo = inverseTransformDirection(normal, viewMatrix);
+    float ombraC = clamp((${NO_Y} - dot(nMondo, ${NO_GLSL})) / 1.4, 0.0, 1.0);
+    diffuseColor.rgb = mix(diffuseColor.rgb, ${grafite}, ${RILIEVO_C} * ombraC * (1.0 - kRealta)); }
+  float kVelo = 1.0 - mix(1.0, ${sottr}, uSottrazione);
+  diffuseColor.rgb = mix(diffuseColor.rgb, ${velo}, kVelo);
+  { float opaco = max(1.0 - kRealta, kVelo);
+    metalnessFactor = mix(metalnessFactor, 0.0, opaco); roughnessFactor = mix(roughnessFactor, 1.0, opaco); }
+  ${dopoCarta}
+  #include <emissivemap_fragment>`)
       .replace('#include <opaque_fragment>', `
   ${primaUscita}
-  outgoingLight *= mix(1.0, ${sottr}, uSottrazione);
-  { vec3 nMondo = inverseTransformDirection(normal, viewMatrix);
-    outgoingLight += ${vec3Lin(PALETTE.platino)} * 0.06 * clamp(dot(nMondo, ${NO_GLSL}), 0.0, 1.0) * (1.0 - kRealta); }
   #include <opaque_fragment>`);
   };
 }
@@ -97,12 +111,12 @@ export function normaliLift(U) {
 }
 /**
  * Materiale "di suolo": nuovoMateriale + sollevamento + carta/realtà/sottrazione (+ patch extra opzionale).
- * @param {object} ctx @param {typeof THREE.Material} Classe @param {object} par @param {{chiave:string, carta?:string, extra?:Function, pars?:string, dopoColore?:string, primaUscita?:string, uniforms?:object}} opz
+ * @param {object} ctx @param {typeof THREE.Material} Classe @param {object} par @param {{chiave:string, carta?:string, extra?:Function, pars?:string, dopoColore?:string, dopoCarta?:string, primaUscita?:string, uniforms?:object}} opz
  */
 export function materialeSuolo(ctx, Classe, par, opz = {}) {
   const m = nuovoMateriale(Classe, par);
   aggiungiPatch(m, patchLift(ctx.U), 'pianura-lift');
-  aggiungiPatch(m, patchCarta(ctx.U, opz), 'pianura-carta:' + (opz.chiave || 'base'));
+  aggiungiPatch(m, patchCarta(ctx.U, opz), 'pianura-carta-v2:' + (opz.chiave || 'base'));
   if (opz.extra) aggiungiPatch(m, opz.extra, 'pianura-extra:' + opz.chiave);
   return m;
 }

@@ -2,7 +2,8 @@
 // ERI v2 · ui/lineaOro.js — componente LineaOro (SVG a schermo intero) e transizione 4 → 5
 // Proprietario: [BASE-UI].
 // Specifica: DESIGN §5.2 "Componente LineaOro" (un <path> a schermo intero; morph punto per punto di 64
-// punti ricampionati per lunghezza d'arco; tratto oro 1 px con punta luminosa), §4.5 "Transizione verso la
+// punti ricampionati per lunghezza d'arco; tratto oro 1 px con la punta: su fondo chiaro un punto pieno
+// d'oro-inchiostro con un alone chiaro sotto, non luce), §4.5 "Transizione verso la
 // tappa 5" (15,38 – 15,64: retta dei 10 MW proiettata → linea orizzontale a sy 0,58 → polilinea proiettata
 // del cavidotto), config.LINEA_ORO, STATO.lineaOroAlfa / lineaOroStende / lineaOroPiega.
 //
@@ -12,7 +13,7 @@
 //  crea(ctx), aggiorna(ctx, T, t, dt): la transizione 4 → 5 è una funzione pura di T (STATO) più le proiezioni.
 // Nessuna allocazione nel ciclo: buffer preallocati; resta solo la stringa dell'attributo d.
 // =============================================================================
-import { LINEA_ORO, IDRO, PIANURA } from '../config.js';
+import { LINEA_ORO, IDRO, PIANURA, PALETTE } from '../config.js';
 import { altezza, clamp } from '../geo.js';
 
 export const MONDO = 'ui';
@@ -60,14 +61,18 @@ export function creaLineaOro(svg) {
   const id = 'eri-punta-' + (++progressivo);
   svg.innerHTML = '';
   const defs = document.createElementNS(NS, 'defs');
-  defs.innerHTML = `<radialGradient id="${id}"><stop offset="0" stop-color="#f1dfb3" stop-opacity=".95"/><stop offset=".35" stop-color="#f1dfb3" stop-opacity=".35"/><stop offset="1" stop-color="#f1dfb3" stop-opacity="0"/></radialGradient>`;
+  // punta su fondo chiaro: alone color carta (stacca il punto dal terreno), punto pieno d'oro-inchiostro sopra
+  const chiaro = PALETTE.fondo || PALETTE.avorio;
+  defs.innerHTML = `<radialGradient id="${id}"><stop offset="0" stop-color="${chiaro}" stop-opacity=".9"/><stop offset=".45" stop-color="${chiaro}" stop-opacity=".55"/><stop offset="1" stop-color="${chiaro}" stop-opacity="0"/></radialGradient>`;
   const g = document.createElementNS(NS, 'g'); g.setAttribute('class', 'linea-oro-g');
   const pista = document.createElementNS(NS, 'line'); pista.setAttribute('class', 'pista'); pista.style.opacity = '0';
   const alone = document.createElementNS(NS, 'path'); alone.setAttribute('class', 'alone');
   const tratto = document.createElementNS(NS, 'path'); tratto.setAttribute('class', 'tratto');
   const puntaAlone = document.createElementNS(NS, 'circle'); puntaAlone.setAttribute('r', '11'); puntaAlone.setAttribute('fill', `url(#${id})`);
   const puntaC = document.createElementNS(NS, 'circle'); puntaC.setAttribute('r', '3'); puntaC.setAttribute('class', 'punta');
-  g.append(pista, alone, tratto, puntaAlone, puntaC);
+  puntaC.style.fill = PALETTE.oro;                  // in linea: vale anche se il CSS tiene ancora l'accento
+  // l'alone chiaro sta SOTTO il tratto (non lo sbiadisce), il punto sopra a tutto
+  g.append(pista, puntaAlone, alone, tratto, puntaC);
   svg.append(defs, g);
   g.style.opacity = '0';
 
@@ -104,7 +109,7 @@ export function creaLineaOro(svg) {
     },
     /** Opacità del componente. */
     alfa(v) { v = clamp(v, 0, 1); if (Math.abs(v - ultimoAlfa) > 0.003 || (v === 0) !== (ultimoAlfa === 0)) { ultimoAlfa = v; g.style.opacity = v.toFixed(3); } },
-    /** Opacità della punta luminosa. */
+    /** Opacità della punta (punto e alone). */
     punta(v) { v = clamp(v, 0, 1); if (Math.abs(v - ultimaPunta) > 0.003) { ultimaPunta = v; puntaC.style.opacity = puntaAlone.style.opacity = v.toFixed(3); } },
     /** Pista tenue (preloader): linea di riferimento da x0 a x1 alla quota y. */
     pista(x0, x1, y, v) {

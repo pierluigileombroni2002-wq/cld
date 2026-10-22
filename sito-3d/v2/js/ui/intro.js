@@ -244,13 +244,19 @@ function avviaUscita(flip) {
     }
     if (ok === n) D.nFiume = n;
   }
-  // FLIP: dal centro del preloader al simbolo della testata (viewBox "0 20 812 440")
+  // FLIP: dal centro del preloader al simbolo della testata. I viewBox si leggono dal DOM (logo in linea e simbolo),
+  // così il volo resta giusto anche con il logo nuovo; config.INTRO solo come riserva.
   const sim = document.querySelector('.testata .marchio .simbolo');
   if (sim && D.box) {
     const a = D.box.getBoundingClientRect(), b = sim.getBoundingClientRect();
+    const vl = D.svg?.viewBox?.baseVal, vs = sim.viewBox?.baseVal;
+    const lL = vl?.width || INTRO.logo.viewBox[0], xL = vl?.width ? vl.x : 0, yL = vl?.width ? vl.y : 0;
+    const vbT = String(INTRO.testata.viewBox).split(/[\s,]+/).map(Number);
+    const lS = vs?.width || vbT[2] || lL, xS = vs?.width ? vs.x : (vbT[0] || 0), yS = vs?.width ? vs.y : (vbT[1] || 0);
     if (a.width > 0 && b.width > 0) {
-      const s = b.width / a.width, k = a.width / INTRO.logo.viewBox[0];
-      const dx = b.left - a.left, dy = b.top - a.top - s * 20 * k;
+      // px per unità: logo k, simbolo kS; un punto (u, v) del logo deve cadere sullo stesso punto del simbolo
+      const k = a.width / lL, kS = b.width / lS, s = kS / k;
+      const dx = b.left - a.left + (xL - xS) * kS, dy = b.top - a.top + (yL - yS) * kS;
       animaUno(D.box, [{ transform: 'translate(0px, 0px) scale(1)' }, { transform: `translate(${dx}px, ${dy}px) scale(${s})` }], { duration: flip, easing: EXPO_INOUT, fill: 'forwards' });
       // negli ultimi 200 ms il logo in volo passa la mano al simbolo della testata (che compare con html.marchio-in)
       animaUno(D.box, [{ opacity: 1 }, { opacity: 0 }], { duration: INTRO.consegnaMs, delay: flip - INTRO.consegnaMs, easing: 'linear', fill: 'forwards' });

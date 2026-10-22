@@ -15,6 +15,7 @@
 //  - aree idonee (vincoli < 5 %, pendenza < 0,05 su 9 campioni, fuori da strade, fiume e bosco);
 //  - oggetti 3D nascosti finché STATO li accende: 5 fogli GIS, lunetta (60 tacche), tende di luce, percorso del sopralluogo,
 //    layout proposto/approvato (plotter LineSegments2), sigillo READY TO BUILD, polvere.
+//    Tema chiaro: tutti a INCHIOSTRO (NormalBlending, colori di palette, copertura = alfa), nessun materiale additivo.
 //
 // Contratto (vincolante, vedi ARCHITETTURA.md):
 //  crea(ctx): pubblica ctx.dati.catasto = { tStati, tVincoli, tMaschere, particellaDi(x, z) → {foglio, id, numero, ha, idonea,
@@ -37,14 +38,19 @@ const CAT = PIANURA.catasto, NC = CAT.N;
 const BIT = PIANURA.bitStato;
 const VIN = PIANURA.vincoli;
 const PROPRIETARI = { A: 1, B: 2, C: 3, D: 4 };
-const ORO_3D = '#d6a454';                              // --oro-3d-emissivo (§2.1)
 // TARATURA: proporre in config — tempi del plotter (frazioni di uLayout) e misure dei tratteggi in u
 const PLOTTER = { recinzione: [0.00, 0.18, 0.025], viabilita: [0.10, 0.24, 0.03], tracker: [0.20, 0.86, 0.07],
                   cabine: [0.84, 0.93, 0.03], punto: [0.90, 1.00, 0.06], tratto: 0.8, pausa: 0.6 };
-const PERCORSO = { tratto: 0.55, pausa: 0.4, passo: 0.5, sopra: 0.08 };
+// TARATURA: proporre in config — copertura d'inchiostro del percorso del sopralluogo
+const PERCORSO = { tratto: 0.55, pausa: 0.4, passo: 0.5, sopra: 0.08, copertura: 0.9 };
 
-// Colore lineare HDR (sRGB dichiarato, §2.1) × fattore di emissione.
-const hdr = (hex, k = 1) => new THREE.Color(hex).multiplyScalar(k);
+// Tema chiaro: tutto è INCHIOSTRO (NormalBlending, colori di palette senza moltiplicatori HDR, copertura = alfa).
+const col = hex => new THREE.Color(hex);
+/** Copertura 0..1 da un fattore di OVERLAY (ripiego se fosse ancora un'emissione HDR > 1). */
+const cop = v => Math.min(1, v > 1 ? v / 2.4 : v);
+/** Colore di palette (sRGB '#rrggbb') per il canvas: [r, g, b] in 0..255 e 'rgba(r,g,b,a)'. */
+const rgb = hex => [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
+const rgba = (hex, a) => `rgba(${rgb(hex).join(',')},${a})`;
 
 // ---------------------------------------------------------------- campo delle quote (513², passo 360/512)
 const CAMPO_S = 512;
@@ -199,14 +205,14 @@ function canvasFoglio(k, vincoli, masc) {
   const c = document.createElement('canvas'); c.width = c.height = L_FOGLIO;
   const g = c.getContext('2d');
   const img = g.createImageData(L_FOGLIO, L_FOGLIO), o = img.data;
-  const rosso = [224, 100, 79], oro = [216, 184, 120];
+  const rosso = rgb(PALETTE.vincolo), carta = rgb(PALETTE.carta);
   const { dati, L } = vincoli, scV = L / L_FOGLIO, scM = L_MASC / L_FOGLIO;
   const mascheraDi = (i, j) => {
     if (k === 4) return masc[((j * scM) | 0) * L_MASC + ((i * scM) | 0)] / 255;
     return dati[(((j * scV) | 0) * L + ((i * scV) | 0)) * 4 + k] / 255;
   };
-  // fondo del foglio: velo d'inchiostro appena dorato (si legge come "foglio" senza coprire la carta)
-  for (let i = 0; i < o.length; i += 4) { o[i] = oro[0]; o[i + 1] = oro[1]; o[i + 2] = oro[2]; o[i + 3] = 7; }
+  // fondo del foglio: lucido chiaro color carta (si legge come "foglio" senza coprire il territorio)
+  for (let i = 0; i < o.length; i += 4) { o[i] = carta[0]; o[i + 1] = carta[1]; o[i + 2] = carta[2]; o[i + 3] = 77; }
   if (k !== 3) {
     for (let j = 1; j < L_FOGLIO - 1; j++) for (let i = 1; i < L_FOGLIO - 1; i++) {
       const m = mascheraDi(i, j); if (m < 0.5) continue;
@@ -225,17 +231,17 @@ function canvasFoglio(k, vincoli, masc) {
   const s = L_FOGLIO / LATO, X = x => (x + MEZZO) * s;
   if (k === 3) {   // archeologico: cerchio tratteggiato e anello di rispetto (in canvas, con i trattini)
     const A = VIN.archeologico;
-    g.strokeStyle = 'rgba(224,100,79,0.95)'; g.lineWidth = 2; g.setLineDash([4, 4]);
+    g.strokeStyle = rgba(PALETTE.vincolo, 0.95); g.lineWidth = 2; g.setLineDash([4, 4]);
     for (const r of [A.raggio, A.rispetto]) { g.beginPath(); g.arc(X(A.centro[0]), X(A.centro[1]), r * s, 0, Math.PI * 2); g.stroke(); }
-    g.setLineDash([]); g.fillStyle = 'rgba(224,100,79,0.18)'; g.beginPath(); g.arc(X(A.centro[0]), X(A.centro[1]), A.raggio * s, 0, Math.PI * 2); g.fill();
+    g.setLineDash([]); g.fillStyle = rgba(PALETTE.vincolo, 0.18); g.beginPath(); g.arc(X(A.centro[0]), X(A.centro[1]), A.raggio * s, 0, Math.PI * 2); g.fill();
   }
-  // cornice oro (1 px a 1024) con tacche agli angoli, titolo in Plex Mono nell'angolo
-  g.strokeStyle = 'rgba(216,184,120,0.95)'; g.lineWidth = 2; g.strokeRect(6, 6, L_FOGLIO - 12, L_FOGLIO - 12);
+  // cornice oro (1 px a 1024) con tacche agli angoli, titolo in Plex Mono nell'angolo (inchiostro scuro)
+  g.strokeStyle = rgba(PALETTE.oro, 0.95); g.lineWidth = 2; g.strokeRect(6, 6, L_FOGLIO - 12, L_FOGLIO - 12);
   g.lineWidth = 1; g.strokeRect(14, 14, L_FOGLIO - 28, L_FOGLIO - 28);
-  g.fillStyle = 'rgba(241,223,179,1)'; g.font = '500 22px "IBM Plex Mono", monospace'; g.textBaseline = 'top';
+  g.fillStyle = rgba(PALETTE.inchiostro, 1); g.font = '500 22px "IBM Plex Mono", monospace'; g.textBaseline = 'top';
   const titolo = `STRATO ${String(k + 1).padStart(2, '0')} · ${PIANURA.stratiGIS[k].toUpperCase()}`;
   g.fillText(titolo, 30, 28);
-  g.font = '400 15px "IBM Plex Mono", monospace'; g.fillStyle = 'rgba(216,184,120,0.9)';
+  g.font = '400 15px "IBM Plex Mono", monospace'; g.fillStyle = rgba(PALETTE.oro, 0.95);
   g.fillText('FG. 27–28 · SCALA 1:10 000 · DATI ILLUSTRATIVI', 30, 58);
   g.textAlign = 'right'; g.fillText('42°00′N · 12°30′E', L_FOGLIO - 30, 28);
   const t = new THREE.CanvasTexture(c);
@@ -288,8 +294,9 @@ function canvasSigillo() {
 }
 
 // ---------------------------------------------------------------- plotter: LineSegments2 con rivelazione per segmento
-// Ogni segmento ha (t0, t1, lunghezza): si disegna da inizio a fine quando uAvanza va da t0 a t1, con una punta luminosa.
-// uContinua 0 → 1 chiude i tratteggi (layout approvato), uIntensita dissolve, uRitraccia ripassa le linee (×2 sul fronte).
+// Ogni segmento ha (t0, t1, lunghezza): si disegna da inizio a fine quando uAvanza va da t0 a t1, con una punta.
+// uContinua 0 → 1 chiude i tratteggi (layout approvato), uIntensita dissolve, uRitraccia ripassa le linee.
+// Inchiostro: colore e copertura (alfa) dal proposto (A) all'approvato (B); punta e ripassata a piena copertura in uColR.
 function patchPlotter(u) {
   return sh => {
     Object.assign(sh.uniforms, u);
@@ -298,7 +305,8 @@ function patchPlotter(u) {
       '\tvTempi = aTempi; vFase = position.y < 0.5 ? 0.0 : 1.0; vXZ = ( position.y < 0.5 ? instanceStart : instanceEnd ).xz;');
     sh.fragmentShader = sh.fragmentShader
       .replace('void main() {', 'uniform float uAvanza; uniform float uContinua; uniform float uIntensita; uniform float uPunta; uniform float uRitraccia;\n' +
-        'uniform vec3 uColA; uniform vec3 uColB; uniform vec3 uSitoC;\nvarying vec3 vTempi; varying float vFase; varying vec2 vXZ;\nvoid main() {')
+        'uniform float uCopA; uniform float uCopB; uniform vec3 uColA; uniform vec3 uColB; uniform vec3 uColR; uniform vec3 uSitoC;\n' +
+        'varying vec3 vTempi; varying float vFase; varying vec2 vXZ;\nvoid main() {')
       .replace('if ( mod( vLineDistance + dashOffset, dashSize + gapSize ) > dashSize ) discard;',
         'float rv = clamp( ( uAvanza - vTempi.x ) / max( vTempi.y - vTempi.x, 1e-5 ), 0.0, 1.0 );\n' +
         '\t\t\t\tif ( rv <= 0.0 || vFase > rv ) discard;\n' +
@@ -307,9 +315,11 @@ function patchPlotter(u) {
       .replace('vec4 diffuseColor = vec4( diffuse, alpha );',
         'float dPunta = ( rv - vFase ) * vTempi.z;\n' +
         '\t\t\tfloat punta = rv < 0.999 ? exp( - dPunta * dPunta / 0.12 ) : 0.0;\n' +
-        '\t\t\tfloat rit = 1.0;\n' +
-        '\t\t\tif ( uRitraccia > 0.0 ) { float dd = ( distance( vXZ, uSitoC.xz ) - uRitraccia ) / 4.0; rit += 2.0 * exp( - dd * dd ) * ( 1.0 - smoothstep( 280.0, 320.0, uRitraccia ) ); }\n' +
-        '\t\t\tvec3 colP = ( mix( uColA, uColB, uContinua ) * rit + uColA * uPunta * punta ) * uIntensita;\n' +
+        '\t\t\tfloat rit = 0.0;\n' +
+        '\t\t\tif ( uRitraccia > 0.0 ) { float dd = ( distance( vXZ, uSitoC.xz ) - uRitraccia ) / 4.0; rit = exp( - dd * dd ) * ( 1.0 - smoothstep( 280.0, 320.0, uRitraccia ) ); }\n' +
+        '\t\t\tfloat kR = max( clamp( punta * uPunta / 3.0, 0.0, 1.0 ), rit );\n' +
+        '\t\t\tvec3 colP = mix( mix( uColA, uColB, uContinua ), uColR, kR );\n' +
+        '\t\t\talpha *= clamp( max( mix( uCopA, uCopB, uContinua ), kR ) * uIntensita, 0.0, 1.0 );\n' +
         '\t\t\tvec4 diffuseColor = vec4( colP, alpha );');
   };
 }
@@ -323,14 +333,15 @@ function creaPlotter(ctx, segmenti, opz) {
   geo.setAttribute('aTempi', new THREE.InstancedBufferAttribute(tempi, 3));
   const u = {
     uAvanza: { value: 0 }, uContinua: { value: 0 }, uIntensita: { value: 1 }, uPunta: { value: opz.punta ?? OVERLAY.layoutProposto.punta },
-    uColA: { value: opz.colA.clone() }, uColB: { value: (opz.colB || opz.colA).clone() },
+    uColA: { value: opz.colA.clone() }, uColB: { value: (opz.colB || opz.colA).clone() }, uColR: { value: col(PALETTE.oroChiaro) },
+    uCopA: { value: opz.copA ?? 1 }, uCopB: { value: opz.copB ?? opz.copA ?? 1 },
     uRitraccia: ctx.U.uRitraccia, uSitoC: ctx.U.uSitoC,
   };
   const mat = nuovoMateriale(LineMaterial, {
     color: 0xffffff, linewidth: opz.px, dashed: true, dashSize: opz.tratto, gapSize: opz.pausa, dashScale: 1,
-    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    transparent: true, depthWrite: false, blending: THREE.NormalBlending,
     polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
-  }, { patch: patchPlotter(u), chiave: 'plotter-v1' });
+  }, { patch: patchPlotter(u), chiave: 'plotter-v2' });
   const linee = new LineSegments2(geo, mat);
   linee.computeLineDistances();
   linee.frustumCulled = false; linee.visible = false; linee.renderOrder = 3;
@@ -487,7 +498,7 @@ export async function crea(ctx) {
   const geoFoglio = new THREE.PlaneGeometry(FG.lato, FG.lato).rotateX(-Math.PI / 2);
   for (let k = 0; k < 5; k++) {
     const mat = nuovoMateriale(THREE.MeshBasicMaterial, {
-      map: canvasFoglio(k, vincoli, mB), color: new THREE.Color(1.35, 1.35, 1.35), transparent: true, opacity: 0,
+      map: canvasFoglio(k, vincoli, mB), color: 0xffffff, transparent: true, opacity: 0,
       depthWrite: false, side: THREE.DoubleSide, fog: false,
     });
     const m = new THREE.Mesh(geoFoglio, mat);
@@ -497,11 +508,18 @@ export async function crea(ctx) {
   }
   const impattoFoglio = [0, 1, 2, 3, 4].map(k => TRACCE[`fogliGIS.${k}.y`]?.[0]?.[1] ?? 99);
 
-  // ---- lunetta: 60 tacche radiali attorno a SITO_C (§2.7)
+  // ---- lunetta: 60 tacche radiali attorno a SITO_C (§2.7). Inchiostro oro linea: il colore d'istanza porta la
+  // copertura (r → alfa) e il lampo a 100 % (g → verso il rame-bruno)
   const LU = OVERLAY.lunetta;
   const geoTacca = new THREE.PlaneGeometry(LU.tacca[0], LU.tacca[1]).rotateX(-Math.PI / 2);
   const matTacca = nuovoMateriale(THREE.MeshBasicMaterial, { color: 0xffffff, transparent: true, opacity: 0, depthWrite: false,
-    blending: THREE.AdditiveBlending, fog: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+    blending: THREE.NormalBlending, fog: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+  aggiungiPatch(matTacca, sh => {
+    sh.uniforms.uTacca = { value: col(PALETTE.oroLinea) }; sh.uniforms.uTaccaLampo = { value: col(PALETTE.oroChiaro) };
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <common>', '#include <common>\nuniform vec3 uTacca; uniform vec3 uTaccaLampo;')
+      .replace('#include <color_fragment>', '#ifdef USE_COLOR\n\tdiffuseColor = vec4( mix( uTacca, uTaccaLampo, vColor.g ), diffuseColor.a * vColor.r );\n#endif');
+  }, 'tacca-inchiostro');
   const lunetta = new THREE.InstancedMesh(geoTacca, matTacca, LU.tacche);
   { const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), su = new THREE.Vector3(0, 1, 0), p = new THREE.Vector3(), s1 = new THREE.Vector3(1, 1, 1);
     for (let i = 0; i < LU.tacche; i++) {
@@ -515,7 +533,7 @@ export async function crea(ctx) {
   lunetta.instanceMatrix.needsUpdate = true; lunetta.instanceColor.setUsage(THREE.DynamicDrawUsage);
   lunetta.visible = false; lunetta.renderOrder = 4; lunetta.userData.noAO = true; lunetta.name = 'lunetta'; lunetta.frustumCulled = false;
   gruppo.add(lunetta);
-  const coloreTacca = { accesa: hdr(PALETTE.oro, LU.accesa), spenta: hdr(PALETTE.oro, LU.spenta), tmp: new THREE.Color() };
+  const coloreTacca = { accesa: cop(LU.accesa), spenta: cop(LU.spenta), tmp: new THREE.Color() };   // r = copertura, g = lampo
 
   // ---- tende di luce sui confini delle 7 particelle del sito (§2.7, §4.2)
   const TE = OVERLAY.tende;
@@ -529,14 +547,15 @@ export async function crea(ctx) {
   const p3 = ([x, z]) => [x, altezza(x, z) + PERCORSO.sopra, z];
   const segPerc = [];
   for (let i = 0; i < puntiPerc.length - 1; i++) segPerc.push({ a: p3(puntiPerc[i]), b: p3(puntiPerc[i + 1]), t0: lunPerc[i] / accP, t1: lunPerc[i + 1] / accP });
-  const percorso = creaPlotter(ctx, segPerc, { nome: 'percorso', colA: hdr(PALETTE.oro, 2.0), px: 1.4, tratto: PERCORSO.tratto, pausa: PERCORSO.pausa, punta: 3 });
+  const percorso = creaPlotter(ctx, segPerc, { nome: 'percorso', colA: col(PALETTE.oro), copA: PERCORSO.copertura, px: 1.4, tratto: PERCORSO.tratto, pausa: PERCORSO.pausa, punta: 3 });
   gruppo.add(percorso.linee);
-  const matPunta = nuovoMateriale(THREE.MeshBasicMaterial, { color: hdr(PALETTE.oroChiaro, 6), transparent: true, depthWrite: false, fog: false });
+  // punta: piccolo punto pieno scuro (rame-bruno) con un alone chiaro a terra
+  const matPunta = nuovoMateriale(THREE.MeshBasicMaterial, { color: col(PALETTE.oroChiaro), transparent: true, depthWrite: false, fog: false });
   const puntaPerc = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 12), matPunta);
   puntaPerc.visible = false; puntaPerc.userData.noAO = true; puntaPerc.name = 'percorso.punta'; gruppo.add(puntaPerc);
   const alonePerc = new THREE.Mesh(new THREE.RingGeometry(0.35, 1.1, 40).rotateX(-Math.PI / 2),
-    nuovoMateriale(THREE.MeshBasicMaterial, { color: hdr(PALETTE.oro, 1.2), transparent: true, opacity: 0.5, depthWrite: false, fog: false, blending: THREE.AdditiveBlending }));
-  alonePerc.visible = false; alonePerc.userData.noAO = true; gruppo.add(alonePerc);
+    nuovoMateriale(THREE.MeshBasicMaterial, { color: col(PALETTE.carta), transparent: true, opacity: 0.5, depthWrite: false, fog: false, blending: THREE.NormalBlending }));
+  alonePerc.visible = false; alonePerc.userData.noAO = true; alonePerc.renderOrder = 2; gruppo.add(alonePerc);
   const puntoSuPercorso = (f, out) => {
     const s = clamp(f, 0, 1) * accP; let i = 1; while (i < lunPerc.length - 1 && lunPerc[i] < s) i++;
     const a = puntiPerc[i - 1], b = puntiPerc[i], u = clamp((s - lunPerc[i - 1]) / Math.max(1e-6, lunPerc[i] - lunPerc[i - 1]), 0, 1);
@@ -571,14 +590,14 @@ export async function crea(ctx) {
     // il punto si disegna tutto insieme, alla fine
     const [g0, g1] = PLOTTER.punto; punto.forEach(s => { s.t0 = g0; s.t1 = g1; segLay.push(s); });
   }
-  const layout = creaPlotter(ctx, segLay, { nome: 'layout', colA: hdr(PALETTE.oroChiaro, OVERLAY.layoutProposto.emissione),
-    colB: hdr(PALETTE.oro, OVERLAY.layoutApprovato.emissione), px: OVERLAY.layoutProposto.px, tratto: PLOTTER.tratto, pausa: PLOTTER.pausa });
+  const layout = creaPlotter(ctx, segLay, { nome: 'layout', colA: col(PALETTE.oroChiaro), copA: cop(OVERLAY.layoutProposto.emissione),
+    colB: col(PALETTE.oro), copB: cop(OVERLAY.layoutApprovato.emissione), px: OVERLAY.layoutProposto.px, tratto: PLOTTER.tratto, pausa: PLOTTER.pausa });
   gruppo.add(layout.linee);
   const tLay = TRACCE.uLayoutApprovato?.[0] || [7.20, 7.26];   // passaggio tratteggiato → continuo
 
   // ---- sigillo READY TO BUILD (decalcomania a terra, diametro 26 u, rame)
   const SG = PIANURA.sigillo;
-  const matSig = nuovoMateriale(THREE.MeshBasicMaterial, { map: canvasSigillo(), color: hdr(PALETTE.rame, 2.4), transparent: true, opacity: 0,
+  const matSig = nuovoMateriale(THREE.MeshBasicMaterial, { map: canvasSigillo(), color: col(PALETTE.rame), transparent: true, opacity: 0,
     depthWrite: false, fog: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
   const sigillo = new THREE.Mesh(new THREE.CircleGeometry(SG.diametro / 2, 96).rotateX(-Math.PI / 2), matSig);
   sigillo.position.set(SITO_C[0], SG.quota + SG.ySopra, SITO_C[2]);
@@ -633,10 +652,11 @@ function creaTende(ctx, particelle, idCella, TE, U) {
   geo.setIndex(ind);
   const u = {
     uAltezza: { value: 0 }, uTempo: U.uTempoR, uPulsa: U.uPulsa, uLampoFirma: U.uLampoFirma, uFirma: ctx.U.uTrattativaFirmata,
-    uOro: { value: hdr(PALETTE.oro, 1) },
+    uOro: { value: col(PALETTE.oroLinea) }, uOroPiede: { value: col(PALETTE.oro) },
   };
+  // velo d'oro trasparente (NormalBlending): l'intensità di prima ora è la copertura (alfa); il piede è più scuro
   const mat = nuovoMateriale(THREE.ShaderMaterial, {
-    uniforms: u, transparent: true, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending,
+    uniforms: u, transparent: true, depthWrite: false, side: THREE.DoubleSide, blending: THREE.NormalBlending,
     vertexShader: /* glsl */`
       attribute float aV; attribute float aC; uniform float uAltezza;
       varying float vV; varying float vC; varying float vY;
@@ -646,7 +666,7 @@ function creaTende(ctx, particelle, idCella, TE, U) {
         gl_Position = projectionMatrix * modelViewMatrix * vec4( p, 1.0 );
       }`,
     fragmentShader: /* glsl */`
-      uniform vec3 uOro; uniform float uAltezza, uTempo, uPulsa, uLampoFirma, uFirma;
+      uniform vec3 uOro, uOroPiede; uniform float uAltezza, uTempo, uPulsa, uLampoFirma, uFirma;
       varying float vV; varying float vC; varying float vY;
       void main(){
         // gradiente d'alfa 0,55 → 0 sull'altezza (${TE.altezza} u) e 6 scanline che salgono a ${TE.scanlineVel} u/s
@@ -655,13 +675,13 @@ function creaTende(ctx, particelle, idCella, TE, U) {
         float s = fract( ( vY - uTempo * ${TE.scanlineVel.toFixed(3)} ) / passo );
         float scan = smoothstep( 0.0, 0.06, s ) * ( 1.0 - smoothstep( 0.06, 0.2, s ) ) * ( 1.0 - vV );
         float piede = exp( - vY * 40.0 );
-        // A e B: oro pieno ×1,8. C (in trattativa): contorno pulsante 0,8–1,8 a 1,2 Hz, poi firmato con un lampo ×2
-        float pulsa = mix( ${TE.pulsa[0].toFixed(2)}, ${TE.pulsa[1].toFixed(2)}, uPulsa );
+        // A e B: copertura piena (firmato). C (in trattativa): pulsa a 1,2 Hz, poi firmato con un lampo
+        float pulsa = mix( ${cop(TE.pulsa[0]).toFixed(2)}, ${cop(TE.pulsa[1]).toFixed(2)}, uPulsa );
         float kC = mix( 0.35, 1.0, uFirma );
-        float em = mix( ${TE.firmato.toFixed(2)}, mix( pulsa, ${TE.firmato.toFixed(2)} * uLampoFirma, uFirma ), vC );
+        float em = mix( ${cop(TE.firmato).toFixed(2)}, mix( pulsa, ${cop(TE.firmato).toFixed(2)} * uLampoFirma, uFirma ), vC );
         float corpo = mix( 1.0, kC, vC );
         float intens = ( a * corpo + scan * 0.55 + piede * 0.6 ) * em * smoothstep( 0.0, 0.25, uAltezza );
-        gl_FragColor = vec4( uOro * intens, 1.0 );
+        gl_FragColor = vec4( mix( uOro, uOroPiede, clamp( piede, 0.0, 1.0 ) ), clamp( intens, 0.0, 0.85 ) );
       }`,
   });
   const mesh = new THREE.Mesh(geo, mat);
@@ -679,10 +699,11 @@ function creaPolvere(ctx, SG) {
   geo.setAttribute('aSeme', new THREE.BufferAttribute(seme, 3));
   const u = {
     uP: { value: 0 }, uPx: ctx.U.uPx, uR0: { value: SG.diametro / 2 }, uCentro: { value: new THREE.Vector3(SITO_C[0], SG.quota, SITO_C[2]) },
-    uCol: { value: hdr(PALETTE.oroChiaro, 0.9) },
+    uCol: { value: col(PALETTE.oroLinea) },
   };
+  // granelli d'inchiostro oro (NormalBlending, alfa = densità), mai luce sommata
   const mat = nuovoMateriale(THREE.ShaderMaterial, {
-    uniforms: u, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    uniforms: u, transparent: true, depthWrite: false, blending: THREE.NormalBlending,
     vertexShader: /* glsl */`
       attribute vec3 aSeme; uniform float uP, uPx, uR0; uniform vec3 uCentro; varying float vA;
       void main(){
@@ -698,7 +719,7 @@ function creaPolvere(ctx, SG) {
       void main(){
         float d = length( gl_PointCoord - 0.5 ); if ( d > 0.5 ) discard;
         float a = vA * ( 1.0 - smoothstep( 0.05, 0.5, d ) );
-        gl_FragColor = vec4( uCol * a, 1.0 );
+        gl_FragColor = vec4( uCol, a );
       }`,
   });
   const punti = new THREE.Points(geo, mat);
@@ -732,17 +753,17 @@ export function aggiorna(ctx, T, t /*, dt */) {
     m.visible = f.o > 0.002; m.position.y = f.y; m.material.opacity = f.o;
   }
 
-  // ---- lunetta: tacche accese con la maturità, in senso orario da nord; lampo ×4 a 100 %
+  // ---- lunetta: tacche accese con la maturità, in senso orario da nord; lampo a 100 % (verso il rame-bruno)
   const lu = st.lunetta, nT = OVERLAY.lunetta.tacche;
   lu.visible = S.lunetta > 0.002;
   if (lu.visible) {
     lu.material.opacity = S.lunetta;
-    const accese = clamp(S.maturita / 100, 0, 1) * nT, lampo = 1 + 3 * bump(T, T_MATURITA_100, 0.02);   // lampo ×4 per 0,02 T a 100 %
+    const accese = clamp(S.maturita / 100, 0, 1) * nT, lampo = bump(T, T_MATURITA_100, 0.02);   // lampo per 0,02 T a 100 %
     if (Math.abs(accese - st.accesePrima) > 1e-4 || lampo !== st.lampoPrima) {
       const c = st.coloreTacca;
       for (let i = 0; i < nT; i++) {
         const k = clamp(accese - i, 0, 1);
-        c.tmp.copy(c.spenta).lerp(c.accesa, k).multiplyScalar(k > 0 ? lampo : 1); lu.setColorAt(i, c.tmp);
+        c.tmp.setRGB(c.spenta + (c.accesa - c.spenta) * k, k > 0 ? lampo : 0, 0, THREE.LinearSRGBColorSpace); lu.setColorAt(i, c.tmp);
       }
       lu.instanceColor.needsUpdate = true; st.accesePrima = accese; st.lampoPrima = lampo;
     }

@@ -10,8 +10,9 @@
 //    vere (ricerca del bordo bagnato su altezza(), più un orlo che scende sotto il terreno): niente bordi sospesi.
 //  - MeshPhysicalMaterial di §2.6; due campioni della normal map che scorrono a valle (§6.7); clearcoat increspato;
 //    riflessi d'ambiente attenuati vicino alle sponde (la sponda "si specchia" scura); acqua bassa più chiara ai bordi.
-//  - modo carta (uFiumeMappa in tappa 0, poi 1 − realtà): riempimento acqua × 0,25 e bordi di 1 px × 1,5 (§6.5), come
-//    il fiume disegnato dal terreno, così il passaggio di testimone è continuo; sottrazione (§4.2) e fronte di realtà.
+//  - modo carta (uFiumeMappa in tappa 0, poi 1 − realtà): azzurro inchiostro su carta, riempimento e bordo con le
+//    coperture di OVERLAY.fiumeCarta (§6.5), come il fiume disegnato dal terreno, opaco (niente riflessi); sottrazione
+//    (§4.2) come velatura verso la carta; fronte di realtà. In realtà: acqua lucida chiara di MATERIALI.fiume.
 //  - opacità da STATO.fiume; sollevamento lift() come il terreno (tappa 0).
 //  - traversa con paratoie, pile, passerella, muri d'ala e centrale ad acqua fluente sulla sponda est (§3.4).
 //  - normal map dell'acqua generata su canvas (somma periodica di onde + Sobel a 4 campioni), condivisa con la VALLE.
@@ -179,8 +180,11 @@ function creaNastro() {
 
 // ---------------------------------------------------------------- shader dell'acqua
 function patchAcqua(U, loc) {
-  const ACQUA = vec3Lin(PALETTE.acqua), SCHIUMA = vec3Lin(PALETTE.avorio, 0.85), BASSA = vec3Lin('#1f2e2a');
-  const FC = OVERLAY.fiumeCarta;
+  // tema chiaro: schiuma chiara, acqua bassa schiarita verso la riva, carta e velatura chiare
+  const ACQUA = vec3Lin(PALETTE.acqua), SCHIUMA = vec3Lin(PALETTE.suOro, 0.95);
+  const BASSA = vec3Lin('#' + new THREE.Color(MATERIALI.fiume.color).lerp(new THREE.Color(PALETTE.carta2), 0.35).getHexString());
+  const CARTA = vec3Lin(PALETTE.carta), VELO = vec3Lin(OVERLAY.velatura || PALETTE.carta);
+  const FC = OVERLAY.fiumeCarta, cop = v => Math.min(1, v > 1 ? v / 2.4 : v).toFixed(3);
   return sh => {
     Object.assign(sh.uniforms, {
       uTempoAcqua: loc.uTempoAcqua, uFiumeMappa: U.uFiumeMappa, uRealta: U.uRealta, uFronteRealta: U.uFronteRealta,
@@ -209,9 +213,21 @@ float rumoreA(vec2 p) { vec2 i = floor(p), f = fract(p); vec2 u = f * f * (3.0 -
   float fSalto = vSchiuma * smoothstep(0.2, 0.75, nS2 * 0.65 + nS1 * 0.5 + vSchiuma * 0.35);
   float schiuma = clamp(fBordo * 0.7 + fSalto, 0.0, 1.0);
   diffuseColor.rgb = mix(diffuseColor.rgb, ${BASSA}, (1.0 - smoothstep(0.0, 0.9, vBordo)) * 0.5);
-  diffuseColor.rgb = mix(diffuseColor.rgb, ${SCHIUMA}, schiuma * 0.9);`)
+  diffuseColor.rgb = mix(diffuseColor.rgb, ${SCHIUMA}, schiuma * 0.9);
+  // modo carta (uFiumeMappa in tappa 0, poi 1 − realtà): azzurro inchiostro su carta, riempimento e bordo come il fiume
+  // disegnato dal terreno (§6.5), così il passaggio di testimone è continuo
+  float mappa = max(uFiumeMappa, 1.0 - realtaA);
+  float fwB = max(fwidth(vBordo), 1e-4);
+  float lineaB = 1.0 - smoothstep(0.5 * fwB * uPx, 0.5 * fwB * uPx + fwB, abs(vBordo - 0.06));
+  vec3 cartaF = mix(${CARTA}, ${ACQUA}, ${cop(FC.riempimento)});
+  cartaF = mix(cartaF, ${ACQUA}, ${cop(FC.bordo)} * lineaB);
+  diffuseColor.rgb = mix(diffuseColor.rgb, cartaF, mappa);
+  // sottrazione: velata verso la carta (come il terreno), e la carta non luccica
+  float kVelo = 1.0 - mix(1.0, ${OVERLAY.sottrazioneLuminanza.toFixed(3)}, uSottrazione);
+  diffuseColor.rgb = mix(diffuseColor.rgb, ${VELO}, kVelo);
+  float opacoA = max(mappa, kVelo);`)
       .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
-  roughnessFactor = mix(roughnessFactor, 0.55, schiuma);`)
+  roughnessFactor = mix(mix(roughnessFactor, 0.55, schiuma), 1.0, opacoA);`)
       // due campioni della normal map che scorrono a valle (§6.7), più forti nella schiuma
       .replace('#include <normal_fragment_maps>', `{
   vec2 uvA = vNormalMapUv + vec2(0.0, uTempoAcqua * 0.05);
@@ -228,7 +244,7 @@ float rumoreA(vec2 p) { vec2 i = floor(p), f = fract(p); vec2 u = f * f * (3.0 -
 #endif`)
       .replace('#include <lights_physical_fragment>', `#include <lights_physical_fragment>
 #ifdef USE_CLEARCOAT
-  material.clearcoat *= 1.0 - schiuma;
+  material.clearcoat *= ( 1.0 - schiuma ) * ( 1.0 - opacoA );
 #endif`)
       // le sponde "si specchiano": riflessi d'ambiente più scuri vicino ai bordi
       .replace('#include <lights_fragment_maps>', `#include <lights_fragment_maps>
@@ -239,18 +255,7 @@ float rumoreA(vec2 p) { vec2 i = floor(p), f = fract(p); vec2 u = f * f * (3.0 -
     clearcoatRadiance *= rivaR;
   #endif
   }
-#endif`)
-      // modo carta: riempimento acqua × 0,25 e bordi di 1 px × 1,5 (come il fiume disegnato dal terreno, §6.5)
-      .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
-  { float mappa = max(uFiumeMappa, 1.0 - realtaA);
-    float fw = max(fwidth(vBordo), 1e-4);
-    float dB = abs(vBordo - 0.06);
-    float linea = 1.0 - smoothstep(0.5 * fw * uPx, 0.5 * fw * uPx + fw, dB);
-    totalEmissiveRadiance += ${ACQUA} * (${FC.riempimento.toFixed(3)} + ${FC.bordo.toFixed(3)} * linea) * mappa;
-    totalEmissiveRadiance += ${SCHIUMA} * schiuma * 0.15; }`)
-      .replace('#include <opaque_fragment>', `
-  outgoingLight *= mix(1.0, ${OVERLAY.sottrazioneLuminanza.toFixed(3)}, uSottrazione);
-  #include <opaque_fragment>`);
+#endif`);
   };
 }
 
@@ -331,7 +336,7 @@ export async function crea(ctx) {
     transparent: true, opacity: 0, depthWrite: true,
   });
   aggiungiPatch(mat, patchLift(U), 'pianura-lift');
-  aggiungiPatch(mat, patchAcqua(U, D.loc), 'fiume-acqua');
+  aggiungiPatch(mat, patchAcqua(U, D.loc), 'fiume-acqua-v2');
   const mesh = new THREE.Mesh(creaNastro(), mat);
   mesh.name = 'fiume'; mesh.receiveShadow = true; mesh.castShadow = false;
   mesh.userData.noAO = true; mesh.renderOrder = 1; mesh.visible = false;

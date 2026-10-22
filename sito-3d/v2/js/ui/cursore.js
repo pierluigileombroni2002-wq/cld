@@ -7,7 +7,7 @@
 // sotto il cursore → uHover = id e "Fg. 27 · P.lla 114 · 2,95 ha · idonea"; sui link l'anello sale a 44 px;
 // sugli oggetti esplorabili compare ESPLORA. Bottoni magnetici: attrazione entro 90 px, spostamento massimo 8 px,
 // etichetta in parallasse 0,6×, gsap.quickTo 0,4 s power3.out, uscita 0,6 s; riempimento radiale dal punto
-// d'ingresso (--x --y), testo nero; bottone principale premuto: rame), §6.11 (riduci: cursore di sistema),
+// d'ingresso (--x --y), testo --su-oro; bottone principale premuto: rame), §6.11 (riduci: cursore di sistema),
 // §6.12 (schermi piccoli o touch: cursore di sistema), config.INTERAZIONI.
 //
 // Contratto (ARCHITETTURA §6): export rendiMagnetico(el); scrive ctx.STATO.uHover.

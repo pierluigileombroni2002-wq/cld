@@ -6,7 +6,7 @@
 // config.CIELO, config.CIELO_PRESET.
 //
 // Contratto: crea(ctx) (async) pubblica ctx.cielo = {
-//   orizzonte: Color, bagliore: Color,   // colori lineari correnti (gli stessi della nebbia)
+//   orizzonte: Color, bagliore: Color,   // colori lineari A SCHERMO correnti (la nebbia usa colori.nebbia, in HDR)
 //   forzaCottura(): void,                // rifà le cotture al prossimo fotogramma (vaiT, contesto ripristinato)
 //   cotturaValle(): Promise,             // ambiente della VALLE (kloofendal ruotata, sole HDRI ad az 210°)
 //   azHDRI: {qwantani, kloofendal, autumn},  // azimut del texel più luminoso, PRIMA della de-solazione
@@ -16,21 +16,24 @@
 // Le cotture PMREM avvengono SOLO quando cambia la riga di COTTURE_PIANURA valida per T (funzione pura
 // di T: scroll all'indietro e vaiT corretti), o quando arriva una HDRI che la riga aspettava.
 // La HDRI non è mai sfondo: lo sfondo è la cupola procedurale, nitida a ogni risoluzione.
+// Tema chiaro: la cupola calcola il colore A SCHERMO (preset di CIELO_PRESET) e lo riporta in HDR con l'inversa di
+// ACES e dell'esposizione (stessa funzione di nebbia.js versoScena): a schermo esce il preset, qualunque sia
+// STATO.esposizione, e la cupola resta sotto la soglia del bloom (fioriscono solo disco e aureola).
 // =============================================================================
 import * as THREE from 'three';
 import { CIELO, COTTURE_PIANURA, AMBIENTE_VALLE, HDRI, PALETTE } from '../config.js';
 import { posizioneSole, rad, deg, ss } from '../geo.js';
-import { COLORI_CIELO, calcolaCielo } from './nebbia.js';
+import { COLORI_CIELO, calcolaCielo, INVERSA_TONO, esposizioneTono } from './nebbia.js';
 
 export const MONDO = 'sistema';
 
 // Tarature dell'ambiente (in config.CIELO.ibl, marcate [ARCH]; DESIGN non dà valori):
 //  - luminanza: ogni HDRI si normalizza alla luminanza media del suo emisfero alto (qwantani 1,20 · kloofendal 1,15 ·
-//    autumn 1,78 in origine). Il crepuscolo (qwantani: tramonto, ora blu, alba, finale) resta basso perché il sole
-//    radente disegni rilievo e ombre; il giorno pieno torna a 1. ENV_GLOBALE di §2.4 regola solo la tappa.
-//  - albedoSuolo/tintaSuolo: le HDRI "puresky" non hanno suolo; sotto l'orizzonte si mette un suolo scuro
-//    (niente luce "dal basso" sui moduli e sull'acciaio).
-//  - saturazione/tinta: le HDRI hanno tinte proprie (qwantani è lilla) che stonano con la palette nero-oro: l'ambiente
+//    autumn 1,78 in origine). Il crepuscolo (qwantani: tramonto, ora blu, alba, finale) resta un po' più basso del
+//    giorno perché il sole radente disegni rilievo e ombre; il giorno pieno torna a 1. ENV_GLOBALE regola la tappa.
+//  - albedoSuolo/tintaSuolo: le HDRI "puresky" non hanno suolo; sotto l'orizzonte si mette un suolo chiaro e caldo
+//    (il rimbalzo di una campagna luminosa, non una luce "dal basso" che sbianca moduli e acciaio).
+//  - saturazione/tinta: le HDRI hanno tinte proprie (qwantani è lilla) che stonano con la palette: l'ambiente
 //    si desatura in parte e si tinge col colore del cielo procedurale alla riga di cottura.
 //  - CIELO.tintaDisco: il disco di §6.3 (1; 0,85; 0,62) × 30 dopo ACES è un punto bianco; tinto col colore del sole
 //    ha il nucleo pallido e l'alone arancio di una foto vera (0 = disco esattamente come §6.3).
@@ -52,22 +55,39 @@ const VERT = /* glsl */`
 
 // Cupola di sfondo (§6.3). Il disco usa la distanza angolare θ = asin|d × s|, precisa anche per 0,27°
 // (cos θ in float32 non distingue 0,27° da 0,32°); leggero oscuramento al bordo per un disco "fisico".
+// Tema chiaro: gradiente, bagliore, suolo e Mie si calcolano A SCHERMO (lineare), poi versoScena() li porta in HDR
+// (inversa di ACES ed esposizione, come nebbia.js); disco e aureola si sommano dopo, in HDR (bloom controllato).
+// Il bagliore (e la diffusione di Mie) porta il cielo VERSO il suo colore con peso × k del preset, non si somma:
+// sul chiaro la somma satura e vira al giallo.
 const FRAG_CIELO = /* glsl */`
-  uniform vec3 uZenit, uOrizzonte, uBagliore, uSoleDir, uDiscoColore, uColoreSole, uNadir;
-  uniform float uDisco, uMieG, uEspBagliore, uDiscoR, uDiscoB, uDiscoHDR, uTintaDisco, uAureola, uSuolo, uSuoloH0, uSuoloH1;
+  uniform vec3 uZenit, uOrizzonte, uBaglioreCol, uSoleDir, uDiscoColore, uColoreSole, uNadir;
+  uniform float uKBagliore, uDisco, uMieG, uEspBagliore, uDiscoR, uDiscoB, uDiscoHDR, uTintaDisco, uAureola, uSuolo, uSuoloH0, uSuoloH1;
+  uniform mat3 uAcesInInv, uAcesOutInv; uniform float uEsp, uTetto, uAces;
   varying vec3 vDir;
+  vec3 rrtInv(vec3 y){
+    y = clamp(y, 0.0, 0.97);
+    vec3 a = 1.0 - 0.983729 * y, b = 0.0245786 - 0.432951 * y, c = -(0.000090537 + 0.238081 * y);
+    return (-b + sqrt(b * b - 4.0 * a * c)) / (2.0 * a);
+  }
+  // colore lineare a schermo → HDR della scena (OutputPass lo riporta esattamente qui)
+  vec3 versoScena(vec3 t){
+    t = clamp(t, 0.0, uTetto);
+    if (uAces < 0.5) return t / uEsp;                                 // AgX: solo esposizione (approssimato)
+    return max(uAcesInInv * rrtInv(uAcesOutInv * t), 0.0) * (0.6 / uEsp);
+  }
   void main(){
     vec3 d = normalize(vDir); float h = clamp(d.y, -0.2, 1.0);
     vec3 c = mix(uOrizzonte, uZenit, pow(smoothstep(-0.02, 0.6, h), 0.55));
-    float mu = dot(d, uSoleDir);
-    c += uBagliore * pow(max(mu, 0.0), uEspBagliore) * (1.0 - smoothstep(0.0, 0.35, h));
-    // suolo [ARCH]: sotto l'orizzonte la cupola scende in una piana scura (il mondo vero la copre; la fascia fino a
-    // h0 resta del colore dell'orizzonte = nebbia, così il bordo dell'anello del terreno non si vede)
-    float s = smoothstep(uSuoloH0, uSuoloH1, d.y);
-    vec3 suolo = mix(uOrizzonte * uSuolo + uBagliore * uSuolo * 0.5 * pow(max(mu, 0.0), 2.0), uNadir, smoothstep(uSuoloH1, -0.95, d.y));
-    c = mix(c, suolo, s);
+    float mu = dot(d, uSoleDir), mu0 = max(mu, 0.0);
     float g = uMieG; float mie = (1.0 - g * g) / pow(1.0 + g * g - 2.0 * g * mu, 1.5) * 0.02;
-    c += uBagliore * mie;
+    c = mix(c, uBaglioreCol, clamp((pow(mu0, uEspBagliore) * (1.0 - smoothstep(0.0, 0.35, h)) + mie) * uKBagliore, 0.0, 1.0));
+    // suolo [ARCH]: sotto l'orizzonte la cupola scende in una piana chiara (il mondo vero la copre). Fino a h1 ha il
+    // colore della nebbia (orizzonte e diffusione del sole come in fog_fragment: mix(o, soleNebbia, 0,6·sol)), poi va
+    // verso il nadir carta: nessuna fascia scura, il bordo dell'anello del terreno si perde nella foschia.
+    float s = smoothstep(uSuoloH0, uSuoloH1, d.y);
+    vec3 nebbia = mix(uOrizzonte * uSuolo, uBaglioreCol, clamp(0.6 * pow(mu0, 8.0) * uKBagliore, 0.0, 1.0));
+    c = mix(c, mix(nebbia, uNadir, smoothstep(uSuoloH1, -0.95, d.y)), s);
+    c = versoScena(c);
     float th = asin(clamp(length(cross(d, uSoleDir)), 0.0, 1.0));
     float disco = mu > 0.0 ? 1.0 - smoothstep(uDiscoR, uDiscoR + uDiscoB, th) : 0.0;
     float r = clamp(th / uDiscoR, 0.0, 1.0);
@@ -78,7 +98,7 @@ const FRAG_CIELO = /* glsl */`
     gl_FragColor = vec4(c, 1.0);
   }`;
 
-// Cupola d'ambiente (§6.3): due HDRI ruotate e miscelate, suolo scuro sotto l'orizzonte; la cuoce PMREM.
+// Cupola d'ambiente (§6.3): due HDRI ruotate e miscelate, suolo chiaro sotto l'orizzonte; la cuoce PMREM.
 const FRAG_ENV = /* glsl */`
   #include <common>
   uniform sampler2D tA, tB; uniform float uMix, uRotA, uRotB, uGain, uSat; uniform vec3 uSuoloA, uSuoloB, uTinta;
@@ -204,7 +224,7 @@ function azSoleA(ctx, T) {
 
 export async function crea(ctx) {
   const r = ctx.renderer;
-  r.setClearColor(new THREE.Color(PALETTE.nero), 1);
+  r.setClearColor(new THREE.Color(PALETTE.fondo), 1);                        // tema chiaro: fondo carta
   ctx.scene.pianura.background = null; ctx.scene.valle.background = null;   // la HDRI non è mai sfondo
 
   // ---- cupole di sfondo (§2.5): una per scena, stesso materiale (si disegna un mondo per volta)
@@ -212,13 +232,16 @@ export async function crea(ctx) {
   const matCielo = new THREE.ShaderMaterial({
     name: 'ERI.cielo', side: THREE.BackSide, depthWrite: false, fog: false, toneMapped: false,
     uniforms: {
-      uZenit: { value: new THREE.Color() }, uOrizzonte: { value: new THREE.Color() }, uBagliore: { value: new THREE.Color() },
+      uZenit: { value: new THREE.Color() }, uOrizzonte: { value: new THREE.Color() }, uBaglioreCol: { value: new THREE.Color() }, uKBagliore: { value: 0 },
       uSoleDir: ctx.U.uSoleDir, uDisco: { value: 0 }, uMieG: { value: CIELO.mieG }, uEspBagliore: { value: CIELO.esponenteBagliore },
       uDiscoR: { value: rad(CIELO.discoRaggio) }, uDiscoB: { value: rad(CIELO.discoBordo) }, uDiscoHDR: { value: CIELO.discoHDR },
       uDiscoColore: { value: new THREE.Vector3(...CIELO.discoColore) },
       uColoreSole: ctx.U.uColoreSole, uTintaDisco: { value: TINTA_DISCO }, uAureola: { value: AUREOLA },
       uSuolo: { value: CIELO.suolo.fattore }, uSuoloH0: { value: CIELO.suolo.h0 }, uSuoloH1: { value: CIELO.suolo.h1 },
       uNadir: { value: new THREE.Color(CIELO.suolo.nadir) },
+      // inversa del tone mapping (nebbia.js INVERSA_TONO): matrici per riferimento, esposizione a ogni fotogramma
+      uAcesInInv: { value: INVERSA_TONO.inInv }, uAcesOutInv: { value: INVERSA_TONO.outInv },
+      uEsp: { value: esposizioneTono(ctx.STATO) }, uTetto: { value: INVERSA_TONO.tetto }, uAces: { value: INVERSA_TONO.aces ? 1 : 0 },
     },
     vertexShader: VERT, fragmentShader: FRAG_CIELO,
   });
@@ -258,12 +281,17 @@ export async function crea(ctx) {
     return null;
   }
 
-  /** Tinta (luminanza 1) della cupola visibile al tempo T: orizzonte + bagliore del preset di quel momento. */
-  const _S = { cielo: null, sole: { el: 0 }, discoSole: 1 }, _col = { zenit: new THREE.Color(), orizzonte: new THREE.Color(), bagliore: new THREE.Color(), soleNebbia: new THREE.Color(), disco: 0 };
+  /**
+   * Tinta (luminanza 1) della cupola visibile al tempo T: media di zenit e orizzonte + bagliore del preset di quel
+   * momento. Tema chiaro: col solo orizzonte + bagliore (pesca al tramonto) tutta la luce del cielo diventava arancio;
+   * la media tiene il sole caldo e il cielo appena fresco, come in una foto vera.
+   */
+  const _S = { cielo: null, sole: { el: 0 }, discoSole: 1 }, _col = { zenit: new THREE.Color(), orizzonte: new THREE.Color(), bagliore: new THREE.Color(),
+    baglioreColore: new THREE.Color(), kBagliore: 0, soleNebbia: new THREE.Color(), disco: 0 };
   function tintaA(T, out) {
     _S.cielo = T == null ? { da: 'museale', a: 'museale', k: 0 } : (ctx.stato?.valuta?.('cielo', T) ?? ctx.STATO.cielo);
     calcolaCielo(_S, _col);
-    out.copy(_col.soleNebbia);
+    out.copy(_col.soleNebbia).add(_col.zenit).multiplyScalar(0.5);
     const l = 0.2126 * out.r + 0.7152 * out.g + 0.0722 * out.b;
     if (l > 1e-6) out.multiplyScalar(1 / l); else out.setRGB(1, 1, 1);
     return out.lerp(_bianco, 1 - TINTA_ENV);
@@ -337,7 +365,9 @@ export function aggiorna(ctx, T /*, t, dt */) {
   const cl = ctx.cielo; if (!cl?.cupole) return;
   const C = calcolaCielo(ctx.STATO);           // stessi valori della nebbia (nebbia.js li ha già calcolati)
   const u = cl.materiale.uniforms;
-  u.uZenit.value.copy(C.zenit); u.uOrizzonte.value.copy(C.orizzonte); u.uBagliore.value.copy(C.bagliore);
+  u.uZenit.value.copy(C.zenit); u.uOrizzonte.value.copy(C.orizzonte);
+  u.uBaglioreCol.value.copy(C.baglioreColore); u.uKBagliore.value = C.kBagliore;
+  u.uEsp.value = esposizioneTono(ctx.STATO);   // la stessa che pipeline.render scrive nel renderer in questo fotogramma
   // sotto le sezioni HTML il disco del sole (già diventato i petali del finale) non serve: dietro il velo 0,75
   // resterebbe un puntino grigio, come polvere sullo schermo
   u.uDisco.value = C.disco * (1 - ss(0.2, 0.6, ctx.veli?.sezioni || 0));

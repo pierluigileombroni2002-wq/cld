@@ -14,9 +14,9 @@
 //  - cabine al cancello (scala STATO.cabine), cabina primaria con trasformatori, portali, sbarre, apparecchiature,
 //    edificio comandi e luci calde (STATO.luciCP), linea AT con tralicci, capannone con scansione termica
 //    (STATO.termica), casali della campagna (file privato contorno-edifici.js).
-//  - cavidotto MT: LineSegments2 rame × 2,6 disegnato progressivamente (STATO.cavo) con punta luminosa, impulsi oro
-//    chiaro a 6 u/s uno ogni 4 u (STATO.impulsi), tratteggio "di progetto" (STATO.cavoProgetto), trincea scura che
-//    avanza (STATO.cavoScavo).
+//  - cavidotto MT: LineSegments2 rame a inchiostro disegnato progressivamente (STATO.cavo) con una punta, impulsi
+//    (punti pieni d'oro con alone chiaro) a 6 u/s uno ogni 4 u (STATO.impulsi), tratteggio "di progetto"
+//    (STATO.cavoProgetto), trincea scura che avanza (STATO.cavoScavo). Tema chiaro: nessun materiale additivo.
 //
 // Contratto (vincolante, vedi ARCHITETTURA.md):
 //  crea(ctx): registra ctx.ancore.set('cavo.polilinea', Vector3[]) (polilinea del cavidotto sul terreno, per LineaOro 4→5).
@@ -332,15 +332,17 @@ function creaCavo(ctx) {
     const l = new LineSegments2(g, mat); l.computeLineDistances(); l.position.y = dy;
     l.userData.noAO = true; l.visible = false; ctx.scene.pianura.add(l); return l;
   };
-  const rame = new THREE.Color(PALETTE.rame).multiplyScalar(O.emissione);
-  const oroC = new THREE.Color(PALETTE.oroChiaro).multiplyScalar(OVERLAY.layoutProposto.emissione);
+  // inchiostro (tema chiaro): colori di palette senza moltiplicatori, copertura = opacità della linea
+  const rame = new THREE.Color(PALETTE.rame);
+  const oroC = new THREE.Color(PALETTE.oroChiaro);
   const lp = OVERLAY.layoutProposto;
-  const mRame = materialeLinea(ctx, rame, O.px, { lift: false });
-  const mProg = materialeLinea(ctx, oroC, lp.px, { lift: false, par: { dashed: true, dashSize: 0.9, gapSize: 0.6 } });
+  const copL = v => Math.min(1, v > 1 ? v / 2.4 : v);
+  const mRame = materialeLinea(ctx, rame, O.px, { lift: false, par: { transparent: true, opacity: copL(O.emissione), depthWrite: false } });
+  const mProg = materialeLinea(ctx, oroC, lp.px, { lift: false, par: { dashed: true, dashSize: 0.9, gapSize: 0.6, transparent: true, opacity: copL(lp.emissione), depthWrite: false } });
   const mScavo = materialeLinea(ctx, new THREE.Color(PALETTE.inchiostro), 4, { lift: false, par: { dashed: true, dashSize: 0.55, gapSize: 0.18 } });
   const lRame = linea(mRame), lProg = linea(mProg), lScavo = linea(mScavo, 0.004);
-  lScavo.renderOrder = 2;
-  // impulsi e punta: Points additivi (posizioni scritte in aggiorna, nessuna allocazione)
+  lScavo.renderOrder = 2; lRame.renderOrder = 3; lProg.renderOrder = 3;
+  // impulsi e punta: piccoli punti pieni d'inchiostro con un alone chiaro (posizioni scritte in aggiorna, nessuna allocazione)
   const nImp = Math.ceil(lunghezza / O.impulsiPasso), nP = nImp * IMPULSI.scia.length + 1;
   const g = new THREE.BufferGeometry();
   const aPos = new THREE.BufferAttribute(new Float32Array(nP * 3), 3).setUsage(THREE.DynamicDrawUsage);
@@ -348,15 +350,17 @@ function creaCavo(ctx) {
   const aDim = new THREE.BufferAttribute(new Float32Array(nP), 1).setUsage(THREE.DynamicDrawUsage);
   g.setAttribute('position', aPos); g.setAttribute('aInt', aInt); g.setAttribute('aDim', aDim); g.setDrawRange(0, 0);
   const mImp = new THREE.ShaderMaterial({
-    uniforms: { uPx: ctx.U.uPx, uColore: { value: new THREE.Color(PALETTE.oroChiaro).multiplyScalar(3.2) }, uPunta: { value: rame.clone().multiplyScalar(1.4) } },
+    uniforms: { uPx: ctx.U.uPx, uColore: { value: new THREE.Color(PALETTE.oro) }, uPunta: { value: rame.clone() },
+                uAlone: { value: new THREE.Color(PALETTE.carta) } },
     vertexShader: `attribute float aInt; attribute float aDim; uniform float uPx; varying float vInt;
       void main() { vInt = aInt; vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * mv; gl_PointSize = aDim * uPx; }`,
-    fragmentShader: `uniform vec3 uColore; uniform vec3 uPunta; varying float vInt;
+    fragmentShader: `uniform vec3 uColore; uniform vec3 uPunta; uniform vec3 uAlone; varying float vInt;
       void main() { vec2 d = gl_PointCoord - 0.5; float r2 = dot(d, d) * 4.0; if (r2 > 1.0) discard;
-        float a = exp(-r2 * 5.0) + 0.35 * exp(-r2 * 1.2) * (1.0 - r2);
-        vec3 col = vInt > 1.2 ? mix(uColore, uPunta, 0.35) : uColore;
-        gl_FragColor = vec4(col * min(vInt, 1.6), a); }`,
-    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false,
+        float nucleo = 1.0 - smoothstep(0.1, 0.18, r2);                    // punto pieno scuro
+        float alone = exp(-r2 * 3.0) * (1.0 - r2);                          // alone chiaro attorno
+        vec3 col = mix(uAlone, vInt > 1.2 ? uPunta : uColore, nucleo);
+        gl_FragColor = vec4(col, clamp(max(nucleo, 0.6 * alone) * min(vInt, 1.0), 0.0, 1.0)); }`,
+    transparent: true, depthWrite: false, blending: THREE.NormalBlending, fog: false,
   });
   const impulsi = new THREE.Points(g, mImp);
   impulsi.frustumCulled = false; impulsi.userData.noAO = true; impulsi.visible = false; impulsi.renderOrder = 3;
@@ -365,26 +369,28 @@ function creaCavo(ctx) {
 }
 
 // ---------------------------------------------------------------- luci della CP: aloni e pozze di luce
+// Tema chiaro: niente somma di luce. Aloni = punto caldo pieno con un velo chiaro; pozze = velo caldo trasparente.
 function creaAloni(ctx, teste) {
   const col = new THREE.Color(PIANURA.cabinaPrimaria.luciColore);
   const pos = new Float32Array(teste.length * 3); teste.forEach((v, i) => v.toArray(pos, i * 3));
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   const mA = new THREE.ShaderMaterial({
-    uniforms: { uPx: ctx.U.uPx, uInt: { value: 0 }, uColore: { value: col.clone() } },
+    uniforms: { uPx: ctx.U.uPx, uInt: { value: 0 }, uColore: { value: col.clone() }, uAlone: { value: new THREE.Color(PALETTE.carta) } },
     vertexShader: `uniform float uPx; void main() { vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * mv;
       gl_PointSize = clamp(260.0 / -mv.z, 6.0, 40.0) * uPx; }`,
-    fragmentShader: `uniform vec3 uColore; uniform float uInt; void main() { vec2 d = gl_PointCoord - 0.5; float r2 = dot(d, d) * 4.0;
-      if (r2 > 1.0) discard; float a = exp(-r2 * 7.0) * 0.9 + exp(-r2 * 2.0) * 0.25; gl_FragColor = vec4(uColore * uInt, a); }`,
-    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false,
+    fragmentShader: `uniform vec3 uColore; uniform vec3 uAlone; uniform float uInt; void main() { vec2 d = gl_PointCoord - 0.5; float r2 = dot(d, d) * 4.0;
+      if (r2 > 1.0) discard; float nucleo = exp(-r2 * 9.0), alone = exp(-r2 * 2.0) * (1.0 - r2);
+      gl_FragColor = vec4(mix(uAlone, uColore, nucleo), clamp((nucleo * 0.9 + alone * 0.3) * min(uInt, 1.0), 0.0, 1.0)); }`,
+    transparent: true, depthWrite: false, blending: THREE.NormalBlending, fog: false,
   });
   const aloni = new THREE.Points(g, mA); aloni.userData.noAO = true; aloni.visible = false; aloni.renderOrder = 3;
-  // pozze di luce sul piazzale (gradiente radiale additivo)
+  // pozze di luce sul piazzale (gradiente radiale, velo trasparente)
   const c = document.createElement('canvas'); c.width = c.height = 128;
   const x = c.getContext('2d'), gr = x.createRadialGradient(64, 64, 0, 64, 64, 64);
-  gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.35, 'rgba(255,255,255,0.45)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+  gr.addColorStop(0, '#fff'); gr.addColorStop(0.35, 'rgb(115,115,115)'); gr.addColorStop(1, '#000');   // alphaMap in scala di grigi
   x.fillStyle = gr; x.fillRect(0, 0, 128, 128);
-  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
-  const mP = new THREE.MeshBasicMaterial({ map: tex, color: col.clone(), transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, fog: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4 });
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.NoColorSpace;
+  const mP = new THREE.MeshBasicMaterial({ alphaMap: tex, color: col.clone(), transparent: true, opacity: 0, depthWrite: false, blending: THREE.NormalBlending, fog: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4 });
   const lp = [];
   for (const v of teste) { const p = new THREE.PlaneGeometry(2.2, 2.2); p.rotateX(-Math.PI / 2); p.translate(v.x, altezza(v.x, v.z) + 0.05, v.z); lp.push(p); }
   const pozze = new THREE.Mesh(unisci(lp), mP); pozze.userData.noAO = true; pozze.visible = false; pozze.renderOrder = 2;
@@ -438,9 +444,9 @@ export function aggiorna(ctx, T, t, dt) {
     D.cabine.visible = kc > 0.001; D.cabScala = kc; ctx.ombre?.richiedi();
   }
 
-  // luci della CP (emissivo × 3 all'ora blu)
+  // luci della CP (STATO 0 → 3 all'ora blu; tema chiaro: emissivo al massimo × 1, niente bloom)
   const l = S.luciCP;
-  D.M.luci.emissiveIntensity = l;
+  D.M.luci.emissiveIntensity = clamp(l / 3, 0, 1);
   D.luci.aloni.visible = D.luci.pozze.visible = l > 0.01;
   D.luci.mA.uniforms.uInt.value = l * 0.9;
   D.luci.mP.opacity = clamp(l / 3, 0, 1) * 0.5;

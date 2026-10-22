@@ -242,8 +242,10 @@ export function creaLineaAT(ctx, M, uscita) {
 }
 
 // ---------------------------------------------------------------- capannone aziendale + scansione termica (§3.4, §4.6)
+// Termografia a inchiostro (tema chiaro): l'edificio scansionato diventa carta2 e il calore è una rampa
+// oro linea → rame stampata sull'albedo (niente emissione); il fronte della scansione è una linea d'oro.
 function patchTermica(U, centro) {
-  const C0 = vec3Lin('#2a1c10'), ORO = vec3Lin(PALETTE.oro), CH = vec3Lin(PALETTE.oroChiaro);
+  const C0 = vec3Lin(PALETTE.carta2), ORO = vec3Lin(PALETTE.oroLinea), CH = vec3Lin(PALETTE.rame), FR = vec3Lin(PALETTE.oro);
   return {
     uniforms: { uTermica: U.termica, uCentroCap: { value: centro } },
     pars: `uniform float uTermica; uniform vec3 uCentroCap;
@@ -262,12 +264,11 @@ float rumoreT(vec2 p) { vec2 i = floor(p), f = fract(p); vec2 u = f * f * (3.0 -
   calore += 0.2 * smoothstep(0.6, 0.7, lpT.y) * step(lpT.y, 0.72);                                 // ponte termico in gronda
   calore += 0.3 * (rumoreT(lpT.xz * 3.1 + lpT.y * 1.7) - 0.45) + 0.12 * (rumoreT(lpT.xy * 9.0) - 0.5);
   calore = clamp(calore, 0.0, 1.0);
-  vec3 rampaT = calore < 0.5 ? mix(${C0}, ${ORO}, calore * 2.0) : mix(${ORO}, ${CH}, (calore - 0.5) * 2.0);
-  diffuseColor.rgb *= 1.0 - 0.88 * kT;`,
-    primaUscita: `
-  outgoingLight = mix(outgoingLight, outgoingLight * 0.15, kT);
-  outgoingLight += rampaT * (0.25 + 1.6 * calore * calore) * kT;
-  outgoingLight += ${CH} * 2.4 * exp(-pow((lpT.x - fronteT) / 0.05, 2.0)) * step(0.001, uTermica) * step(uTermica, 0.999);`,
+  vec3 rampaT = calore < 0.5 ? mix(${C0}, ${ORO}, calore * 2.0) : mix(${ORO}, ${CH}, (calore - 0.5) * 2.0);`,
+    dopoCarta: `
+  diffuseColor.rgb = mix(diffuseColor.rgb, rampaT, kT);
+  diffuseColor.rgb = mix(diffuseColor.rgb, ${FR}, 0.9 * exp(-pow((lpT.x - fronteT) / 0.05, 2.0)) * step(0.001, uTermica) * step(uTermica, 0.999));
+  metalnessFactor = mix(metalnessFactor, 0.0, kT); roughnessFactor = mix(roughnessFactor, 0.9, kT);`,
   };
 }
 export function creaCapannone(ctx, cem) {

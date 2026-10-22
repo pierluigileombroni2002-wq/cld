@@ -17,14 +17,28 @@ export const STORIA_VH = 2000;     // #storia alta 2000vh (§4.0)
 
 // ---------------------------------------------------------------- §2.1 palette
 // Colori in sRGB: in 3D si usano con new THREE.Color(hex) (ColorManagement attivo).
+// Tema chiaro "Alba luminosa": fondo carta calda, linee d'oro a inchiostro (scure su chiaro, mai luce sommata),
+// testi verde-inchiostro. I nomi dei ruoli restano quelli del tema scuro (avorio = titoli, platino = testo corrente).
 export const PALETTE = {
-  nero: '#050607', inchiostro: '#0b0f12', grafite: '#0d1012', grafite2: '#15191c',
-  bordo: 'rgba(216,184,120,.16)',
-  oro: '#d8b878', oroChiaro: '#f1dfb3', avorio: '#f4efe4', platino: '#c9d0d4', grigio: '#8a949a',
-  smeraldo: '#36c39a', vincolo: '#e0644f', acqua: '#8fb7c9',
-  rame: '#b8572a',   // SOLO sigillo RTB, cavidotto acceso, CTA premuta
-  ambra: '#e8a33d',  // SOLO stringa 14-B (tappa 5b)
-  oro3d: '#d6a454',  // oro per le emissioni 3D
+  fondo: '#f3ece2',      // fondo della pagina e della scena: clear color, velo pieno, preloader
+  carta: '#efe7da',      // albedo del terreno in "modo carta" e superfici del plastico bianco
+  carta2: '#e4dbcc',     // pannelli, campiture, facce di sezione del plastico, edifici in modo carta
+  nero: '#10241c',       // = inchiostro più scuro (NON più il fondo)
+  inchiostro: '#10241c', // testo forte e titoli, linee forti
+  grafite: '#2c3b34', grafite2: '#e4dbcc',
+  bordo: 'rgba(141,95,18,.32)',
+  oro: '#8d5f12',        // oro-inchiostro: testo in oro (occhielli, dati), linee sottili
+  oroLinea: '#b9831f',   // oro per linee e decori 3D/SVG più spessi
+  oroChiaro: '#9a4f1c',  // accento (corsivi dei titoli, valori attivi): rame-bruno caldo
+  avorio: '#10241c',     // ruolo "titoli" → inchiostro
+  platino: '#2c3b34',    // ruolo "testo corrente" → grafite
+  griglia: '#6f7a72',    // confini catastali e linee neutre 3D
+  grigio: '#5b665f',     // dati secondari (≥ 4,5:1 sul fondo)
+  smeraldo: '#1e7f5c', vincolo: '#c0412c', acqua: '#2f6f8c',
+  rame: '#b8572a',       // SOLO sigillo RTB, cavidotto acceso, CTA premuta
+  ambra: '#a8650f',      // SOLO stringa 14-B (tappa 5b)
+  oro3d: '#b9831f',      // oro delle linee 3D (inchiostro, non emissione)
+  suOro: '#fbf7f0',      // testo sopra riempimenti oro/rame
 };
 
 // ---------------------------------------------------------------- §2.3 easing
@@ -53,12 +67,13 @@ export const FONT = {
 };
 
 // ---------------------------------------------------------------- §2.6 materiali
+// Tema chiaro: mondo luminoso e naturale (terreno chiaro, acqua lucida azzurro-ardesia, verdi caldi e polverosi).
 export const MATERIALI = {
-  terreno: { envMapIntensity: 0.45, metalness: 0, roughness: 1, albedo: 0.62, saturazione: 0.78,
+  terreno: { envMapIntensity: 0.45, metalness: 0, roughness: 1, albedo: 0.9, saturazione: 0.9,
              ripetizioneErba: 6.0, ripetizioneCampo: 4.6, macro: 0.13, rocciaPendenza: [0.18, 0.35] },
-  fiume: { color: '#0a171c', roughness: 0.06, metalness: 0, clearcoat: 0.6, clearcoatRoughness: 0.04,
+  fiume: { color: '#3d6f86', roughness: 0.06, metalness: 0, clearcoat: 0.6, clearcoatRoughness: 0.04,
            envMapIntensity: 1.4, normalScale: 0.35 },
-  laghi: { color: '#08141a' },
+  laghi: { color: '#3a6a80' },
   moduloFronte: { roughness: 0.32, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.05, ior: 1.5,
                   envMapIntensity: 1.25, iridescence: 0.12, iridescenceIOR: 1.3, iridescenceThicknessRange: [180, 320] },
   moduloRetro: { color: '#1a2230', roughness: 0.4, clearcoat: 0.8 },
@@ -68,42 +83,50 @@ export const MATERIALI = {
   casse: { color: '#2a2f33', metalnessDaArm: 0.8, envMapIntensity: 0.8 },
   calcestruzzo: { color: '#b9b4ab', uvScala: 0.25, envMapIntensity: 0.6 },
   cabine: { color: '#8e8a83' },
-  sezione: { fondo: '#15191c', passoPx: 6, lineaPx: 1, emissione: 1.2, stratiOgniM: 5, stratiAlfa: 0.12 },
-  colture: { color: '#3d4a2a', roughness: 0.9, alphaTest: 0.5 },
-  alberi: { color: '#1f2b1f', roughness: 0.95, variazione: 0.10 },
-  asfalto: { color: '#2b2c2c', roughness: 0.85 },
+  // facce di sezione del plastico bianco: campitura carta2 con tratteggio oro-inchiostro;
+  // emissione = copertura dell'inchiostro del tratteggio (0..1), come in OVERLAY
+  sezione: { fondo: PALETTE.carta2, tratteggio: PALETTE.oro, passoPx: 6, lineaPx: 1, emissione: 0.55, stratiOgniM: 5, stratiAlfa: 0.12 },
+  colture: { color: '#6f7f45', roughness: 0.9, alphaTest: 0.5 },
+  alberi: { color: '#4f6b45', roughness: 0.95, variazione: 0.10 },
+  asfalto: { color: '#6b6a66', roughness: 0.85 },
   ghiaia: { color: '#6b6155' },
   tettoCapannone: { color: '#4a4f53' },
   celle: { lato: [2048, 1024], colore: '#0a1220', retro: '#1a2230', griglia: [6, 24], fugaMm: 10, busbar: 16 },
 };
 
 // ---------------------------------------------------------------- §2.7 overlay
-// Emissione = colore × fattore (HDR, soglia bloom 1,0). Spessori in px CSS (× uPx nello shader).
+// Tema chiaro: le linee sono INCHIOSTRO, non luce. Ogni "emissione" (e bordo, riempimento, accesa, spenta, firmato,
+// pulsa) ora è la COPERTURA dell'inchiostro 0..1: c = mix(c, coloreLinea, copertura × maschera della linea).
+// Niente somma HDR, niente bloom (soglia 2,8). Spessori in px CSS (× uPx nello shader).
 export const OVERLAY = {
-  isoipse: { passo: 0.5, emissione: 1.2, px: 1.0 },          // ogni 5 m
-  direttrici: { passo: 2.5, emissione: 2.4, px: 1.6 },       // ogni 25 m
+  isoipse: { passo: 0.5, emissione: 0.55, px: 1.0 },         // ogni 5 m
+  direttrici: { passo: 2.5, emissione: 0.85, px: 1.6 },      // ogni 25 m
   isoipseValle: { passo: 5, direttrici: 25 },                // plastico: ogni 50 m / 250 m (§3.6, §6.5)
-  confini: { emissione: 0.9, px: 0.9 },                      // platino
-  sito: { bordo: 2.4, riempimento: 0.25, px: 1.4 },          // oro
-  idonee: { riempimento: 0.35, bordo: 1.4, px: 1 },          // smeraldo
-  paesaggistico: { emissione: 1.6, px: 1.2, angolo: 45, passoPx: 6 },
-  fluviale: { emissione: 1.6, px: 1.2, angolo: 135 },
-  pai: { emissione: 1.4, puntoPx: 2, passoPx: 7 },
-  archeologico: { emissione: 1.8, px: 1.2, trattoPx: 4, pausaPx: 4 },
-  ambientale: { emissione: 1.4, px: 1 },
-  layoutProposto: { emissione: 2.2, punta: 6, px: 1.25, trattoPx: 8, pausaPx: 6 },   // oro chiaro
-  layoutApprovato: { emissione: 2.0, px: 1.25 },
-  cavo: { emissione: 2.6, px: 2, impulsiVelocita: 6, impulsiPasso: 4 },             // rame
-  lunetta: { tacche: 60, tacca: [0.12, 2.2], raggio: 32, accesa: 2.4, spenta: 0.25 },
-  tende: { altezza: 0.8, alfa: 0.55, scanline: 6, scanlineVel: 0.4, firmato: 1.8, pulsa: [0.8, 1.8], hz: 1.2 },
-  quote: { emissione: 2.0, px: 1, freccia: 30 },
-  fronteRealta: { emissione: 3, larghezza: 4 },
-  ondaRame: { emissione: 2.6, larghezza: 3 },
-  ritraccia: { emissione: 2 },
+  confini: { emissione: 0.45, px: 0.9 },                     // PALETTE.griglia
+  sito: { bordo: 0.9, riempimento: 0.12, px: 1.4 },          // oro
+  idonee: { riempimento: 0.16, bordo: 0.75, px: 1 },         // smeraldo
+  paesaggistico: { emissione: 0.6, px: 1.2, angolo: 45, passoPx: 6 },
+  fluviale: { emissione: 0.6, px: 1.2, angolo: 135 },
+  pai: { emissione: 0.55, puntoPx: 2, passoPx: 7 },
+  archeologico: { emissione: 0.7, px: 1.2, trattoPx: 4, pausaPx: 4 },
+  ambientale: { emissione: 0.55, px: 1 },
+  layoutProposto: { emissione: 0.85, punta: 6, px: 1.25, trattoPx: 8, pausaPx: 6 },  // oroChiaro
+  layoutApprovato: { emissione: 0.8, px: 1.25 },
+  cavo: { emissione: 0.9, px: 2, impulsiVelocita: 6, impulsiPasso: 4 },             // rame
+  lunetta: { tacche: 60, tacca: [0.12, 2.2], raggio: 32, accesa: 0.9, spenta: 0.15 },
+  tende: { altezza: 0.8, alfa: 0.55, scanline: 6, scanlineVel: 0.4, firmato: 0.75, pulsa: [0.35, 0.75], hz: 1.2 },
+  quote: { emissione: 0.85, px: 1, freccia: 30 },
+  fronteRealta: { emissione: 0.9, larghezza: 4 },
+  ondaRame: { emissione: 0.9, larghezza: 3 },
+  ritraccia: { emissione: 0.85 },
   svanimentoFwidth: [0.3, 0.8],
-  sottrazioneLuminanza: 0.15,
-  cartaOmbreggiatura: { direzione: [-0.5, 0.707, -0.5], emissione: 0.05 },
-  fiumeCarta: { riempimento: 0.25, bordo: 1.5, mezzaLarghezza: 2.07 },
+  // Aree non idonee: su chiaro si VELANO verso la carta (mai verso il nero). Valore = quota di contrasto che resta:
+  // c = mix(cartaLuce, c, mix(1, sottrazioneLuminanza, uSottrazione)), cartaLuce = velatura × luce della scena
+  // (richiede la patch negli shader di terreno, contorno-comune e fiume: oggi moltiplicano per questo valore).
+  sottrazioneLuminanza: 0.35,
+  velatura: PALETTE.carta,
+  cartaOmbreggiatura: { direzione: [-0.5, 0.707, -0.5], emissione: 0.08 },  // ombreggiatura a inchiostro del modo carta
+  fiumeCarta: { riempimento: 0.3, bordo: 0.8, mezzaLarghezza: 2.07 },
 };
 
 // ---------------------------------------------------------------- §2.4–2.5 luce e cielo
@@ -118,13 +141,16 @@ export const HDRI = {
 };
 
 // Preset del cielo (§2.5). bagliore: [colore, fattore]. disco: true | false | 'el>-0.5'
+// Tema chiaro: i colori sono quelli che devono APPARIRE a schermo (sRGB dopo tone mapping ed esposizione).
+// La cupola e la nebbia li riportano in HDR con l'inversa di ACES e dell'esposizione (luce/nebbia.js versoScena),
+// così il cielo non dipende da STATO.esposizione e il terreno svanisce esattamente nell'orizzonte.
 export const CIELO_PRESET = {
-  tramonto:    { zenit: '#050607', orizzonte: '#3a2a1c', bagliore: '#b8794a', k: 1.0, disco: 'el>-0.5' },
-  oraBlu:      { zenit: '#04060a', orizzonte: '#1d2a36', bagliore: '#2c3a4a', k: 0.6, disco: false },
-  alba:        { zenit: '#06080b', orizzonte: '#3d2a22', bagliore: '#d08a55', k: 1.2, disco: true },
-  giornoScuro: { zenit: '#101b26', orizzonte: '#59697a', bagliore: '#a99a80', k: 0.4, disco: false },
-  pomeriggio:  { zenit: '#0f1820', orizzonte: '#4f5a62', bagliore: '#9c7c5a', k: 0.6, disco: false },
-  museale:     { zenit: '#050607', orizzonte: '#121a22', bagliore: '#000000', k: 0.0, disco: false },
+  tramonto:    { zenit: '#9db8cf', orizzonte: '#f3cfa8', bagliore: '#ffc38a', k: 0.5, disco: 'el>-0.5' },  // ora d'oro luminosa
+  oraBlu:      { zenit: '#9fb0d0', orizzonte: '#dcd3e3', bagliore: '#f2c7b0', k: 0.3, disco: false },      // crepuscolo chiaro
+  alba:        { zenit: '#a9c3d6', orizzonte: '#f4d9bd', bagliore: '#ffd9a8', k: 0.6, disco: true },
+  giornoScuro: { zenit: '#8fb3d3', orizzonte: '#e6edf0', bagliore: '#fff1d8', k: 0.25, disco: false },     // ora è "giorno"
+  pomeriggio:  { zenit: '#98b6cf', orizzonte: '#efe2cc', bagliore: '#ffdcae', k: 0.4, disco: false },
+  museale:     { zenit: '#ece8e1', orizzonte: '#f3efe8', bagliore: '#000000', k: 0, disco: false },         // stanza del plastico bianco
 };
 export const CIELO = {
   raggio: 3000, segmenti: [64, 32],
@@ -136,14 +162,21 @@ export const CIELO = {
   tintaDisco: 0.85,              // il disco prende il colore del sole (arancio sotto i 5°): nucleo pallido, alone caldo
   aureola: 1.2,                  // aureola stretta (~2°) attorno al disco acceso: a 0,27° il disco è di pochi px
   // [ARCH] suolo della cupola sotto l'orizzonte: il mondo vero lo copre (anello fino a 1 500 u); senza mondo
-  // (o oltre l'anello) l'orizzonte scende in una piana scura invece di un "cielo rovesciato".
-  // colore = orizzonte × fattore, raccordato tra h0 (≈ orizzonte, nascosto dalla nebbia) e h1 (verso il nadir).
-  suolo: { fattore: 0.2, h0: -0.006, h1: -0.22, nadir: '#0b0f12' },   // nadir = inchiostro (§2.1): un plastico d'inchiostro
+  // (o oltre l'anello) l'orizzonte scende in una piana chiara invece di un "cielo rovesciato".
+  // Colore = quello della nebbia (orizzonte × fattore + diffusione del sole) fino a h1, poi verso il nadir carta2:
+  // nessuna fascia scura, il bordo del mondo si perde nella foschia.
+  suolo: { fattore: 1.0, h0: -0.006, h1: -0.22, nadir: PALETTE.carta2 },
+  // [ARCH] tetto del colore a schermo (lineare, per canale; 0,90 = sRGB 243) prima dell'inversa di ACES: verso 1
+  // l'inversa esplode. Il bagliore pieno diventa bianco caldo, non HDR: con esposizione ≥ 0,88 la cupola resta sotto
+  // 2,5 di luminanza, quindi sotto la soglia del bloom (2,8); fioriscono solo disco e aureola.
+  tettoSchermo: 0.9,
   // [ARCH] ambiente IBL (§2.4, §6.3): tarature di BASE-RENDER
   ibl: {
-    // luminanza media dell'emisfero alto a cui si normalizza ogni HDRI (il crepuscolo resta basso: ombre e rilievo)
-    luminanza: { qwantani: 0.3, kloofendal: 1.0, autumn: 0.85, altro: 1.0 },
-    albedoSuolo: 0.12, tintaSuolo: [1.0, 0.84, 0.64],   // suolo scuro sotto l'orizzonte delle HDRI "puresky"
+    // luminanza media dell'emisfero alto a cui si normalizza ogni HDRI: il crepuscolo (qwantani) resta sotto il giorno
+    // per ombre e rilievo, ma nel tema chiaro sale da 0,3 a 0,9 (regge la campagna col sole radente); il giorno resta a 1
+    luminanza: { qwantani: 0.9, kloofendal: 1.0, autumn: 0.85, altro: 1.0 },
+    // suolo chiaro sotto l'orizzonte delle HDRI "puresky": la luce di rimbalzo di una campagna luminosa
+    albedoSuolo: 0.3, tintaSuolo: [1.0, 0.93, 0.8],
     saturazione: 0.55,           // l'ambiente si desatura in parte…
     tinta: 0.6,                  // …e si tinge col colore della cupola visibile alla riga di cottura
     lato: 1024,                  // HDRI ricampionate a 1K dopo la de-solazione
@@ -156,7 +189,7 @@ export const CIELO = {
 // 'sole' = azimut corrente di STATO.sole.az al momento della cottura.
 export const COTTURE_PIANURA = [
   { T: 0.00,   a: 'qwantani', b: null, mix: 0, azA: 295 },
-  { T: 7.52,   a: 'qwantani', b: null, mix: 0, azA: 57 },                 // alba, nel fotogramma più scuro
+  { T: 7.52,   a: 'qwantani', b: null, mix: 0, azA: 57 },                 // alba, nel respiro del crepuscolo
   { T: 9.15,   a: 'qwantani', b: 'kloofendal', mix: 0.00, azA: 57, azB: 'sole' },
   { T: 9.26,   a: 'qwantani', b: 'kloofendal', mix: 0.25, azA: 57, azB: 'sole' },
   { T: 9.37,   a: 'qwantani', b: 'kloofendal', mix: 0.50, azA: 57, azB: 'sole' },
@@ -187,7 +220,7 @@ export const SOLE = {
   // §6.3: colore del sole per elevazione (interpolato in spazio lineare)
   colori: [[-1, '#ff7a3c'], [2, '#ff9a55'], [5, '#ffb46b'], [10, '#ffc98a'], [20, '#ffe0b5'], [35, '#fff1df']],
   intensitaMax: 3.4,
-  emisfera: { cielo: '#8fa3b8', suolo: '#0b0f12' },
+  emisfera: { cielo: '#a9c3d6', suolo: '#cfc3ad' },   // tema chiaro: cielo del mattino, rimbalzo della campagna
   ombra: { bias: -0.0003, normalBias: 0.005, radius: 3, near: 1, far: 600, distanza: 300 },
   // Riduci movimento: sole fisso alle 10:00 in tappa 3 (§6.11)
   oraRiduci: 10.0,
@@ -205,13 +238,18 @@ export const META_OMBRA = { panoramiche: 190, medie: 60, campoFV: 26, mezzogiorn
 // ---------------------------------------------------------------- §6.3 post-produzione
 export const RENDER = {
   dprMax: 2,
-  esposizioneIniziale: 0.95,
+  esposizioneIniziale: 1.1,    // = STATO_INIZIALE.esposizione
   agx: { esposizione: 1.35, contrasto: 0.08, saturazione: 0.1 },  // ?tm=agx
-  bloom: { forza: 0.32, raggio: 0.55, soglia: 1.0 },
+  // tema chiaro: fiorisce solo il disco del sole e poche luci (cupola e carta restano sotto ~2,5 di luminanza)
+  bloom: { forza: 0.18, raggio: 0.55, soglia: 2.8 },
   gtao: { radius: 0.012, distanceExponent: 1.5, thickness: 0.15, scale: 1.0, samples: 16, distanceFallOff: 1.0, screenSpaceRadius: false },
   gtaoPd: { lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 6, radiusExponent: 1, rings: 2, samples: 16 },
-  pellicola: { nitidezza: 0.35, nitidezzaScalaBassa: 0.5, sogliaScalaBassa: 0.9, vignetta: 0.26, spostamentoVignetta: 0.06,
-               grana: 0.028, granaEstremi: 0.01, granaFps: 24, lato: 1,
+  // tema chiaro: vignetta e grana leggere (sul chiaro sporcano), grading quasi neutro (niente dominanti sulle luci)
+  // vignettaLuci: quota di vignetta tolta sulle luci (sRGB 0,55 → 0,95): cielo e carta restano del loro colore,
+  // la vignetta scurisce solo i mezzitoni della campagna (sul chiaro un angolo grigio sembra sporco)
+  pellicola: { nitidezza: 0.35, nitidezzaScalaBassa: 0.5, sogliaScalaBassa: 0.9, vignetta: 0.09, vignettaLuci: 0.7, spostamentoVignetta: 0.06,
+               grana: 0.012, granaEstremi: 0.006, granaFps: 24, lato: 1,
+               gradingLuci: [0.004, 0.002, -0.003], gradingOmbre: [0, 0, 0.006],   // [ARCH] luci appena calde, ombre appena fredde
                granaCiclo: 1024 /* [ARCH] fotogrammi di grana prima che il seme ricominci: precisione float32 nelle sessioni lunghe */ },
   contestoAttesaMs: 3000,   // contesto WebGL perso: oltre questa attesa la pagina passa alla modalità senza WebGL (§6.12)
 };
@@ -252,7 +290,7 @@ export const ASSET = {
     // ATTENZIONE: metallo_lamiera è una lamiera mandorlata ARRUGGINITA. Solo casse/carter/tetti, MAI tracker o giranti.
     metallo_lamiera:     { diff: TEX + 'metallo_lamiera_diff.webp', nor: TEX + 'metallo_lamiera_nor.webp', arm: TEX + 'metallo_lamiera_arm.webp' },
   },
-  logo: '../logo/ufficiale/logo-eri-v2-su-scuro.svg',
+  logo: '../logo/ufficiale/logo-eri-originale.svg',   // tema chiaro: scritte verde scuro, mai ricolorato
   // §6.14 modelli .glb facoltativi. Niente HEAD di prova (404 = errore in console):
   // il titolare mette attivo:true quando aggiunge il file in asset/modelli/.
   modelli: {
@@ -395,7 +433,15 @@ export const LAYOUT = {
 // =============================================================================
 export const VALLE = {
   blocco: { x0: -230, x1: 230, z0: -60, z1: 0, base: -6 },
-  appoggio: { y: -6.02, lato: 2000, colore: '#0d1012' },
+  // tema chiaro: PLASTICO BIANCO da architetto (avorio/bianco su carta, linee d'oro sottili, acqua azzurra)
+  appoggio: { y: -6.02, lato: 2000, colore: PALETTE.carta },            // il foglio su cui poggia il plastico
+  plastico: {
+    superficie: '#f7f3ec',        // avorio-bianco del plastico (albedo, roughness alta, niente metallo)
+    sezione: PALETTE.carta2,      // facce di sezione e retro-facce campite (tratteggio: MATERIALI.sezione)
+    edifici: PALETTE.carta2,      // centrali e diga: stesso bianco carta, un tono sotto
+    linee: PALETTE.oroLinea,      // isoipse, righello, parentesi: inchiostro d'oro (copertura da OVERLAY)
+    acqua: '#7fb2cc', acquaAlfa: 0.45,   // laghi e fiume del plastico: azzurro velato
+  },
   PUNTI_M: [[-230, 18], [-106, 18], [-94, 14], [-46, 14], [-34, 10], [14, 10], [26, 5], [114, 5], [126, 2], [230, 2]],
   superficie: { dim: [460, 60], segmenti: [460, 60] },
   peli: { lagoAlto: 88.0, serbatoio: 17.0, fiumeMonte: [-29, 1.7], fiumePool: [106, 1.2], valle: [0.0, -0.1] },
@@ -491,18 +537,23 @@ export const CAMBIO_MONDO = { valleDa: 11.50, valleA: 15.50,
 // più dense dove sta il testo; a sx 0,54 il velo è 0 (i soggetti stanno a destra di 0,38–0,44, App. C, dove
 // l'alfa è già ≤ 0,24). I titoli non escono oltre 0,54 della larghezza (stile.css: .battuta h1, h2).
 // Fermate [frazione della larghezza, alfa]: unica fonte per il CSS (ui/testi.js scrive --scrim) e per test.js.
-const SCRIM_FERMATE = [[0, 0.86], [0.26, 0.72], [0.40, 0.34], [0.54, 0]];
+// Tema chiaro: il velo è carta (PALETTE.fondo) sotto testo scuro. Misurato (__eri.contrasto, 10 battute): il velo NON
+// può scendere. La campagna in mezzitoni (luminanza 0,2–0,4) è più scura del fondo e i testi piccoli in oro (occhiello,
+// #8d5f12: 4,7:1 sul fondo pieno), oroChiaro (em) e grigio (dato) chiedono un fondo quasi pieno. Con queste fermate
+// il peggiore va da 3,4 a 4,4:1 (con 0,78 → 0,28 scendeva a 2,0); l'inchiostro dei titoli resta ≥ 7:1.
+const SCRIM_FERMATE = [[0, 0.92], [0.28, 0.86], [0.42, 0.5], [0.56, 0]];
 // [ARCH] sotto 900 px (§6.12) il velo è verticale, dal basso: DESIGN dà .9 0% → 0 55%; con la colonna in basso alta
-// fino al 60 % dello schermo serve una fermata intermedia (.75 al 30 %) e la fine al 62 %. Frazione dal basso.
-const SCRIM_PICCOLO_FERMATE = [[0, 0.9], [0.30, 0.75], [0.62, 0]];
-const gradiente = (dir, F) => `linear-gradient(${dir}, ${F.map(([f, a]) => `rgba(5,6,7,${a}) ${Math.round(f * 100)}%`).join(', ')})`;
+// fino al 60 % dello schermo serve una fermata intermedia al 30 % e la fine al 62 %. Frazione dal basso.
+const SCRIM_PICCOLO_FERMATE = [[0, 0.92], [0.30, 0.8], [0.62, 0]];
+const FONDO_RGB = '243,236,226';   // = PALETTE.fondo
+const gradiente = (dir, F) => `linear-gradient(${dir}, ${F.map(([f, a]) => `rgba(${FONDO_RGB},${a}) ${Math.round(f * 100)}%`).join(', ')})`;
 export const COLONNA = {
   left: 'clamp(24px, 6vw, 112px)', larghezza: 'min(36vw, 600px)', spostamentoY: '-4vh',
   scrimFermate: SCRIM_FERMATE,
   scrim: gradiente('90deg', SCRIM_FERMATE),
   scrimPiccoloFermate: SCRIM_PICCOLO_FERMATE,
   scrimPiccolo: gradiente('0deg', SCRIM_PICCOLO_FERMATE),
-  scrimDurataT: 0.04, ombraTesto: '0 2px 24px rgba(5,6,7,.9)',
+  scrimDurataT: 0.04, ombraTesto: `0 1px 18px rgba(${FONDO_RGB},.85)`,
   limiteSoggetto: 0.38,           // la colonna occupa sx < 0,38 (App. C)
 };
 
@@ -595,7 +646,10 @@ export const STATO_INIZIALE = {
   // idro
   righello: 0, parentesi: 0, YF: 10, apertura: 0, passoKaplan: -8, oscura: 0, diagramma: 0, colonne: 0, giranti: 0, retta10: 0,
   // luce
-  sole: { el: 4, az: 295, int: 2.0, col: '#ffb46b' }, emisfera: 0.06, envGlobale: 0.55, esposizione: 0.95,
+  // tema chiaro: niente buio. La luce del cielo (emisfera + ambiente) regge da sola la campagna quando il sole è
+  // radente o sotto l'orizzonte; esposizione mai sotto 0,88 (il cielo non ne dipende: luce/nebbia.js versoScena)
+  // [ARCH] obiettivo: un cartoncino grigio 18 % in piano esce a ≈ sRGB 0,55 anche col sole a 4° (luce del cielo ≈ 1,0)
+  sole: { el: 4, az: 295, int: 2.0, col: '#ffbd7d' }, emisfera: 2.0, envGlobale: 1.4, esposizione: 1.1,
   mixHDRI: 0, nebbia: 0.0004 /* [ARCH] K0.0 vista da 1 150 u: 0,0018 la nasconderebbe */, velo: 0, saturazione: 1, maturita: 0,
 
   // ---- estensioni [ARCH] ----
@@ -616,7 +670,7 @@ export const STATO_INIZIALE = {
   trackerManuale: 0, trackerAngoloManuale: 0,   // tappa 5: angolo dei tracker imposto
   cielo: 'tramonto',        // preset (stringa) → in STATO diventa {da, a, k}
   discoSole: 1,             // moltiplicatore del bagliore del disco (finale: 1 → 0,3)
-  idroHud: 0, saltoHud: 0, condottaEmissione: 1.4,
+  idroHud: 0, saltoHud: 0, condottaEmissione: 0.6,   // tema chiaro: copertura dell'inchiostro della condotta (0..1)
   rectInt: 0, rectSala: 0,  // RectAreaLight: intensità e sala (0 Pelton, 1 Francis, 2 Kaplan)
   getti: 0, lame: 0, spruzzi: 0,
   tempoScalaEsp: 0,         // tempoScala = 10^tempoScalaEsp (derivato)
@@ -681,20 +735,23 @@ export const TRACCE = {
                  [11.50, 11.50, null, 210], [15.50, 15.50, null, 240], [16.50, 16.60, 240, 255.5], [17.45, 18.30, 255.5, 300.2]],
   'sole.int':   [[2.00, 4.95, 2.0, 1.2], [4.95, 5.25, 1.2, 0], [7.60, 8.10, 0, 1.6],
                  [11.50, 11.50, null, 2.6], [15.50, 15.50, null, 3.0], [16.50, 16.60, 3.0, 3.3], [17.45, 18.30, 3.3, 1.6]],
-  'sole.col':   [[1.55, 2.00, '#ffb46b', '#ffa45c'] /* [ARCH] */, [2.00, 5.00, '#ffa45c', '#ff8f4f'], [7.60, 8.10, '#ff8a4c', '#ff9d5c'],
+  // tema chiaro: ora d'oro luminosa, sole caldo ma meno saturo (con l'arancio pieno la campagna diventava terra bruciata)
+  'sole.col':   [[1.55, 2.00, '#ffbd7d', '#ffb070'] /* [ARCH] */, [2.00, 5.00, '#ffb070', '#ffa063'], [7.60, 8.10, '#ff9e62', '#ffad70'],
                  [11.50, 11.50, null, '#fff1df'], [15.50, 15.50, null, '#ffe2bf'], [16.50, 16.60, '#ffe2bf', '#fff1df']],
   soleAuto:     [[8.70, 8.70, null, 1], [11.50, 11.50, null, 0], [17.45, 17.45, null, 2]],
   ora:          [[7.60, 8.70, 5 + 34 / 60, 6.0], [8.70, 9.15, 6.0, 6 + 10 / 60], [9.15, 9.55, 6 + 10 / 60, 9 + 40 / 60], [9.55, 9.95, 9 + 40 / 60, 13 + 11 / 60],
                  [9.95, 10.40, 13 + 11 / 60, 17.5], [10.40, 11.30, 17.5, 19.0], [11.30, 11.50, 19.0, 19.25], [15.50, 15.50, null, 16.0] /* [ARCH] HUD 16:00 */],
-  emisfera:     [[2.00, 5.00, 0.06, 0.12], [5.00, 5.60, 0.12, 0.35], [7.45, 7.60, 0.35, 0.15], [7.60, 8.70, 0.15, 0.08], [8.70, 9.15, 0.08, 0.06],
-                 [10.40, 10.70, 0.06, 0.08], [11.50, 11.50, null, 0.10], [15.50, 15.50, null, 0.06]],
-  envGlobale:   [[1.90, 2.10, 0.55, 0.50], [5.00, 7.45, 0.50, 0.35], [7.45, 7.60, 0.35, 0.45], [10.40, 10.70, 0.45, 0.50],
-                 [11.50, 11.50, null, 0.60], [12.55, 12.80, 0.60, 0.35], [13.30, 13.55, 0.35, 0.60], [13.55, 13.80, 0.60, 0.35], [14.75, 15.00, 0.35, 0.60] /* interni [ARCH] */,
-                 [15.50, 15.50, null, 0.55]],
-  esposizione:  [[2.00, 4.95, 0.95, 0.88], [4.95, 5.25, 0.88, 0.80] /* [ARCH] raccordo */, [5.25, 7.45, 0.80, 0.62], [7.45, 7.52, 0.62, 0.45], [7.52, 7.62, 0.45, 0.80],
-                 [7.62, 8.70, 0.80, 0.85], [9.15, 9.95, 0.85, 1.00], [9.95, 10.40, 1.00, 0.95],
-                 [11.50, 11.50, null, 0.90], [12.55, 12.80, 0.90, 1.00], [13.30, 13.55, 1.00, 0.90], [13.55, 13.80, 0.90, 1.00], [14.75, 15.00, 1.00, 0.90] /* interni [ARCH] */,
-                 [15.50, 15.50, null, 1.00], [17.45, 18.30, 1.00, 0.95]],
+  // [ARCH] tema chiaro: la notte della tappa 2 è un crepuscolo chiaro (ora blu luminosa, sole sotto l'orizzonte):
+  // la luce del cielo sale quando il sole scende, il "tuffo" 7,45–7,52 è un respiro (0,88), non il buio.
+  emisfera:     [[2.00, 5.00, 2.0, 2.1], [5.00, 5.60, 2.1, 2.3], [7.45, 7.60, 2.3, 1.9], [7.60, 8.70, 1.9, 1.2], [8.70, 9.15, 1.2, 0.8],
+                 [10.40, 10.70, 0.8, 0.9], [11.50, 11.50, null, 1.0], [15.50, 15.50, null, 0.8]],
+  envGlobale:   [[1.90, 2.10, 1.4, 1.3], [5.00, 7.45, 1.3, 1.2], [7.45, 7.60, 1.2, 1.1], [10.40, 10.70, 1.1, 1.15],
+                 [11.50, 11.50, null, 1.2], [12.55, 12.80, 1.2, 0.8], [13.30, 13.55, 0.8, 1.2], [13.55, 13.80, 1.2, 0.8], [14.75, 15.00, 0.8, 1.2] /* interni [ARCH] */,
+                 [15.50, 15.50, null, 1.1]],
+  esposizione:  [[2.00, 4.95, 1.10, 1.05], [4.95, 5.25, 1.05, 1.00] /* [ARCH] raccordo */, [5.25, 7.45, 1.00, 0.94], [7.45, 7.52, 0.94, 0.90], [7.52, 7.62, 0.90, 1.00],
+                 [9.95, 10.40, 1.00, 0.98],
+                 [11.50, 11.50, null, 0.95], [12.55, 12.80, 0.95, 1.00], [13.30, 13.55, 1.00, 0.95], [13.55, 13.80, 0.95, 1.00], [14.75, 15.00, 1.00, 0.95] /* interni [ARCH] */,
+                 [15.50, 15.50, null, 1.00]],
   saturazione:  [[1.90, 2.10, 1, 0.85], [4.90, 5.10, 0.85, 1]],     // "analisi" in tappa 1 [raccordi ARCH]
   cielo:        [[5.00, 5.60, 'tramonto', 'oraBlu'], [7.52, 7.52, null, 'alba'], [9.15, 9.60, 'alba', 'giornoScuro'], [10.10, 10.40, 'giornoScuro', 'pomeriggio'],
                  [11.50, 11.50, null, 'museale'], [15.50, 15.50, null, 'pomeriggio'], [17.80, 18.30, 'pomeriggio', 'tramonto']],
@@ -714,7 +771,7 @@ export const TRACCE = {
   sigillo:      [[7.10, 7.18, 0, 1, 'power4.in']],
   sigilloAlfa:  [[7.62, 7.75, 1, 0]],
   polvere:      [[7.18, 7.30, 0, 1, 'expo.out']],
-  uOndaRame:    [[7.18, 7.42, -1, 140, 'power2.out'], [7.45, 7.45, null, -1] /* [ARCH] spenta nel buio */],
+  uOndaRame:    [[7.18, 7.42, -1, 140, 'power2.out'], [7.45, 7.45, null, -1] /* [ARCH] spenta nel respiro del crepuscolo */],
   uLayoutApprovato: [[7.20, 7.26, 0, 1], [7.75, 8.70, 1, 0.3], [15.50, 15.50, null, 1], [16.05, 16.40, 1, 0.3], [17.95, 18.30, 0.3, 0.6]],
 
   // ---------------- tappa 3 (§4.4)
@@ -737,7 +794,7 @@ export const TRACCE = {
   parentesi:    [[11.80, 11.95, 0, 1, 'expo.out']],   // sfalsamento per parentesi: VALLE.sfalsamentoParentesi
   idroHud:      [[11.70, 11.76, 0, 1]],
   saltoHud:     [[12.05, 12.80, 0, 700]],
-  condottaEmissione: [[12.05, 12.80, 1.4, 2.4]],
+  condottaEmissione: [[12.05, 12.80, 0.6, 0.95]],          // copertura dell'inchiostro (tema chiaro)
   rectInt:      [[12.65, 12.80, 0, 8], [13.35, 13.35, null, 0], [13.70, 13.80, 0, 8], [14.20, 14.20, null, 0], [14.35, 14.45, 0, 8], [14.75, 15.00, 8, 0] /* [ARCH] */],
   rectSala:     [[13.35, 13.35, null, 1], [14.20, 14.20, null, 2]],
   getti:        [[13.02, 13.10, 0, 1]],
@@ -748,6 +805,7 @@ export const TRACCE = {
   apertura:     [[13.92, 14.10, 0, 1, P2IO]],
   passoKaplan:  [[14.45, 14.70, -8, 15, P2IO]],
   aperturaKaplan: [[14.45, 14.70, 0.3, 1, P2IO]],
+  // tema chiaro: "oscura" VELA il plastico verso la carta (mix(c, PALETTE.carta × luce, oscura)), mai verso il nero
   oscura:       [[14.80, 15.00, 0, 0.85]],
   diagramma:    [[14.85, 15.00, 0, 1]],
   campi:        [[14.95, 15.05, 0, 1]],
@@ -950,8 +1008,9 @@ export const PRODUZIONE = {
 // §5.2 INTRO
 // =============================================================================
 export const INTRO = {
-  logo: { x: '50%', y: '40%', larghezza: 'min(340px, 42vw)', viewBox: [812, 720], centroVentaglio: [405, 388],
-          punte: [[74, 261], [135, 155], [229, 77], [343, 35], [466, 35], [581, 77]] },
+  // punte dei 6 petali del logo originale (logo-eri-originale.svg × 3,485 + 18 in y, nella cornice 812 × 720 dello sprite)
+  logo: { x: '50%', y: '40%', larghezza: 'min(340px, 42vw)', viewBox: [812, 720], centroVentaglio: [410, 417],
+          punte: [[47, 248], [137, 126], [256, 49], [409, 20], [555, 47], [613, 159]] },
   linea: { y: '58%', punta: 6 },
   coppiaPetaliMs: 500, petaliRiempimentoMs: 600, petaliSfalsamentoMs: 60, foglieMs: 400, scritteMs: 500, scritteScala: 1.02, pausaMs: 700,
   flipMs: 1000, consegnaMs: 200, lineaAllungaMs: 300, morphMs: 900, fondoRitardoMs: 600, lineaSvanisceMs: 400,
@@ -968,7 +1027,7 @@ export const INTRO = {
 export const LINEA_ORO = { punti: 64, sy: 0.58 };
 
 // Petali del finale (§4.7): coppie disegnate in 0,04 T, sfalsate di 0,025 T da sinistra a destra
-export const PETALI = { tratto: 0.04, sfalsamento: 0.025, raggioPunte: 0.11 /* × innerHeight */, centroVentaglio: [405, 388] };
+export const PETALI = { tratto: 0.04, sfalsamento: 0.025, raggioPunte: 0.11 /* × innerHeight */, centroVentaglio: [410, 417] };
 
 // §5.4 indice e §4.7 dopo la storia
 export const INDICE = { durata: 2.2, salta: 'Salta ai servizi ↓', lineaPx: [18, 36], nascostoSotto: 900 };
