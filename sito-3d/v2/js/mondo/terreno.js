@@ -142,9 +142,9 @@ float lineaP( float v, float w ) {
 float maschera( float v ) { return clamp( ( v - 0.5 ) / max( fwidth( v ), 1e-4 ) + 0.5, 0.0, 1.0 ); }
 float bordoM( float v, float w ) { return lineaD( abs( v - 0.5 ) / max( fwidth( v ), 1e-4 ), w ); }
 float tratt( vec2 p, vec2 dir, float passo, float w ) { float t = dot( p, dir ) / passo; return lineaD( abs( fract( t - 0.5 ) - 0.5 ) * passo, w ); }
-// inchiostro sottrattivo con copertura a (0..1): sulla carta dà esattamente col, sul territorio vero scurisce sempre
-// (trasmittanza col / CARTA), così la linea resta scura anche dove il terreno è più scuro dell'oro
-void inch( inout vec3 c, vec3 col, float a ) { c *= mix( vec3( 1.0 ), col / CARTA, clamp( a, 0.0, 1.0 ) ); }
+// inchiostro con copertura a (0..1): la linea prende il suo colore sopra qualunque fondo (carta o territorio vero);
+// nel crepuscolo il bagliore (OVERLAY.bagliore) poi la accende dove schiarisce il terreno scuro
+void inch( inout vec3 c, vec3 col, float a ) { c = mix( c, col, clamp( a, 0.0, 1.0 ) ); }
 ${STILE >= 4 ? `uniform float uTempoV, uVentoT, uErbaR;\n${SUOLO_GLSL}\n${F_NATURA_FUNZ}` : ''}
 `;
 
@@ -300,6 +300,7 @@ float riempF = 1.0 - clamp( ( dFz - ${f(OV.fiumeCarta.mezzaLarghezza)} ) / upx +
 float bFiume = lineaD( abs( dFz - ${f(OV.fiumeCarta.mezzaLarghezza)} ) / upx, uPx );
 // ---- composizione a inchiostro: velatura, campiture, vincoli, griglia, isoipse, bordi, fiume, cornice, onde
 vec3 cInk = diffuseColor.rgb;
+vec3 cBase = cInk;                                                            // per il bagliore delle linee
 // sottrazione: le aree non idonee si velano verso la carta ("cancellate a matita"), le linee restano al 60 %
 float nonIdoneo = uSottrazione * ( 1.0 - ido0 );
 cInk = mix( VELATURA, cInk, mix( 1.0, ${f(OV.sottrazioneLuminanza)}, nonIdoneo ) );
@@ -340,6 +341,8 @@ if ( uFronte >= 0.0 ) {
   inch( cInk, ORO, 0.9 * ( 1.0 - smoothstep( 0.0, 1.0, abs( dd ) ) ) * ( 1.0 - smoothstep( 60.0, 80.0, uFronte ) ) );
 }
 diffuseColor.rgb = cInk;
+// bagliore: le linee d'oro che schiariscono il terreno scuro emettono luce (fa fiorire il bloom)
+totalEmissiveRadiance += max( cInk - cBase, vec3( 0.0 ) ) * ${f(OV.bagliore ?? 0)};
 `;
 
 // Prima di opaque_fragment: ombre delle nuvole (l'inchiostro è già nell'albedo e le segue).

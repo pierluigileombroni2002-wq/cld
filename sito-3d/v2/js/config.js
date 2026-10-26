@@ -17,28 +17,29 @@ export const STORIA_VH = 2000;     // #storia alta 2000vh (§4.0)
 
 // ---------------------------------------------------------------- §2.1 palette
 // Colori in sRGB: in 3D si usano con new THREE.Color(hex) (ColorManagement attivo).
-// Tema chiaro "Alba luminosa": fondo carta calda, linee d'oro a inchiostro (scure su chiaro, mai luce sommata),
-// testi verde-inchiostro. I nomi dei ruoli restano quelli del tema scuro (avorio = titoli, platino = testo corrente).
+// Tema "Crepuscolo magico" (scelta del cliente, 26/10/2026): cielo indaco che sfuma in un orizzonte dorato, terra in
+// controluce, linee d'oro LUMINOSE (inchiostro + bagliore, OVERLAY.bagliore), stelle e polvere d'oro. Testi chiari.
+// I nomi dei ruoli restano quelli storici (avorio = titoli, platino = testo corrente, inchiostro = testo forte).
 export const PALETTE = {
-  fondo: '#f3ece2',      // fondo della pagina e della scena: clear color, velo pieno, preloader
-  carta: '#efe7da',      // albedo del terreno in "modo carta" e superfici del plastico bianco
-  carta2: '#e4dbcc',     // pannelli, campiture, facce di sezione del plastico, edifici in modo carta
-  nero: '#10241c',       // = inchiostro più scuro (NON più il fondo)
-  inchiostro: '#10241c', // testo forte e titoli, linee forti
-  grafite: '#2c3b34', grafite2: '#e4dbcc',
-  bordo: 'rgba(141,95,18,.32)',
-  oro: '#8d5f12',        // oro-inchiostro: testo in oro (occhielli, dati), linee sottili
-  oroLinea: '#b9831f',   // oro per linee e decori 3D/SVG più spessi
-  oroChiaro: '#9a4f1c',  // accento (corsivi dei titoli, valori attivi): rame-bruno caldo
-  avorio: '#10241c',     // ruolo "titoli" → inchiostro
-  platino: '#2c3b34',    // ruolo "testo corrente" → grafite
-  griglia: '#6f7a72',    // confini catastali e linee neutre 3D
-  grigio: '#5b665f',     // dati secondari (≥ 4,5:1 sul fondo)
-  smeraldo: '#1e7f5c', vincolo: '#c0412c', acqua: '#2f6f8c',
-  rame: '#b8572a',       // SOLO sigillo RTB, cavidotto acceso, CTA premuta
-  ambra: '#a8650f',      // SOLO stringa 14-B (tappa 5b)
-  oro3d: '#b9831f',      // oro delle linee 3D (inchiostro, non emissione)
-  suOro: '#fbf7f0',      // testo sopra riempimenti oro/rame
+  fondo: '#151335',      // fondo della pagina e della scena: clear color, velo pieno, preloader (indaco notte)
+  carta: '#1e1a3b',      // albedo del terreno in "modo carta": la mappa è un foglio indaco su cui si accende l'oro
+  carta2: '#28224a',     // pannelli, campiture, facce di sezione, edifici in modo carta
+  nero: '#0b0a1c',       // il più scuro (rilievo, ombre della carta)
+  inchiostro: '#fbf3e6', // testo forte e titoli (chiaro sul fondo scuro)
+  grafite: '#0b0a1c', grafite2: '#28224a',
+  bordo: 'rgba(230,178,92,.28)',
+  oro: '#e6b25c',        // oro dei testi (occhielli, dati) e delle linee sottili
+  oroLinea: '#ffd27a',   // oro delle linee e dei decori 3D più spessi
+  oroChiaro: '#ffcf8a',  // accento (corsivi dei titoli, valori attivi, punte)
+  avorio: '#fbf3e6',     // titoli
+  platino: '#ddd5e6',    // testo corrente
+  griglia: '#9b91c6',    // confini catastali e linee neutre 3D (lavanda)
+  grigio: '#a89fbe',     // dati secondari
+  smeraldo: '#4fd1a5', vincolo: '#ff7a5c', acqua: '#7fa8e0',
+  rame: '#e8834a',       // SOLO sigillo RTB, cavidotto acceso, CTA premuta
+  ambra: '#ffb347',      // SOLO stringa 14-B (tappa 5b)
+  oro3d: '#ffd27a',      // oro delle linee 3D
+  suOro: '#151335',      // testo sopra riempimenti oro/rame
 };
 
 // ---------------------------------------------------------------- §2.3 easing
@@ -152,7 +153,8 @@ export const OVERLAY = {
   // (richiede la patch negli shader di terreno, contorno-comune e fiume: oggi moltiplicano per questo valore).
   sottrazioneLuminanza: 0.72,   // tema chiaro: velo al 28 % verso la carta (sotto 0,6 le aree diventavano blocchi bianchi)
   velatura: PALETTE.carta,
-  cartaOmbreggiatura: { direzione: [-0.5, 0.707, -0.5], emissione: 0.08 },  // ombreggiatura a inchiostro del modo carta
+  cartaOmbreggiatura: { direzione: [-0.5, 0.707, -0.5], emissione: 0.08 },
+  bagliore: 2.6,   // crepuscolo: dove le linee schiariscono il terreno scuro si accendono (× luce emessa, poi bloom)  // ombreggiatura a inchiostro del modo carta
   fiumeCarta: { riempimento: 0.3, bordo: 0.8, mezzaLarghezza: 2.07 },
 };
 
@@ -172,12 +174,13 @@ export const HDRI = {
 // La cupola e la nebbia li riportano in HDR con l'inversa di ACES e dell'esposizione (luce/nebbia.js versoScena),
 // così il cielo non dipende da STATO.esposizione e il terreno svanisce esattamente nell'orizzonte.
 export const CIELO_PRESET = {
-  tramonto:    { zenit: '#9db8cf', orizzonte: '#ece3d8', bagliore: '#ffd9b0', k: 0.3, disco: 'el>-0.5' },  // ora d'oro luminosa (orizzonte crema: la nebbia pesca virava tutto all'arancio)
-  oraBlu:      { zenit: '#9fb0d0', orizzonte: '#dcd3e3', bagliore: '#f2c7b0', k: 0.3, disco: false },      // crepuscolo chiaro
-  alba:        { zenit: '#a9c3d6', orizzonte: '#f4d9bd', bagliore: '#ffd9a8', k: 0.6, disco: true },
-  giornoScuro: { zenit: '#8fb3d3', orizzonte: '#e6edf0', bagliore: '#fff1d8', k: 0.25, disco: false },     // ora è "giorno"
-  pomeriggio:  { zenit: '#98b6cf', orizzonte: '#efe2cc', bagliore: '#ffdcae', k: 0.4, disco: false },
-  museale:     { zenit: '#ece8e1', orizzonte: '#f3efe8', bagliore: '#000000', k: 0, disco: false },         // stanza del plastico bianco
+  // tema "Crepuscolo magico": zenit indaco, orizzonte dorato; la nebbia prende l'orizzonte (foschia calda in lontananza)
+  tramonto:    { zenit: '#151335', orizzonte: '#e8975a', bagliore: '#ffcf8a', k: 0.6, disco: 'el>-0.5' },
+  oraBlu:      { zenit: '#100f2b', orizzonte: '#6b5a9a', bagliore: '#c08ab0', k: 0.3, disco: false },
+  alba:        { zenit: '#151840', orizzonte: '#f0a868', bagliore: '#ffd59a', k: 0.7, disco: true },
+  giornoScuro: { zenit: '#22306a', orizzonte: '#f2c08a', bagliore: '#ffe0b0', k: 0.4, disco: false },   // "giorno" d'oro
+  pomeriggio:  { zenit: '#1f2a5c', orizzonte: '#efb27a', bagliore: '#ffdcae', k: 0.5, disco: false },
+  museale:     { zenit: '#141230', orizzonte: '#2a2547', bagliore: '#000000', k: 0, disco: false },     // stanza scura del plastico bianco
 };
 export const CIELO = {
   raggio: 3000, segmenti: [64, 32],
@@ -201,9 +204,9 @@ export const CIELO = {
   ibl: {
     // luminanza media dell'emisfero alto a cui si normalizza ogni HDRI: il crepuscolo (qwantani) resta sotto il giorno
     // per ombre e rilievo, ma nel tema chiaro sale da 0,3 a 0,9 (regge la campagna col sole radente); il giorno resta a 1
-    luminanza: { qwantani: 0.9, kloofendal: 1.0, autumn: 0.85, altro: 1.0 },
+    luminanza: { qwantani: 0.5, kloofendal: 0.8, autumn: 0.7, altro: 0.8 },   // crepuscolo: ambiente più basso
     // suolo chiaro sotto l'orizzonte delle HDRI "puresky": la luce di rimbalzo di una campagna luminosa
-    albedoSuolo: 0.3, tintaSuolo: [1.0, 0.93, 0.8],
+    albedoSuolo: 0.15, tintaSuolo: [1.0, 0.82, 0.62],
     saturazione: 0.55,           // l'ambiente si desatura in parte…
     tinta: 0.6,                  // …e si tinge col colore della cupola visibile alla riga di cottura
     lato: 1024,                  // HDRI ricampionate a 1K dopo la de-solazione
@@ -248,7 +251,7 @@ export const SOLE = {
   // tema chiaro: stessi passaggi di §6.3 ma meno saturi (il sole basso tingeva di arancio tutta la campagna)
   colori: [[-1, '#ffa877'], [2, '#ffbb85'], [5, '#ffc993'], [10, '#ffd6a8'], [20, '#ffe6c4'], [35, '#fff4e6']],
   intensitaMax: 3.4,
-  emisfera: { cielo: '#a9c3d6', suolo: '#cfc3ad' },   // tema chiaro: cielo del mattino, rimbalzo della campagna
+  emisfera: { cielo: '#4a4f9a', suolo: '#6a4a34' },   // crepuscolo: cielo indaco, rimbalzo caldo della terra
   ombra: { bias: -0.0003, normalBias: 0.005, radius: 3, near: 1, far: 600, distanza: 300 },
   // Riduci movimento: sole fisso alle 10:00 in tappa 3 (§6.11)
   oraRiduci: 10.0,
@@ -269,13 +272,13 @@ export const RENDER = {
   esposizioneIniziale: 1.1,    // = STATO_INIZIALE.esposizione
   agx: { esposizione: 1.35, contrasto: 0.08, saturazione: 0.1 },  // ?tm=agx
   // tema chiaro: fiorisce solo il disco del sole e poche luci (cupola e carta restano sotto ~2,5 di luminanza)
-  bloom: { forza: 0.18, raggio: 0.55, soglia: 2.8 },
+  bloom: { forza: 0.42, raggio: 0.6, soglia: 1.0 },   // crepuscolo: le linee d'oro, il sole e la polvere fioriscono
   gtao: { radius: 0.012, distanceExponent: 1.5, thickness: 0.15, scale: 1.0, samples: 16, distanceFallOff: 1.0, screenSpaceRadius: false },
   gtaoPd: { lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 6, radiusExponent: 1, rings: 2, samples: 16 },
   // tema chiaro: vignetta e grana leggere (sul chiaro sporcano), grading quasi neutro (niente dominanti sulle luci)
   // vignettaLuci: quota di vignetta tolta sulle luci (sRGB 0,55 → 0,95): cielo e carta restano del loro colore,
   // la vignetta scurisce solo i mezzitoni della campagna (sul chiaro un angolo grigio sembra sporco)
-  pellicola: { nitidezza: 0.35, nitidezzaScalaBassa: 0.5, sogliaScalaBassa: 0.9, vignetta: 0.09, vignettaLuci: 0.7, spostamentoVignetta: 0.06,
+  pellicola: { nitidezza: 0.5, nitidezzaScalaBassa: 0.6, sogliaScalaBassa: 0.9, vignetta: 0.09, vignettaLuci: 0.7, spostamentoVignetta: 0.06,
                grana: 0.012, granaEstremi: 0.006, granaFps: 24, lato: 1,
                gradingLuci: [0.004, 0.002, -0.003], gradingOmbre: [0, 0, 0.006],   // [ARCH] luci appena calde, ombre appena fredde
                granaCiclo: 1024 /* [ARCH] fotogrammi di grana prima che il seme ricominci: precisione float32 nelle sessioni lunghe */ },
@@ -293,7 +296,7 @@ export const QUALITA = {
   },
   ordine: ['base', 'media', 'alta', 'ultra'],
   sogliaSmaa: 3.7e6,             // Ultra/Alta: MSAA 0 + SMAA se pixel interni > 3,7 MP
-  regexUltra: /RTX|RX [67]\d{3}|Apple M\d (Pro|Max|Ultra)|Arc A7/,
+  regexUltra: /RTX|RX [5-9]\d{3}|Apple M\d (Pro|Max|Ultra)|Arc A7/,   // anche le Radeon RX 5000 (5700 XT: ultra a ~5 ms)
   regexBassa: /Intel|UHD|Iris|Mali|Adreno|PowerVR|SwiftShader|llvmpipe/,
   // §6.8: 90 fotogrammi durante l'intro (main.js lo avvia a 'pronto', sotto il preloader). [ARCH] al massimo
   // maxS secondi di misura (tempo reale, almeno minimo fotogrammi): sulle GPU lente 90 fotogrammi durerebbero più
@@ -569,11 +572,11 @@ export const CAMBIO_MONDO = { valleDa: 11.50, valleA: 15.50,
 // può scendere. La campagna in mezzitoni (luminanza 0,2–0,4) è più scura del fondo e i testi piccoli in oro (occhiello,
 // #8d5f12: 4,7:1 sul fondo pieno), oroChiaro (em) e grigio (dato) chiedono un fondo quasi pieno. Con queste fermate
 // il peggiore va da 3,4 a 4,4:1 (con 0,78 → 0,28 scendeva a 2,0); l'inchiostro dei titoli resta ≥ 7:1.
-const SCRIM_FERMATE = [[0, 0.92], [0.28, 0.86], [0.42, 0.5], [0.56, 0]];
+const SCRIM_FERMATE = [[0, 0.82], [0.28, 0.7], [0.42, 0.34], [0.56, 0]];   // crepuscolo: testo chiaro su indaco, basta un velo più leggero
 // [ARCH] sotto 900 px (§6.12) il velo è verticale, dal basso: DESIGN dà .9 0% → 0 55%; con la colonna in basso alta
 // fino al 60 % dello schermo serve una fermata intermedia al 30 % e la fine al 62 %. Frazione dal basso.
 const SCRIM_PICCOLO_FERMATE = [[0, 0.92], [0.30, 0.8], [0.62, 0]];
-const FONDO_RGB = '243,236,226';   // = PALETTE.fondo
+const FONDO_RGB = '21,19,53';   // = PALETTE.fondo (crepuscolo)
 const gradiente = (dir, F) => `linear-gradient(${dir}, ${F.map(([f, a]) => `rgba(${FONDO_RGB},${a}) ${Math.round(f * 100)}%`).join(', ')})`;
 export const COLONNA = {
   left: 'clamp(24px, 6vw, 112px)', larghezza: 'min(36vw, 600px)', spostamentoY: '-4vh',
@@ -677,7 +680,7 @@ export const STATO_INIZIALE = {
   // tema chiaro: niente buio. La luce del cielo (emisfera + ambiente) regge da sola la campagna quando il sole è
   // radente o sotto l'orizzonte; esposizione mai sotto 0,88 (il cielo non ne dipende: luce/nebbia.js versoScena)
   // [ARCH] obiettivo: un cartoncino grigio 18 % in piano esce a ≈ sRGB 0,55 anche col sole a 4° (luce del cielo ≈ 1,0)
-  sole: { el: 4, az: 295, int: 2.0, col: '#ffd3a3' }, emisfera: 2.0, envGlobale: 1.4, esposizione: 1.1,
+  sole: { el: 4, az: 295, int: 2.0, col: '#ffd3a3' }, emisfera: 0.55, envGlobale: 0.75, esposizione: 1.0,
   mixHDRI: 0, nebbia: 0.0004 /* [ARCH] K0.0 vista da 1 150 u: 0,0018 la nasconderebbe */, velo: 0, saturazione: 1, maturita: 0,
 
   // ---- estensioni [ARCH] ----
@@ -771,11 +774,12 @@ export const TRACCE = {
                  [9.95, 10.40, 13 + 11 / 60, 17.5], [10.40, 11.30, 17.5, 19.0], [11.30, 11.50, 19.0, 19.25], [15.50, 15.50, null, 16.0] /* [ARCH] HUD 16:00 */],
   // [ARCH] tema chiaro: la notte della tappa 2 è un crepuscolo chiaro (ora blu luminosa, sole sotto l'orizzonte):
   // la luce del cielo sale quando il sole scende, il "tuffo" 7,45–7,52 è un respiro (0,88), non il buio.
-  emisfera:     [[2.00, 5.00, 2.0, 2.1], [5.00, 5.60, 2.1, 2.3], [7.45, 7.60, 2.3, 1.9], [7.60, 8.70, 1.9, 1.2], [8.70, 9.15, 1.2, 0.8],
-                 [10.40, 10.70, 0.8, 0.9], [11.50, 11.50, null, 1.0], [15.50, 15.50, null, 0.8]],
-  envGlobale:   [[1.90, 2.10, 1.4, 1.3], [5.00, 7.45, 1.3, 1.2], [7.45, 7.60, 1.2, 1.1], [10.40, 10.70, 1.1, 1.15],
-                 [11.50, 11.50, null, 1.2], [12.55, 12.80, 1.2, 0.8], [13.30, 13.55, 0.8, 1.2], [13.55, 13.80, 1.2, 0.8], [14.75, 15.00, 0.8, 1.2] /* interni [ARCH] */,
-                 [15.50, 15.50, null, 1.1]],
+  // crepuscolo: luce del cielo bassa, il rilievo lo disegnano il controluce dorato e le linee d'oro
+  emisfera:     [[2.00, 5.00, 0.55, 0.6], [5.00, 5.60, 0.6, 0.7], [7.45, 7.60, 0.7, 0.6], [7.60, 8.70, 0.6, 0.45], [8.70, 9.15, 0.45, 0.35],
+                 [10.40, 10.70, 0.35, 0.4], [11.50, 11.50, null, 0.5], [15.50, 15.50, null, 0.4]],
+  envGlobale:   [[1.90, 2.10, 0.75, 0.7], [5.00, 7.45, 0.7, 0.65], [7.45, 7.60, 0.65, 0.6], [10.40, 10.70, 0.6, 0.62],
+                 [11.50, 11.50, null, 0.65], [12.55, 12.80, 0.65, 0.45], [13.30, 13.55, 0.45, 0.65], [13.55, 13.80, 0.65, 0.45], [14.75, 15.00, 0.45, 0.65] /* interni [ARCH] */,
+                 [15.50, 15.50, null, 0.6]],
   esposizione:  [[2.00, 4.95, 1.10, 1.05], [4.95, 5.25, 1.05, 1.00] /* [ARCH] raccordo */, [5.25, 7.45, 1.00, 0.94], [7.45, 7.52, 0.94, 0.90], [7.52, 7.62, 0.90, 1.00],
                  [9.95, 10.40, 1.00, 0.98],
                  [11.50, 11.50, null, 0.95], [12.55, 12.80, 0.95, 1.00], [13.30, 13.55, 1.00, 0.95], [13.55, 13.80, 0.95, 1.00], [14.75, 15.00, 1.00, 0.95] /* interni [ARCH] */,
@@ -786,11 +790,13 @@ export const TRACCE = {
   discoSole:    [[18.30, 18.52, 1, 0.3, 'expo.out']],
   // densità (1/u) per inquadratura; [ARCH] dove DESIGN non fissa il T
   // tema chiaro: nella PIANURA la nebbia è chiara e velerebbe tutto; densità ~0,55 di §2.5 (la foschia 0,02 e la VALLE restano)
-  nebbia:       [[0.15, 1.55, 0.0004, 0.001, P2IO], [3.30, 3.55, 0.001, 0.0018], [4.95, 5.25, 0.0018, 0.001], [7.45, 7.60, 0.001, 0.0018],
-                 [7.90, 8.10, 0.0018, 0.0035], [8.70, 8.95, 0.0035, 0.0018], [11.32, 11.50, 0.0018, 0.02, 'power2.in'],
-                 [11.50, 11.65, 0.02, 0.00025, 'power2.out'], [12.05, 12.55, 0.00025, 0.003], [12.55, 12.80, 0.003, 0.006],
-                 [13.30, 13.55, 0.006, 0.002], [13.55, 13.80, 0.002, 0.004], [14.75, 15.00, 0.004, 0.00025],
-                 [15.50, 15.50, null, 0.0018], [17.40, 18.30, 0.0018, 0.001]],
+  // crepuscolo nitido (il cliente: "troppa nebbia, poco definito"): densità ~1/4 di §2.5, foschia solo all'orizzonte;
+  // restano il velo di passaggio 0,02 verso la VALLE e la valle quasi limpida
+  nebbia:       [[0.15, 1.55, 0.0002, 0.00045, P2IO], [3.30, 3.55, 0.00045, 0.0008], [4.95, 5.25, 0.0008, 0.00045], [7.45, 7.60, 0.00045, 0.0008],
+                 [7.90, 8.10, 0.0008, 0.0012], [8.70, 8.95, 0.0012, 0.0008], [11.32, 11.50, 0.0008, 0.02, 'power2.in'],
+                 [11.50, 11.65, 0.02, 0.00015, 'power2.out'], [12.05, 12.55, 0.00015, 0.0012], [12.55, 12.80, 0.0012, 0.002],
+                 [13.30, 13.55, 0.002, 0.0008], [13.55, 13.80, 0.0008, 0.0015], [14.75, 15.00, 0.0015, 0.00015],
+                 [15.50, 15.50, null, 0.0008], [17.40, 18.30, 0.0008, 0.00045]],
   velo:         [[11.42, 11.50, 0, 1], [11.50, 11.65, 1, 0, 'power2.out'], [15.40, 15.47, 0, 1], [15.52, 15.62, 1, 0]],
 
   // ---------------- tappa 2 (§4.3)

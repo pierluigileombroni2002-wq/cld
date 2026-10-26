@@ -13,19 +13,19 @@
 
 /* ---------------------------------------------------------------- §2.1 token */
 :root{
-  /* tema chiaro "Alba luminosa" (stessi valori di config.PALETTE): testo scuro su carta, oro "a inchiostro" */
-  --fondo:#f3ece2; --fondo-rgb:243,236,226; --carta:#efe7da; --carta2:#e4dbcc;
-  --inchiostro:#10241c; --inchiostro-rgb:16,36,28; --nero:var(--inchiostro);   /* --nero: alias dell'inchiostro, NON è il fondo */
-  --grafite:#2c3b34; --grafite-2:#e4dbcc;
-  --bordo:rgba(141,95,18,.32);
-  --oro:#8d5f12; --oro-rgb:141,95,18; --oro-linea:#b9831f; --oro-chiaro:#9a4f1c;
-  --avorio:#10241c; --platino:#2c3b34; --grigio:#5b665f; --griglia:#6f7a72;
-  --smeraldo:#1e7f5c; --vincolo:#c0412c; --acqua:#2f6f8c; --rame:#b8572a; --ambra:#a8650f;
-  --oro-3d-emissivo:#b9831f; --su-oro:#fbf7f0;
+  /* tema "Crepuscolo magico" (stessi valori di config.PALETTE): testi chiari su indaco, oro luminoso */
+  --fondo:#151335; --fondo-rgb:21,19,53; --carta:#1e1a3b; --carta2:#28224a;
+  --inchiostro:#fbf3e6; --inchiostro-rgb:251,243,230; --nero:#0b0a1c;
+  --grafite:#0b0a1c; --grafite-2:#28224a;
+  --bordo:rgba(230,178,92,.28);
+  --oro:#e6b25c; --oro-rgb:230,178,92; --oro-linea:#ffd27a; --oro-chiaro:#ffcf8a;
+  --avorio:#fbf3e6; --platino:#ddd5e6; --grigio:#a89fbe; --griglia:#9b91c6;
+  --smeraldo:#4fd1a5; --vincolo:#ff7a5c; --acqua:#7fa8e0; --rame:#e8834a; --ambra:#ffb347;
+  --oro-3d-emissivo:#ffd27a; --su-oro:#151335;
 
-  /* derivati (trasparenze dei token, ritarate per il fondo chiaro; i nomi restano quelli storici) */
-  --oro-16:rgba(var(--oro-rgb),.34); --oro-30:rgba(var(--oro-rgb),.5); --oro-08:rgba(var(--oro-rgb),.1);
-  --platino-12:rgba(var(--inchiostro-rgb),.14); --platino-24:rgba(var(--inchiostro-rgb),.28); --platino-40:rgba(var(--inchiostro-rgb),.52);   /* 40: ≥ 3:1 sul fondo */
+  /* derivati (trasparenze dei token sul fondo scuro; i nomi restano quelli storici) */
+  --oro-16:rgba(var(--oro-rgb),.24); --oro-30:rgba(var(--oro-rgb),.4); --oro-08:rgba(var(--oro-rgb),.1);
+  --platino-12:rgba(var(--inchiostro-rgb),.12); --platino-24:rgba(var(--inchiostro-rgb),.24); --platino-40:rgba(var(--inchiostro-rgb),.42);
   --nero-90:rgba(var(--fondo-rgb),.9);
 
   /* §2.2 famiglie */
@@ -54,7 +54,7 @@
 
 /* ---------------------------------------------------------------- base */
 *,*::before,*::after{ box-sizing:border-box; }
-html{ background:var(--fondo); color:var(--platino); color-scheme:light; -webkit-text-size-adjust:100%; text-size-adjust:100%;
+html{ background:var(--fondo); color:var(--platino); color-scheme:dark; -webkit-text-size-adjust:100%; text-size-adjust:100%;
   overflow-x:clip; scrollbar-width:thin; scrollbar-color:rgba(var(--oro-rgb),.45) transparent; }
 html::-webkit-scrollbar{ width:6px; }
 html::-webkit-scrollbar-thumb{ background:rgba(var(--oro-rgb),.45); }

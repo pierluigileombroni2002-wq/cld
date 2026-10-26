@@ -28,10 +28,13 @@ export function rileva(ctx) {
     const gl = ctx.renderer.getContext(); const ext = gl.getExtension('WEBGL_debug_renderer_info');
     gpu = ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER);
   } catch { /* GPU ignota */ }
+  // scelta del cliente: chiunque apra il sito deve vedere la qualità massima possibile. Si parte da ultra e scende
+  // solo il benchmark del preloader (e poi il governatore) se la macchina non regge; partenze più basse solo dove
+  // è certo che l'ultra non regge (render su CPU, GPU dei telefoni)
   if (QUALITA.regexUltra.test(gpu)) return 'ultra';
   if (/SwiftShader|llvmpipe|Mali|Adreno|PowerVR/i.test(gpu)) return 'base';   // CPU e GPU mobili
-  if (QUALITA.regexBassa.test(gpu)) return 'media';                            // Intel integrate
-  return 'alta';
+  if (QUALITA.regexBassa.test(gpu)) return 'alta';                             // Intel integrate: il benchmark rifinisce
+  return 'ultra';
 }
 
 /** Pixel nativi della tela (box CSS reale × DPR corrente: lo zoom e il cambio di monitor lo cambiano). */
