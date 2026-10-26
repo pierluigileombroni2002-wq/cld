@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ERI · Energie Rinnovabili Italia</title>
+<meta name="description" content="Sviluppiamo impianti fotovoltaici, agrivoltaici, di accumulo BESS e idroelettrici. Per ogni impianto seguiamo tutto l'iter: dal terreno al Ready to Build, fino alla costruzione e alla gestione.">
+<meta name="theme-color" content="#0b0a1c">
+<meta name="color-scheme" content="dark">
+<link rel="icon" type="image/svg+xml" href="../logo/ufficiale/logo-eri-originale.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400;1,6..96,500&family=IBM+Plex+Mono:wght@400;500&family=Jost:wght@300;400;500&display=swap">
+<link rel="stylesheet" href="stile.css">
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module" src="main.js"></script>
+</head>
+<body class="carica">
+  <canvas id="scena" aria-hidden="true"></canvas>
+  <div class="velo" aria-hidden="true"></div>
+
+  <!-- filo d'energia sullo schermo: dal logo alla linea, dal faro al pulsante -->
+  <svg id="filo" aria-hidden="true">
+    <defs>
+      <linearGradient id="filo-oro" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff1cf"/><stop offset=".5" stop-color="#ffd27a"/><stop offset="1" stop-color="#e6a44c"/></linearGradient>
+    </defs>
+    <path class="filo-tratto alone" pathLength="1"/>
+    <path class="filo-tratto" pathLength="1"/>
+    <circle class="filo-punta" r="3.2" cx="-10" cy="-10"/>
+  </svg>
+
+  <header class="testata">
+    <a class="marchio" href="#apertura" data-vai="apertura" aria-label="ERI · Energie Rinnovabili Italia, torna all'inizio">
+      <span class="logo-piccolo" id="logo-piccolo"></span><span class="sigla">ERI</span>
+    </a>
+    <nav class="menu" aria-label="Navigazione">
+      <a href="#fotovoltaico" data-vai="fv">Fotovoltaico</a>
+      <a href="#accumulo" data-vai="bess">Accumulo</a>
+      <a href="#idroelettrico" data-vai="idro">Idroelettrico</a>
+      <a href="#contatti" class="contatto" data-vai="contatti">Contatti</a>
+    </nav>
+  </header>
+
+  <!-- 1 · apertura -->
+  <section class="eroe" id="apertura" aria-label="ERI · Energie Rinnovabili Italia">
+    <div class="logo-grande" id="logo-grande" role="img" aria-label="Logo ERI · Energie Rinnovabili Italia"></div>
+    <div class="eroe-testi">
+      <h1><span class="parola"><span>Energia,</span></span> <span class="parola"><span><em>progettata.</em></span></span></h1>
+      <p class="frase">Per ogni impianto seguiamo tutto l’iter: dal terreno al Ready to Build, fino alla gestione.</p>
+      <a class="cta" href="#contatti" data-vai="contatti">Parliamo del progetto <span class="freccia" aria-hidden="true"></span></a>
+    </div>
+  </section>
+
+  <!-- 2 · fotovoltaico e agrivoltaico -->
+  <section class="pannello" data-momento="fv" id="fotovoltaico" aria-hidden="true">
+    <p class="num"><span>01</span> Fotovoltaico e agrivoltaico</p>
+    <h2><span class="parola"><span>Il sole,</span></span> <span class="parola"><span><em>inseguito.</em></span></span></h2>
+    <p class="frase">Impianti a terra e agrivoltaici: dal terreno ai tracker che seguono il sole, ogni passo è nostro.</p>
+  </section>
+
+  <!-- 3 · accumulo -->
+  <section class="pannello" data-momento="bess" id="accumulo" aria-hidden="true">
+    <p class="num"><span>02</span> Accumulo BESS</p>
+    <h2><span class="parola"><span>L’energia,</span></span> <span class="parola"><span><em>quando serve.</em></span></span></h2>
+    <p class="frase">Batterie che conservano l’energia del sole e la restituiscono alla rete. Le sviluppiamo, le costruiamo, le gestiamo.</p>
+  </section>
+
+  <!-- 4 · idroelettrico -->
+  <section class="pannello" data-momento="idro" id="idroelettrico" aria-hidden="true">
+    <p class="num"><span>03</span> Idroelettrico</p>
+    <h2><span class="parola"><span>L’acqua,</span></span> <span class="parola"><span><em>al lavoro.</em></span></span></h2>
+    <p class="frase">Una turbina per ogni salto d’acqua. Dal progetto alla gestione, seguiamo tutto noi.</p>
+  </section>
+  <div class="gioielli" aria-label="Le tre turbine">
+    <div class="gioiello" data-turbina="pelton"><b>Pelton</b><span class="salto">Salto alto</span><span class="riga">Getti d’acqua veloci sui cucchiai.</span></div>
+    <div class="gioiello" data-turbina="francis"><b>Francis</b><span class="salto">Salto medio</span><span class="riga">L’acqua entra a spirale e fa girare la girante.</span></div>
+    <div class="gioiello" data-turbina="kaplan"><b>Kaplan</b><span class="salto">Salto basso</span><span class="riga">Grandi portate, pale che si orientano.</span></div>
+  </div>
+
+  <!-- 5 · contatti -->
+  <section class="contatti" id="contatti" aria-labelledby="titolo-contatti">
+    <p class="num"><span>04</span> Contatti</p>
+    <h2 id="titolo-contatti">Parliamo del <em>progetto.</em></h2>
+    <p class="frase">Un terreno, un’idea o un impianto da far crescere: raccontaci da dove parti.</p>
+    <form novalidate>
+      <label>Nome<input name="nome" type="text" autocomplete="name" required></label>
+      <label>Email<input name="email" type="email" autocomplete="email" required></label>
+      <label>Messaggio<textarea name="messaggio" rows="3" required></textarea></label>
+      <div class="riga-invio">
+        <button class="cta invia" type="submit">Invia <span class="freccia" aria-hidden="true"></span></button>
+        <span class="nota">Pagina di prova: il modulo non invia dati.</span>
+      </div>
+    </form>
+    <div class="grazie" role="status" aria-live="polite">
+      <p class="chi">Grazie.</p>
+      <p>Abbiamo ricevuto il tuo messaggio: ti rispondiamo entro due giorni lavorativi.</p>
+      <button type="button" class="altro">Scrivi un altro messaggio</button>
+    </div>
+    <p class="recapiti"><a href="mailto:info@eri-esempio.it">info@eri-esempio.it</a><span aria-hidden="true">·</span><a href="tel:+390000000000">+39 000 000 0000</a></p>
+  </section>
+
+  <!-- barra dell'iter: sempre visibile -->
+  <nav class="iter" aria-label="L’iter di ogni impianto">
+    <p class="iter-didascalia" aria-live="polite"></p>
+    <div class="iter-riga">
+      <span class="iter-etichetta">L’iter</span>
+      <ol></ol>
+    </div>
+  </nav>
+
+  <div class="corsa" aria-hidden="true"></div>
+  <noscript><p class="senza-js">Per vedere la pagina serve JavaScript. Scrivici: info@eri-esempio.it · +39 000 000 0000</p></noscript>
+</body>
+</html>

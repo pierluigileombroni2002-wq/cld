@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ERI Macchine</title>
+<meta name="color-scheme" content="dark">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<style>
+  :root { --notte: #0b0a1c; --testo: #fbf3e6; --oro: #ffd27a; }
+  html, body { margin: 0; height: 100%; background: var(--notte); color: var(--testo); overflow: hidden; font: 12px/1.4 'IBM Plex Mono', ui-monospace, monospace; }
+  #scena { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  .pannello { position: fixed; left: 16px; bottom: 16px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; background: rgba(14, 12, 32, .7); padding: 10px 14px; border: 1px solid rgba(255, 210, 122, .3); border-radius: 10px; }
+  .pannello button { font: inherit; color: var(--testo); background: none; border: 1px solid rgba(255, 210, 122, .35); border-radius: 6px; padding: 4px 9px; cursor: pointer; }
+  .pannello input { width: 220px; accent-color: var(--oro); }
+  body.foto .pannello { display: none; }
+</style>
+</head>
+<body>
+<canvas id="scena"></canvas>
+<div class="pannello">
+  <input id="cursore" type="range" min="0" max="1" step="0.001" value="1">
+  <button data-v="fv">FV</button><button data-v="fvVicino">FV vicino</button>
+  <button data-v="bess">BESS</button><button data-v="bessVicino">BESS vicino</button>
+  <button data-v="turbine">Turbine</button><button data-v="pelton">Pelton</button><button data-v="francis">Francis</button><button data-v="kaplan">Kaplan</button>
+  <span id="info"></span>
+</div>
+<script type="module">
+// Prova delle macchine v3: tre macchine in fila, cursore = montaggio → gestione → primo piano.
+import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { Pass } from 'three/addons/postprocessing/Pass.js';
+import { creaMateriali } from './materiali.js';
+import { creaFV } from './fv.js';
+import { creaBESS } from './bess.js';
+import { creaTurbine } from './turbine.js';
+
+// i riflessi speculari estremi superano il half-float: si tagliano prima del bloom
+THREE.ShaderChunk.opaque_fragment = THREE.ShaderChunk.opaque_fragment.replace('gl_FragColor = vec4( outgoingLight, diffuseColor.a );',
+  'gl_FragColor = vec4( clamp( outgoingLight, 0.0, 24.0 ), diffuseColor.a );');
+
+const errori = [];
+window.__eri = { pronto: false, errori, moduli: () => ({ macchine: 'ok' }) };
+addEventListener('error', e => errori.push(String(e.message)));
+const QS = new URLSearchParams(location.search);
+const qualita = ['alta', 'media', 'bassa'].includes(QS.get('q')) ? QS.get('q') : 'alta';
+if (QS.has('foto')) document.body.classList.add('foto');
+
+const canvas = document.getElementById('scena');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance', stencil: false });
+const telefono = matchMedia('(pointer: coarse)').matches;
+const DPR = Math.min(devicePixelRatio || 1, telefono ? 1.25 : 1.5);
+renderer.setPixelRatio(DPR); renderer.setSize(innerWidth, innerHeight, false);
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.92;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.shadowMap.enabled = false;
+renderer.info.autoReset = false;
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(32, innerWidth / innerHeight, 0.05, 2000);
+const C = (h, k = 1) => new THREE.Color(h).multiplyScalar(k);
+
+// ---- cielo crepuscolo (dallo showroom) ----
+const PAL = { zenit: C('#0a0920'), indaco: C('#151335'), malva: C('#5a2f58'), arancio: C('#e8975a', 1.05), oro: C('#ffcf8a', 1.12) };
+const SOLE = new THREE.Vector3(0.08, 0.01, -1).normalize();
+const cieloMat = () => new THREE.ShaderMaterial({
+  uniforms: { cZenit: { value: PAL.zenit }, cIndaco: { value: PAL.indaco }, cMalva: { value: PAL.malva }, cArancio: { value: PAL.arancio }, cOro: { value: PAL.oro }, uSole: { value: SOLE } },
+  vertexShader: `varying vec3 vDir; void main(){ vDir = position; vec4 p = projectionMatrix * modelViewMatrix * vec4(position, 1.0); gl_Position = p.xyww; }`,
+  fragmentShader: `uniform vec3 cZenit, cIndaco, cMalva, cArancio, cOro, uSole; varying vec3 vDir;
+    void main(){ vec3 d = normalize(vDir); float e = d.y; vec3 c = cOro;
+      c = mix(c, cArancio, smoothstep(0.0, 0.022, e)); c = mix(c, cMalva, smoothstep(0.012, 0.1, e));
+      c = mix(c, cIndaco, smoothstep(0.06, 0.22, e)); c = mix(c, cZenit, smoothstep(0.24, 0.8, e));
+      if (e < 0.0) c = mix(cOro, cArancio * 0.5, smoothstep(0.0, -0.06, e));
+      float s = max(dot(d, normalize(uSole)), 0.0); c += cOro * (pow(s, 60.0) * 0.25 + pow(s, 12.0) * 0.05) * smoothstep(-0.04, 0.01, e);
+      gl_FragColor = vec4(c, 1.0); }`,
+  side: THREE.BackSide, depthWrite: false, depthTest: false,
+});
+const cielo = new THREE.Mesh(new THREE.SphereGeometry(1000, 48, 24), cieloMat()); cielo.renderOrder = -10; cielo.frustumCulled = false; scene.add(cielo);
+{
+  const env = new THREE.Scene(); env.add(new THREE.Mesh(new THREE.SphereGeometry(50, 48, 24), cieloMat()));
+  const sb = (w, h, col, k, pos) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: C(col, k), side: THREE.DoubleSide })); m.position.set(...pos); m.lookAt(0, 3, 0); env.add(m); };
+  sb(30, 10, '#ffffff', 3.2, [0, 30, 6]); sb(5, 26, '#fff6ea', 3.0, [-30, 8, 10]); sb(5, 26, '#eef0ff', 2.4, [30, 8, 6]); sb(40, 2, '#ffc68a', 1.2, [0, 3, -40]);
+  const pm = new THREE.PMREMGenerator(renderer); scene.environment = pm.fromScene(env, 0.02).texture; pm.dispose();
+}
+scene.add(new THREE.HemisphereLight('#4b4483', '#1a1016', 0.75));
+const sole = new THREE.DirectionalLight('#fff0dc', 2.5); sole.position.set(-14, 20, 16); scene.add(sole);
+const contro = new THREE.DirectionalLight('#ffb070', 2.2); contro.position.set(8, 6, -26); scene.add(contro);
+const riempi = new THREE.DirectionalLight('#b4b8ff', 0.6); riempi.position.set(0, 4, 24); scene.add(riempi);
+
+// ---- pavimento scuro con griglia d'oro (niente riflesso in prova) ----
+const pav = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), new THREE.ShaderMaterial({
+  uniforms: { uOro: { value: C('#ffc879') } },
+  vertexShader: `varying vec3 vW; void main(){ vW = (modelMatrix * vec4(position, 1.0)).xyz; gl_Position = projectionMatrix * viewMatrix * vec4(vW, 1.0); }`,
+  fragmentShader: `uniform vec3 uOro; varying vec3 vW;
+    float linea(float x, float w){ float f = abs(fract(x - 0.5) - 0.5) / max(fwidth(x), 1e-4); return 1.0 - min(f / w, 1.0); }
+    void main(){ vec2 p = vW.xz; float g = max(linea(p.x, 0.8), linea(p.y, 0.8)) * 0.012 + max(linea(p.x / 4.0, 1.0), linea(p.y / 4.0, 1.0)) * 0.03;
+      float d = length(p); gl_FragColor = vec4(vec3(0.012, 0.011, 0.02) + uOro * g * exp(-d * 0.03), 1.0); }`,
+}));
+pav.rotation.x = -Math.PI / 2; scene.add(pav);
+
+// ---- macchine ----
+const materiali = creaMateriali(THREE, qualita);
+const ctx = { THREE, scene, renderer, camera, materiali, qualita };
+const O = { fv: new THREE.Vector3(-13, 0, 0), bess: new THREE.Vector3(0, 0, 0), turbine: new THREE.Vector3(13, 0, 0) };
+const macchine = { fv: creaFV(ctx), bess: creaBESS(ctx), turbine: creaTurbine(ctx) };
+for (const k in macchine) { macchine[k].gruppo.position.copy(O[k]); scene.add(macchine[k].gruppo); }
+
+// ---- post ----
+const composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(innerWidth * DPR, innerHeight * DPR, { type: THREE.HalfFloatType, samples: qualita === 'bassa' ? 0 : 4 }));
+composer.setPixelRatio(DPR); composer.setSize(innerWidth, innerHeight);
+composer.addPass(new RenderPass(scene, camera));
+const misura = { tri: 0, call: 0 };
+class Misura extends Pass { constructor() { super(); this.needsSwap = false; } render(r) { misura.tri = r.info.render.triangles; misura.call = r.info.render.calls; } }
+composer.addPass(new Misura());
+const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth / 2, innerHeight / 2), 0.38, 0.5, 1.1);
+if (!QS.has('nobloom')) composer.addPass(bloom);
+composer.addPass(new OutputPass());
+addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight, false); composer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); });
+
+// ---- viste ----
+const V = (o, p, t, fov) => ({ pos: new THREE.Vector3(...p).add(O[o]), target: new THREE.Vector3(...t).add(O[o]), fov, solo: o });
+const VISTE = {
+  fv: V('fv', [-5.2, 3.4, 8.8], [0, 0.9, 0], 32),
+  fvVicino: V('fv', [1.05, 1.32, 4.02], [0.0, 1.0, 2.55], 30),
+  bess: V('bess', [4.2, 4.6, 8.8], [-0.4, 0.6, 0], 36),
+  bessVicino: V('bess', [0.2, 1.55, 3.7], [-1.5, 0.75, 0.6], 36),
+  turbine: V('turbine', [0, 3.3, 8.2], [0, 0.85, 0], 32),
+  pelton: V('turbine', [-3.55, 1.45, 2.75], [-2.75, 1.0, 0], 34),
+  francis: V('turbine', [0.5, 2.3, 2.7], [0, 0.75, 0], 34),
+  kaplan: V('turbine', [3.4, 1.5, 2.7], [2.8, 0.95, 0], 34),
+};
+let vistaCorr = 'turbine';
+function vista(n) { const v = VISTE[n]; if (!v) return false; vistaCorr = n; camera.position.copy(v.pos); camera.lookAt(v.target); camera.fov = v.fov; camera.updateProjectionMatrix(); return true; }
+function solo(n) { for (const k in macchine) macchine[k].gruppo.visible = !n || n === 'tutte' || k === n; }
+
+// ---- stato: cursore p → montaggio, gestione, primo piano ----
+const stato = { t: 0, montaggio: 1, funzione: 1, vicino: 1 };
+const r01 = (x, a, b) => Math.min(1, Math.max(0, (x - a) / (b - a)));
+function vai(p) { stato.montaggio = r01(p, 0, 0.45); stato.funzione = r01(p, 0.45, 0.75); stato.vicino = r01(p, 0.75, 1); document.getElementById('cursore').value = p; return stato; }
+const cursore = document.getElementById('cursore');
+cursore.addEventListener('input', () => vai(+cursore.value));
+document.querySelectorAll('[data-v]').forEach(b => b.addEventListener('click', () => { vista(b.dataset.v); solo(VISTE[b.dataset.v].solo); }));
+
+// ---- ciclo ----
+const orologio = new THREE.Clock(), tempi = [];
+let ultimo = performance.now(), fotogrammi = 0;
+const attendi = n => new Promise(r => { const f0 = fotogrammi; const ck = () => (fotogrammi - f0 >= n ? r() : requestAnimationFrame(ck)); ck(); });
+function ciclo() {
+  requestAnimationFrame(ciclo);
+  const ora = performance.now(); tempi.push(ora - ultimo); ultimo = ora; if (tempi.length > 60) tempi.shift();
+  stato.t = orologio.getElapsedTime();
+  for (const k in macchine) if (macchine[k].gruppo.visible) macchine[k].aggiorna(stato);
+  renderer.info.reset();
+  composer.render();
+  fotogrammi++;
+  if (fotogrammi % 20 === 0) document.getElementById('info').textContent = JSON.stringify(info());
+  if (fotogrammi > 4 && !window.__eri.pronto) window.__eri.pronto = true;
+}
+function info() { return { ms: +(tempi.reduce((a, b) => a + b, 0) / Math.max(1, tempi.length)).toFixed(2), triangoli: misura.tri, chiamate: misura.call, qualita }; }
+Object.assign(window.__eri, {
+  vai, vista, solo, info, stato: s => Object.assign(stato, s), macchine,
+  // triangoli e chiamate di ciascuna macchina da sola, lontano (vicino=0) e da vicino (vicino=1), a montaggio e gestione completi
+  async misura() {
+    const out = {}, v0 = vistaCorr;
+    for (const [k, vl, vv] of [['fv', 'fv', 'fvVicino'], ['bess', 'bess', 'bessVicino'], ['turbine', 'turbine', 'turbine']]) {
+      solo(k); stato.montaggio = 1; stato.funzione = 1;
+      stato.vicino = 0; vista(vl); await attendi(4); const lo = info();
+      stato.vicino = 1; await attendi(4); const hi = info();
+      vista(vv); await attendi(4); const hiV = info();
+      out[k] = { lontano: { triangoli: lo.triangoli, chiamate: lo.chiamate }, vicinoStessaVista: { triangoli: hi.triangoli, chiamate: hi.chiamate }, vicinoPrimoPiano: { triangoli: hiV.triangoli, chiamate: hiV.chiamate } };
+    }
+    solo('tutte'); vista(v0);
+    return JSON.stringify(out);
+  },
+});
+vista('turbine'); vai(1);
+requestAnimationFrame(ciclo);
+</script>
+</body>
+</html>
