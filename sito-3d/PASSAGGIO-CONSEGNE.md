@@ -3,6 +3,16 @@
 Questo file serve a una **nuova sessione** per riprendere il sito nuovo (versione 2) da dove è stato lasciato.
 Leggilo tutto prima di scrivere codice.
 
+> ## Aggiornamento 26/10/2026: SI LAVORA SOLO SU `sito-3d/v3`
+> Il cliente ha scartato la v2 (troppo pesante, laggava sui portatili, "anonima", troppo cartografica) e ha approvato lo stile
+> "showroom" (`prove/showroom*`). Il prototipo del sito nuovo è in `v3/` (commit `51b52f1`): 5 momenti (apertura con il
+> logo completo, fotovoltaico e agrivoltaico, BESS, idroelettrico con Pelton/Francis/Kaplan, contatti), barra dell'ITER sempre
+> visibile (messaggio chiave: per ogni impianto ERI segue tutto l'iter), macchine in `v3/macchine/`. Regole vincolanti:
+> WOW, stilizzato e kinetic, niente vegetazione/terreni realistici, NIENTE ombre, camera calma (niente zoom avanti-indietro),
+> pochi testi grandi e leggibili, fluido su portatili e telefoni (qualità a 3 livelli, `?q=`). Aperti: prova su un portatile
+> vero, "ITALIA" del logo poco leggibile sul fondo scuro, riflesso forte sui pannelli agrivoltaici, barra di carica del BESS
+> poco leggibile da lontano, togliere gli strumenti di prova prima di pubblicare.
+>
 > ## Aggiornamento 22/10/2026 (sessione su PC Windows dell'utente)
 > **Fatto e approvato dal cliente** (branch `claude/charming-planck-l43o5q`, ultimo commit della tappa 4 `243f6fa`):
 > - **Logo** originale ricostruito in vettoriale: `logo/ufficiale/logo-eri-originale.svg` (strumenti in `strumenti/logo-*.html`).
