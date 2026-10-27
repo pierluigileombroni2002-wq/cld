@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Linea di Luce</title>
+<meta name="viewport" content="width=1600">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --grafite:#0c0d0f;--carbone:#15171a;--bianco:#eef2f5;--osso:#c9cbcf;--fumo:#6f7378;
+  --alluminio:#2a2d31;--acciaio:#9ea3a8;--rame:#c47a52;--chiaro:#f4f2ee;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1600px;height:900px;margin:0;overflow:hidden;background:var(--grafite)}
+body{position:relative;color:var(--osso);font-family:'Inter',sans-serif;font-weight:400;-webkit-font-smoothing:antialiased}
+.mono{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--fumo)}
+
+/* grana finissima, come carta da disegno */
+.grana{position:absolute;inset:0;opacity:.045;pointer-events:none}
+
+/* testata */
+.marca{position:absolute;left:96px;top:36px;display:flex;align-items:baseline;gap:12px;white-space:nowrap}
+.marca b{font-family:'Archivo',sans-serif;font-weight:800;font-stretch:110%;font-variation-settings:'wdth' 110,'wght' 800;font-size:20px;letter-spacing:.06em;color:var(--bianco)}
+.marca span{font-size:13px;color:var(--osso);letter-spacing:.01em}
+.marca i{font-style:normal;color:var(--rame)}
+.menu{position:absolute;left:0;right:0;top:40px;display:flex;justify-content:center;gap:44px;font-size:11px}
+.menu a{color:var(--fumo);text-decoration:none}
+.menu a.on{color:var(--bianco)}
+.momento{position:absolute;right:96px;top:40px;font-size:11px;text-align:right}
+.momento em{font-style:normal;color:var(--bianco)}
+
+/* titolo enorme, una parola */
+h1{position:absolute;left:90px;top:152px;font-family:'Archivo',sans-serif;font-weight:800;font-stretch:108%;font-variation-settings:'wdth' 108,'wght' 800;font-size:288px;line-height:1;letter-spacing:-.015em;color:var(--bianco);text-transform:uppercase;white-space:nowrap}
+
+/* didascalie tecniche a sinistra */
+.didascalie{position:absolute;left:96px;top:470px;font-size:11px;line-height:1.7}
+.didascalie div{margin-bottom:12px}
+.didascalie b{font-weight:500;color:var(--osso)}
+
+/* frase in basso a destra, sopra la linea */
+.frase{position:absolute;right:96px;bottom:322px;width:470px;text-align:right;font-size:18px;line-height:1.5;color:var(--osso)}
+
+/* iter lungo la linea */
+.iter{position:absolute;left:0;top:600px;width:1600px;height:80px}
+.iter span{position:absolute;top:26px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-family:'IBM Plex Mono',monospace;color:var(--fumo);white-space:nowrap}
+.iter .fatto{color:var(--bianco)}
+.iter .attivo{color:var(--rame)}
+.iter small{display:block;margin-top:10px;font-size:11px;letter-spacing:.1em;text-transform:none;color:var(--osso)}
+
+/* pulsante testuale */
+.cta{position:absolute;right:96px;bottom:60px;font-size:15px;color:var(--bianco);padding-bottom:9px;letter-spacing:.01em}
+.cta::after{content:"";position:absolute;left:0;bottom:0;width:100%;height:1px;background:var(--rame)}
+
+/* striscia palette */
+.palette{position:absolute;left:96px;bottom:44px}
+.palette .nome{font-size:10px;margin-bottom:10px}
+.palette .nome em{font-style:normal;color:var(--osso)}
+.palette ul{list-style:none;display:flex;gap:10px}
+.palette li{width:48px}
+.palette i{display:block;height:10px;border:1px solid rgba(255,255,255,.1);margin-bottom:5px}
+.palette small{display:block;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.04em;color:var(--fumo)}
+</style>
+</head>
+<body>
+
+<header class="marca"><b>ERI</b><span>· Energie Rinnovabili <i>Italia</i></span></header>
+<nav class="menu mono"><a href="#" class="on">Fotovoltaico</a><a href="#">Accumulo</a><a href="#">Idroelettrico</a><a href="#">Contatti</a></nav>
+<div class="momento mono"><em>02</em> / 05 &nbsp;·&nbsp; Fotovoltaico e agrivoltaico</div>
+
+<h1>Sole</h1>
+
+<div class="didascalie mono">
+  <div><b>01 &nbsp;Tracker monoassiale</b><br>pali · tavola · bulloni</div>
+  <div><b>02 &nbsp;Agrivoltaico rialzato</b><br>h 4,50 m · campo sotto</div>
+</div>
+
+<!-- scena: la riga di luce, le macchine disegnate e quelle solide -->
+<svg width="1600" height="900" viewBox="0 0 1600 900" style="position:absolute;left:0;top:0" fill="none" stroke-linecap="round" stroke-linejoin="round">
+<defs>
+  <linearGradient id="pole" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#1b1e21"/><stop offset=".45" stop-color="#3a3f44"/><stop offset="1" stop-color="#1f2225"/>
+  </linearGradient>
+  <linearGradient id="glass" gradientUnits="userSpaceOnUse" x1="-68" y1="-270" x2="315" y2="-63">
+    <stop offset="0" stop-color="#2c3136"/><stop offset=".45" stop-color="#181b1e"/><stop offset="1" stop-color="#0f1113"/>
+  </linearGradient>
+  <linearGradient id="refl" gradientUnits="userSpaceOnUse" x1="-49" y1="-118" x2="198" y2="-261">
+    <stop offset="0" stop-color="#eef2f5" stop-opacity=".11"/><stop offset="1" stop-color="#eef2f5" stop-opacity="0"/>
+  </linearGradient>
+  <radialGradient id="punta">
+    <stop offset="0" stop-color="#eef2f5" stop-opacity=".16"/><stop offset=".5" stop-color="#eef2f5" stop-opacity=".04"/><stop offset="1" stop-color="#eef2f5" stop-opacity="0"/>
+  </radialGradient>
+  <filter id="grana" x="0" y="0" width="100%" height="100%">
+    <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" stitchTiles="stitch"/>
+    <feColorMatrix type="saturate" values="0"/>
+  </filter>
+
+  <!-- giunzioni tra i moduli della tavola (riusate in versione scura e in versione a linea) -->
+  <path id="mod" d="M-55.6-134.2 80.4-70.2M-43.3-141.3 92.8-77.3M-30.9-148.5 105.1-84.5M-18.5-155.6 117.5-91.6M-6.1-162.8 129.9-98.8M6.3-169.9 142.3-105.9M18.6-177.1 154.6-113.1M31-184.2 167-120.2M43.4-191.4 179.4-127.4M55.8-198.5 191.8-134.5M68.1-205.7 204.1-141.7M80.5-212.8 216.5-148.8M92.9-220 228.9-156M105.3-227.1 241.3-163.1M117.6-234.3 253.6-170.3M130-241.4 266-177.4M142.4-248.6 278.4-184.6M154.8-255.7 290.8-191.7M167.1-262.9 303.1-198.9M0-95 247.5-238"/>
+
+  <!-- tracker solido: lama di base, pali, tubo, tavola in vetro -->
+  <g id="trk">
+    <polygon points="-75,0 75,0 322.5,-143 172.5,-143" fill="#141618" stroke="#2a2d31"/>
+    <polygon points="75,0 322.5,-143 322.5,-139.5 75,3.5" fill="#2a2d31"/>
+    <rect x="-75" y="0" width="150" height="3.5" fill="#1d2023"/>
+    <line x1="75" y1="0" x2="322.5" y2="-143" stroke="#dfe8f0" stroke-opacity=".4"/>
+    <g fill="url(#pole)">
+      <rect x="244" y="-238" width="7" height="95"/><rect x="182.1" y="-202.3" width="7" height="95"/><rect x="120.3" y="-166.5" width="7" height="95"/><rect x="58.4" y="-130.8" width="7" height="95"/><rect x="-3.5" y="-95" width="7" height="95"/>
+    </g>
+    <g fill="#2a2d31">
+      <rect x="241.5" y="-146" width="12" height="3"/><rect x="179.6" y="-110.3" width="12" height="3"/><rect x="117.8" y="-74.5" width="12" height="3"/><rect x="55.9" y="-38.8" width="12" height="3"/><rect x="-6" y="-3" width="12" height="3"/>
+    </g>
+    <path d="M250.5-238v95M188.6-202.3v95M126.8-166.5v95M64.9-130.8v95M3-95v95" stroke="#8a9096" stroke-opacity=".35"/>
+    <line x1="0" y1="-95" x2="247.5" y2="-238" stroke="#30353a" stroke-width="7"/>
+    <line x1="-1" y1="-97" x2="246.5" y2="-240" stroke="#5a6067" stroke-opacity=".6"/>
+    <g fill="#9ea3a8"><circle cx="0" cy="-95" r="5.5"/><circle cx="61.9" cy="-130.8" r="5.5"/><circle cx="123.8" cy="-166.5" r="5.5"/><circle cx="185.6" cy="-202.3" r="5.5"/><circle cx="247.5" cy="-238" r="5.5"/></g>
+    <polygon points="-68,-127 68,-63 315.5,-206 179.5,-270" fill="url(#glass)"/>
+    <polygon points="-49,-118 -13.6,-101.4 233.9,-244.4 198.5,-261" fill="url(#refl)"/>
+    <use href="#mod" stroke="#0c0d0f" stroke-opacity=".6"/>
+    <polygon points="-68,-127 68,-63 68,-59.5 -68,-123.5" fill="#2a2d31"/>
+    <polygon points="68,-63 315.5,-206 318.5,-204 71,-61" fill="#1c1f22"/>
+    <polygon points="-68,-127 68,-63 315.5,-206 179.5,-270" stroke="#3b4046"/>
+    <line x1="-68" y1="-127" x2="179.5" y2="-270" stroke="#565c63"/>
+    <line x1="68" y1="-63" x2="315.5" y2="-206" stroke="#dfe8f0" stroke-opacity=".8"/>
+    <line x1="68" y1="-63" x2="-68" y2="-127" stroke="#3f444a"/>
+    <g fill="#9ea3a8"><circle cx="-34" cy="-111" r="1.4"/><circle cx="34" cy="-79" r="1.4"/><circle cx="213.5" cy="-254" r="1.4"/><circle cx="281.5" cy="-222" r="1.4"/></g>
+  </g>
+
+  <!-- tracker a linea: lo stesso oggetto disegnato dalla punta -->
+  <g id="trkL" stroke="#eef2f5" stroke-opacity=".9">
+    <polygon points="-75,0 75,0 322.5,-143 172.5,-143" stroke-opacity=".45"/>
+    <path d="M-3.5 0v-95h7v95M58.4-35.8v-95h7v95M120.3-71.5v-95h7v95M182.1-107.3v-95h7v95M244-143v-95h7v95" stroke-opacity=".7"/>
+    <line x1="0" y1="-95" x2="247.5" y2="-238"/>
+    <g stroke-opacity=".8"><circle cx="0" cy="-95" r="5.5"/><circle cx="61.9" cy="-130.8" r="5.5"/><circle cx="123.8" cy="-166.5" r="5.5"/><circle cx="185.6" cy="-202.3" r="5.5"/><circle cx="247.5" cy="-238" r="5.5"/></g>
+    <polygon points="-68,-127 68,-63 315.5,-206 179.5,-270"/>
+    <use href="#mod" stroke-opacity=".28"/>
+    <g fill="#eef2f5" stroke="none"><circle cx="-68" cy="-127" r="1.6"/><circle cx="68" cy="-63" r="1.6"/><circle cx="315.5" cy="-206" r="1.6"/><circle cx="179.5" cy="-270" r="1.6"/><circle cx="0" cy="0" r="1.6"/><circle cx="247.5" cy="-143" r="1.6"/></g>
+  </g>
+</defs>
+
+<!-- grana della carta -->
+<rect class="grana" width="1600" height="900" filter="url(#grana)" fill="#fff"/>
+
+<!-- AGRIVOLTAICO RIALZATO, ancora disegno: linee di costruzione, contorno, dettagli -->
+<g stroke="#eef2f5">
+  <!-- ingombro e quote (Sviluppo) -->
+  <rect x="986" y="276" width="596" height="192" stroke-opacity=".16" stroke-dasharray="2 4"/>
+  <path d="M1000 484h570M1000 480v8M1570 480v8M980 312v150M976 312h8M976 462h8" stroke-opacity=".32"/>
+  <!-- la riga va in profondità e diventa la base dell'agrivoltaico -->
+  <line x1="880" y1="600" x2="1118" y2="462" stroke-opacity=".4"/>
+  <line x1="1000" y1="462" x2="1570" y2="462" stroke-opacity=".6"/>
+  <!-- pali, plinti, controventi, trave (Autorizzazioni) -->
+  <path d="M1000 462V312M1095 462V312M1190 462V312M1285 462V312M1380 462V312M1475 462V312" stroke-opacity=".85"/>
+  <path d="M995 462h10v-3h-10zM1090 462h10v-3h-10zM1185 462h10v-3h-10zM1280 462h10v-3h-10zM1375 462h10v-3h-10zM1470 462h10v-3h-10z" stroke-opacity=".6"/>
+  <path d="M1095 350l-26-38M1095 350l26-38M1190 350l-26-38M1190 350l26-38M1285 350l-26-38M1285 350l26-38M1380 350l-26-38M1380 350l26-38" stroke-opacity=".55"/>
+  <line x1="1000" y1="312" x2="1535" y2="312"/>
+  <!-- tavole inclinate verso sud -->
+  <path d="M992.7 342.25h81l28.6-60.5h-81zM1087.7 342.25h81l28.6-60.5h-81zM1182.7 342.25h81l28.6-60.5h-81zM1277.7 342.25h81l28.6-60.5h-81z" stroke-opacity=".95"/>
+  <path d="M1019.7 342.25l28.6-60.5M1046.7 342.25l28.6-60.5M1114.7 342.25l28.6-60.5M1141.7 342.25l28.6-60.5M1209.7 342.25l28.6-60.5M1236.7 342.25l28.6-60.5M1304.7 342.25l28.6-60.5M1331.7 342.25l28.6-60.5" stroke-opacity=".3"/>
+  <!-- l'ultima tavola sta nascendo -->
+  <path d="M1372.7 342.25h81l28.6-60.5h-81z" stroke-opacity=".4"/>
+  <!-- bulloni (Ready to Build) -->
+  <g fill="#eef2f5" stroke="none"><circle cx="1000" cy="312" r="1.6"/><circle cx="1095" cy="312" r="1.6"/><circle cx="1190" cy="312" r="1.6"/><circle cx="1285" cy="312" r="1.6"/><circle cx="1380" cy="312" r="1.6"/><circle cx="1475" cy="312" r="1.6"/><circle cx="880" cy="600" r="1.6"/></g>
+</g>
+<!-- la punta della linea e la piccola luce che la segue -->
+<circle cx="1535" cy="312" r="90" fill="url(#punta)"/>
+<circle cx="1535" cy="312" r="2.2" fill="#eef2f5"/>
+<!-- quote in mono -->
+<g font-family="'IBM Plex Mono',monospace" font-size="10" letter-spacing="1.2" fill="#6f7378" stroke="none">
+  <text x="1570" y="503" text-anchor="end">L 24,00 M</text>
+  <text x="968" y="391" text-anchor="end">H 4,50 M</text>
+  <text x="1000" y="503" text-anchor="start">AGRIVOLTAICO · FILA 02</text>
+</g>
+
+<!-- TRACKER MONOASSIALI: due già solidi, il terzo che si riempie di materia -->
+<use href="#trk" transform="translate(380 600)"/>
+<use href="#trk" transform="translate(580 600)"/>
+<g transform="translate(780 600)"><use href="#trk" opacity=".5"/><use href="#trkL"/></g>
+
+<!-- la riga di luce: accesa fino al passo attivo, poi spenta -->
+<line x1="0" y1="600" x2="1152" y2="600" stroke="#eef2f5"/>
+<line x1="1152" y1="600" x2="1600" y2="600" stroke="#eef2f5" stroke-opacity=".18"/>
+<path d="M96 596v8M448 596v8M800 596v8M1152 596v8M1504 596v8" stroke="#eef2f5" stroke-opacity=".5"/>
+<circle cx="1152" cy="600" r="2.6" fill="#c47a52"/>
+</svg>
+
+<div class="iter">
+  <span class="fatto" style="left:96px">Sviluppo</span>
+  <span class="fatto" style="left:448px;transform:translateX(-50%)">Autorizzazioni</span>
+  <span class="fatto" style="left:800px;transform:translateX(-50%)">Ready to Build</span>
+  <span class="attivo" style="left:1152px;transform:translateX(-50%);text-align:center">Costruzione<small>Materia e metallo</small></span>
+  <span style="left:1504px;transform:translateX(-100%)">Gestione</span>
+</div>
+
+<p class="frase">Tracker a un asse e strutture agrivoltaiche rialzate. Dal disegno alla rete, seguiamo tutto l'iter.</p>
+
+<a class="cta" href="#">Parliamo del progetto</a>
+
+<aside class="palette">
+  <div class="nome mono">Tavola di stile 06 &nbsp;—&nbsp; <em>Linea di Luce</em></div>
+  <ul>
+    <li><i style="background:#0c0d0f"></i><small>#0c0d0f</small></li>
+    <li><i style="background:#15171a"></i><small>#15171a</small></li>
+    <li><i style="background:#eef2f5"></i><small>#eef2f5</small></li>
+    <li><i style="background:#c9cbcf"></i><small>#c9cbcf</small></li>
+    <li><i style="background:#6f7378"></i><small>#6f7378</small></li>
+    <li><i style="background:#2a2d31"></i><small>#2a2d31</small></li>
+    <li><i style="background:#9ea3a8"></i><small>#9ea3a8</small></li>
+    <li><i style="background:#c47a52"></i><small>#c47a52</small></li>
+    <li><i style="background:#f4f2ee"></i><small>#f4f2ee</small></li>
+  </ul>
+</aside>
+
+<script>document.fonts.ready.then(function(){window.__eri={pronto:true}});</script>
+</body>
+</html>

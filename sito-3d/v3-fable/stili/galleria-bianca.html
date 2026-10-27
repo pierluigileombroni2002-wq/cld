@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Galleria Bianca · ERI</title>
+<meta name="viewport" content="width=1600">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter+Tight:wght@300;400&family=Inter:wght@400&display=swap&subset=latin" rel="stylesheet">
+<style>
+:root{
+  --avorio:#F6F3EC;--avorio2:#EBE6DC;--pav:#DDD8CD;--ombra:#AFA89B;
+  --nero:#1C1B18;--grigio:#75706A;--linea:#BDB6AA;
+  --rame:#B5633A;--rame2:#D9A98C;--vetro:#1F2A33;--acciaio:#C6C5BF;--ghisa:#3E4247;--lamiera:#ECE8E0;
+  --verde:#0F3B2C;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+  --tight:'Inter Tight',Inter,system-ui,sans-serif;
+}
+html,body{margin:0;padding:0;width:1600px;height:900px;overflow:hidden;background:#F6F3EC}
+body{position:relative;font-family:Inter,system-ui,sans-serif;color:var(--nero);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+
+/* Ciclorama: parete avorio che si curva nel pavimento di cemento levigato */
+.sala{position:absolute;inset:0;background:linear-gradient(180deg,#F6F3EC 0%,#F3EFE7 36%,#EBE6DC 56%,#E4DFD4 59.5%,#DDD8CD 63.5%,#D9D4C9 100%)}
+/* La finestra alta a sinistra, fuori inquadratura: solo una striscia di luce più chiara */
+.finestra{position:absolute;left:380px;top:-500px;width:330px;height:1900px;transform:rotate(30deg);background:linear-gradient(90deg,rgba(251,249,244,0) 0%,rgba(251,249,244,.78) 44%,rgba(251,249,244,.9) 56%,rgba(251,249,244,0) 100%);filter:blur(22px)}
+
+/* Titolo: nel DOM sotto la tela, la macchina lo copre in parte */
+.titolo{position:absolute;left:96px;top:124px;width:1120px;margin:0;font-family:var(--tight);font-weight:300;font-size:148px;line-height:.95;letter-spacing:-.03em;color:var(--nero)}
+
+.scena{position:absolute;inset:0;width:1600px;height:900px;display:block}
+
+/* Testa */
+.testa{position:absolute;left:96px;right:96px;top:44px;display:flex;justify-content:space-between;align-items:center}
+.marchio{display:flex;align-items:baseline;gap:14px;text-decoration:none}
+.marchio b{font-family:var(--tight);font-weight:400;font-size:26px;letter-spacing:-.02em;color:var(--verde)}
+.marchio span{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--verde)}
+.marchio span i{font-style:normal;color:var(--rame)}
+.menu{display:flex;gap:40px;align-items:center;font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase}
+.menu a{color:var(--nero);text-decoration:none}
+.menu .cta{background:var(--rame);color:var(--avorio);padding:11px 18px;border-radius:2px}
+
+/* Cartellino da museo */
+.mono{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--nero);font-weight:500}
+.cartellino{position:absolute;left:96px;bottom:92px;width:600px}
+.cartellino p{margin:12px 0 0;font-size:18px;line-height:26px;color:var(--grigio)}
+
+/* Nome della fase, grande, sotto la macchina (appare 1,2 s al cambio di fase) */
+.fase{position:absolute;left:606px;top:690px;font-family:var(--mono);font-size:22px;letter-spacing:.22em;text-transform:uppercase;color:var(--nero);opacity:.26}
+
+/* Iter: colonna di numeri di sala, allineata in basso a destra */
+.iter{position:absolute;right:80px;bottom:132px;list-style:none;margin:0;padding:0;width:280px}
+.iter li{display:flex;align-items:baseline;gap:16px;margin-top:10px;flex-wrap:wrap}
+.iter .n{font-family:var(--tight);font-weight:300;font-size:40px;line-height:1;letter-spacing:-.02em;color:var(--linea);width:52px}
+.iter .w{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--grigio)}
+.iter .on .n{color:var(--rame)}
+.iter .on .w{color:var(--nero);font-weight:500}
+.iter .d{flex-basis:100%;margin:3px 0 0 68px;font-size:15px;line-height:21px;color:var(--grigio)}
+
+/* Palette, piccola, nell'angolo */
+.palette{position:absolute;right:96px;bottom:40px;display:flex;flex-direction:column;gap:7px;align-items:flex-end}
+.palette .nome{font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--grigio)}
+.sw{display:flex;gap:3px}
+.sw i{display:block;width:33px;font-style:normal;font-family:var(--mono);font-size:7.5px;color:#8A857E;text-align:center;letter-spacing:0}
+.sw i::before{content:"";display:block;height:12px;margin-bottom:4px;background:var(--c);box-shadow:inset 0 0 0 1px rgba(28,27,24,.08)}
+</style>
+</head>
+<body>
+
+<div class="sala"></div>
+<div class="finestra"></div>
+
+<h1 class="titolo">Seguire il sole,<br>ogni giorno.</h1>
+
+<svg class="scena" viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+<defs>
+  <linearGradient id="zinc" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#A9A8A2"/><stop offset=".35" stop-color="#DAD9D4"/><stop offset=".65" stop-color="#C6C5BF"/><stop offset="1" stop-color="#93928D"/>
+  </linearGradient>
+  <linearGradient id="cem" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#D9D5CB"/><stop offset="1" stop-color="#C2BDB2"/>
+  </linearGradient>
+  <!-- vetro antracite blu con la striscia della finestra, a tre altezze diverse -->
+  <linearGradient id="g1" gradientTransform="rotate(-32 .5 .5)">
+    <stop offset="0" stop-color="#17202A"/><stop offset=".36" stop-color="#1F2A33"/><stop offset=".46" stop-color="#3B4A57"/><stop offset=".515" stop-color="#8795A3"/><stop offset=".57" stop-color="#3B4A57"/><stop offset=".67" stop-color="#1F2A33"/><stop offset="1" stop-color="#141C24"/>
+  </linearGradient>
+  <linearGradient id="g2" gradientTransform="rotate(-32 .5 .5)">
+    <stop offset="0" stop-color="#17202A"/><stop offset=".28" stop-color="#1F2A33"/><stop offset=".38" stop-color="#3B4A57"/><stop offset=".435" stop-color="#7E8C9A"/><stop offset=".49" stop-color="#3B4A57"/><stop offset=".6" stop-color="#1F2A33"/><stop offset="1" stop-color="#141C24"/>
+  </linearGradient>
+  <linearGradient id="g3" gradientTransform="rotate(-32 .5 .5)">
+    <stop offset="0" stop-color="#17202A"/><stop offset=".2" stop-color="#1F2A33"/><stop offset=".3" stop-color="#36444F"/><stop offset=".355" stop-color="#6F7D8A"/><stop offset=".41" stop-color="#36444F"/><stop offset=".52" stop-color="#1F2A33"/><stop offset="1" stop-color="#141C24"/>
+  </linearGradient>
+  <!-- ombra di contatto dipinta -->
+  <radialGradient id="ombra">
+    <stop offset="0" stop-color="#A69F92" stop-opacity=".78"/><stop offset=".5" stop-color="#A69F92" stop-opacity=".34"/><stop offset="1" stop-color="#A69F92" stop-opacity="0"/>
+  </radialGradient>
+  <linearGradient id="fade" gradientUnits="userSpaceOnUse" x1="0" y1="528" x2="0" y2="720">
+    <stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff"/>
+  </linearGradient>
+  <mask id="mfade"><rect width="1600" height="900" fill="url(#fade)"/></mask>
+
+  <!-- Tracker monoassiale a terra: plinto, palo, scatola, tubo, modulo -->
+  <g id="trk">
+    <ellipse cx="0" cy="10" rx="150" ry="11" fill="#1F2A33" opacity=".05" transform="rotate(-6.5)"/>
+    <ellipse cx="0" cy="-10" rx="168" ry="21" fill="url(#ombra)" transform="rotate(-6.5)"/>
+    <ellipse cx="0" cy="-3" rx="34" ry="8" fill="url(#ombra)"/>
+    <path d="M-15,-12h30v12h-30z" fill="url(#cem)"/>
+    <path d="M-15,-12l7,-5h30l-7,5z" fill="#E3DFD5"/>
+    <path d="M15,-12l7,-5v12l-7,5z" fill="#B6B1A6"/>
+    <rect x="-5" y="-150" width="10" height="138" fill="url(#zinc)"/>
+    <rect x="-9" y="-64" width="7" height="13" rx="1" fill="#3E4247"/>
+    <path d="M-5,-58h10" stroke="#8F8E89" stroke-width="1"/>
+    <polygon points="-155,-64 105,-94 155,-214 -105,-184" fill="#8A8984"/>
+    <polygon points="-155,-70 105,-100 155,-220 -105,-190" style="fill:var(--g,url(#g1))" stroke="#C6C5BF" stroke-width="2.5" stroke-linejoin="round"/>
+    <path d="M-111.7,-75L-61.7,-195M-68.3,-80L-18.3,-200M-25,-85L25,-205M18.3,-90L68.3,-210M61.7,-95L111.7,-215M-130,-130L130,-160" stroke="#C6C5BF" stroke-opacity=".3" stroke-width="1" fill="none"/>
+    <path d="M-155,-70L105,-100" stroke="#E2E1DC" stroke-width="1.6"/>
+  </g>
+
+  <!-- Struttura agrivoltaica rialzata: due pali alti, tubo, modulo -->
+  <g id="agri">
+    <ellipse cx="-65" cy="5" rx="36" ry="8" fill="url(#ombra)"/>
+    <ellipse cx="65" cy="-10" rx="36" ry="8" fill="url(#ombra)"/>
+    <path d="M-76,0h22v7h-22z" fill="url(#cem)"/><path d="M-76,0l6,-4h22l-6,4z" fill="#E3DFD5"/>
+    <path d="M54,-15h22v7h-22z" fill="url(#cem)"/><path d="M54,-15l6,-4h22l-6,4z" fill="#E3DFD5"/>
+    <rect x="-68" y="-285" width="6" height="285" fill="url(#zinc)"/>
+    <rect x="62" y="-300" width="6" height="285" fill="url(#zinc)"/>
+    <path d="M-65,-262l16,-9M65,-277l-16,-9" stroke="#B4B3AD" stroke-width="2.5"/>
+    <polygon points="-155,-245 105,-275 150,-365 -110,-335" fill="#8A8984"/>
+    <polygon points="-155,-250 105,-280 150,-370 -110,-340" style="fill:var(--g,url(#g1))" stroke="#C6C5BF" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M-111.7,-255L-66.7,-345M-68.3,-260L-23.3,-350M-25,-265L20,-355M18.3,-270L63.3,-360M61.7,-275L106.7,-365M-132.5,-295L127.5,-325" stroke="#C6C5BF" stroke-opacity=".3" stroke-width="1" fill="none"/>
+    <path d="M-155,-250L105,-280" stroke="#E2E1DC" stroke-width="1.4"/>
+  </g>
+</defs>
+
+<!-- Reticolo da atelier, 1 m, appena percettibile -->
+<g mask="url(#mfade)" stroke="#D3CEC3" stroke-width="1" fill="none">
+  <path d="M2100,505L-200,597M2100,505L-200,643M2100,505L-200,700.5M2100,505L-200,769.5M2100,505L-200,861.5M2100,505L-200,988M2100,505L-200,1149M2100,505L-200,1356M2100,505L-200,1655"/>
+  <path d="M-1437,505L1800,634.5M-1437,505L1800,699M-1437,505L1800,780M-1437,505L1800,877M-1437,505L1800,1007M-1437,505L1800,1185M-1437,505L1800,1411M-1437,505L1800,1703M-1437,505L1800,2124"/>
+</g>
+
+<!-- Fase 01 Sviluppo: il disegno del prossimo tracker, tracciato a terra con le quote -->
+<g fill="none" stroke="#1C1B18" stroke-opacity=".35" stroke-width="1" font-family="IBM Plex Mono, monospace" font-size="9">
+  <polygon points="220,672 500,641 390,631 110,662"/>
+  <path d="M165,667L445,636" stroke-dasharray="3 3"/>
+  <circle cx="221" cy="660.8" r="3.2"/><circle cx="305" cy="651.5" r="3.2"/><circle cx="389" cy="642.2" r="3.2"/>
+  <rect x="300" y="646.5" width="10" height="10" transform="rotate(-6.3 305 651.5)"/>
+  <path d="M220,690L500,659M220,686v8M500,655v8"/>
+  <path d="M516,639L406,629M516,636v6M406,626v6"/>
+  <g fill="#1C1B18" fill-opacity=".5" stroke="none" letter-spacing=".08em">
+    <text transform="translate(332,681) rotate(-6.3)">12,00 m</text>
+    <text transform="translate(445,625) rotate(5.2)">4,20 m</text>
+    <text transform="translate(110,650)">TRACKER 2P · 01 SVILUPPO</text>
+  </g>
+</g>
+
+<!-- Filare agrivoltaico rialzato, dietro -->
+<use href="#agri" transform="translate(580,533.3) scale(.327)" style="--g:url(#g3)"/>
+<use href="#agri" transform="translate(455,535.7) scale(.354)" style="--g:url(#g2)"/>
+<use href="#agri" transform="translate(330,538) scale(.38)" style="--g:url(#g1)"/>
+
+<!-- Fila di tracker a terra, davanti -->
+<use href="#trk" transform="translate(1130,592.7) scale(.73)" style="--g:url(#g3)"/>
+<use href="#trk" transform="translate(900,613.5) scale(.905)" style="--g:url(#g2)"/>
+<g transform="translate(640,637) scale(1.1)">
+  <use href="#trk" style="--g:url(#g1)"/>
+  <!-- primo piano: busbar in rame vero, morsetti -->
+  <path d="M-143.3,-71.4L-93.3,-191.4M-133.4,-72.5L-83.4,-192.5M-123.8,-73.6L-73.8,-193.6" stroke="#B5633A" stroke-opacity=".9" stroke-width="1.1" fill="none"/>
+  <g fill="#D5D4CF" stroke="#8A8984" stroke-width=".6">
+    <rect x="-137.7" y="-74.9" width="7" height="5" transform="rotate(-6.5 -134.2 -72.4)"/>
+    <rect x="-28.5" y="-87.5" width="7" height="5" transform="rotate(-6.5 -25 -85)"/>
+    <rect x="80.7" y="-100.1" width="7" height="5" transform="rotate(-6.5 84.2 -97.6)"/>
+  </g>
+</g>
+</svg>
+
+<header class="testa">
+  <a class="marchio" href="#"><b>ERI</b><span>Energie Rinnovabili <i>Italia</i></span></a>
+  <nav class="menu">
+    <a href="#">Tecnologie</a><a href="#">Iter</a><a href="#">Progetti</a><a class="cta" href="#">Contatti</a>
+  </nav>
+</header>
+
+<div class="fase">05 · Gestione</div>
+
+<div class="cartellino">
+  <div class="mono">01 · Fotovoltaico e agrivoltaico</div>
+  <p>Tracker a terra e filari agrivoltaici alti,<br>progettati e costruiti da ERI fino alla rete.</p>
+</div>
+
+<ol class="iter">
+  <li><span class="n">01</span><span class="w">Sviluppo</span></li>
+  <li><span class="n">02</span><span class="w">Autorizzazioni</span></li>
+  <li><span class="n">03</span><span class="w">Ready to Build</span></li>
+  <li><span class="n">04</span><span class="w">Costruzione</span></li>
+  <li class="on"><span class="n">05</span><span class="w">Gestione</span><span class="d">Esercizio, monitoraggio e manutenzione, per tutta la vita dell'impianto.</span></li>
+</ol>
+
+<div class="palette">
+  <div class="nome">Galleria Bianca · palette</div>
+  <div class="sw">
+    <i style="--c:#F6F3EC">F6F3EC</i><i style="--c:#EBE6DC">EBE6DC</i><i style="--c:#DDD8CD">DDD8CD</i><i style="--c:#AFA89B">AFA89B</i><i style="--c:#1C1B18">1C1B18</i><i style="--c:#75706A">75706A</i><i style="--c:#BDB6AA">BDB6AA</i><i style="--c:#B5633A">B5633A</i><i style="--c:#D9A98C">D9A98C</i><i style="--c:#1F2A33">1F2A33</i><i style="--c:#C6C5BF">C6C5BF</i><i style="--c:#3E4247">3E4247</i><i style="--c:#ECE8E0">ECE8E0</i>
+  </div>
+</div>
+
+<script>document.fonts.ready.then(function(){window.__eri={pronto:true}});</script>
+</body>
+</html>

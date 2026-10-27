@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1600">
+<title>Pietra e Bronzo · ERI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --pietra:#E9E2D3; --pietra-ombra:#CFC6B4; --cemento:#B9B5AC; --lastra:#F1EBDD;
+  --cielo-h:#EEF0EA; --cielo-z:#A9C3D2;
+  --bronzo:#7A4F26; --bronzo-chiaro:#C8955A; --grafite:#2B2622; --vetro:#1B2330;
+  --sole:#FFF2DC; --verde:#0F3B2C;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1600px;height:900px;margin:0;overflow:hidden;background:var(--pietra)}
+body{position:relative;font-family:"DM Sans",sans-serif;color:var(--grafite);-webkit-font-smoothing:antialiased}
+.scena{position:absolute;inset:0;display:block}
+/* barra in alto */
+.barra{position:absolute;left:0;right:0;top:0;height:76px;padding:0 56px;display:flex;align-items:center;justify-content:space-between;z-index:5}
+.marchio{display:flex;align-items:baseline;gap:14px;text-decoration:none;color:var(--grafite)}
+.marchio b{font-family:Marcellus,serif;font-weight:400;font-size:22px;letter-spacing:.14em;color:var(--verde)}
+.marchio i{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--bronzo-chiaro);transform:translateY(-4px)}
+.marchio span{font-size:12px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--bronzo)}
+.menu{display:flex;gap:40px;list-style:none}
+.menu li{font-size:12px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--grafite)}
+.menu li.att{color:var(--bronzo);position:relative}
+.menu li.att::after{content:"";position:absolute;left:0;right:0;bottom:-8px;height:1px;background:var(--bronzo-chiaro)}
+.menu li.cont{color:var(--bronzo)}
+/* colonna di testo a destra */
+.colonna{position:absolute;right:0;bottom:0;width:38%;height:520px;background:var(--lastra);border-top:1px solid var(--bronzo-chiaro);padding:44px 56px 52px 56px;display:flex;flex-direction:column;justify-content:flex-end;z-index:4}
+.colonna::before{content:"";position:absolute;left:0;top:0;width:160px;height:1px;background:var(--bronzo)}
+.num{font-family:Marcellus,serif;font-size:56px;line-height:1;color:var(--bronzo);letter-spacing:.04em}
+.etich{margin-top:8px;font-size:12px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--bronzo)}
+h1{font-family:Marcellus,serif;font-weight:400;font-size:54px;line-height:1.04;letter-spacing:.08em;text-transform:uppercase;color:var(--grafite);margin-top:20px;white-space:nowrap}
+h1 small{display:block;font-size:54px}
+.frase{margin-top:22px;font-size:17px;line-height:1.55;font-weight:400;color:var(--grafite);max-width:440px}
+.frase em{font-style:normal;color:var(--bronzo)}
+.iter{margin-top:36px;display:flex;justify-content:space-between;gap:12px;align-items:flex-end;border-top:1px solid var(--pietra-ombra);padding-top:16px}
+.iter div{flex:0 0 auto;position:relative;padding-top:12px;font-family:Marcellus,serif;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--pietra-ombra);text-align:left;white-space:nowrap}
+.iter div::before{content:"";position:absolute;left:0;top:0;width:100%;height:3px;background:var(--pietra-ombra)}
+.iter div.fatto{color:var(--bronzo)}
+.iter div.fatto::before{background:var(--bronzo)}
+.iter div.ora{color:var(--bronzo-chiaro)}
+.iter div.ora::before{background:var(--bronzo-chiaro)}
+.iter-nota{margin-top:14px;font-size:13px;color:var(--grafite);letter-spacing:.02em}
+.iter-nota b{font-weight:500;color:var(--bronzo-chiaro)}
+.iter-nota span{color:var(--bronzo)}
+/* tavolozza */
+.tav{position:absolute;left:540px;top:724px;z-index:5;display:flex;flex-direction:column;gap:9px}
+.tav .nome{font-family:Marcellus,serif;font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:var(--bronzo)}
+.tav .striscia{display:flex;gap:4px}
+.tav .striscia i{display:block;width:40px;height:16px;border:1px solid rgba(43,38,34,.14)}
+.tav .hex{display:flex;gap:4px}
+.tav .hex span{display:block;width:40px;font-size:7.5px;letter-spacing:.04em;color:var(--grafite);opacity:.75;text-align:center;font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+
+<svg class="scena" viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+<defs>
+  <linearGradient id="cielo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#A9C3D2"/><stop offset="1" stop-color="#EEF0EA"/></linearGradient>
+  <linearGradient id="paretef" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#C9C4B7"/><stop offset=".55" stop-color="#D8D1C1"/><stop offset="1" stop-color="#E6DFCF"/></linearGradient>
+  <linearGradient id="paretel" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#B9B5AC"/><stop offset="1" stop-color="#C9C3B6"/></linearGradient>
+  <linearGradient id="pav" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#D6CFBE"/><stop offset=".5" stop-color="#E4DCCB"/><stop offset="1" stop-color="#EDE7D9"/></linearGradient>
+  <linearGradient id="raggio" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FFF2DC" stop-opacity="0"/><stop offset=".35" stop-color="#FFF2DC" stop-opacity=".55"/><stop offset=".7" stop-color="#FFF2DC" stop-opacity=".62"/><stop offset="1" stop-color="#FFF2DC" stop-opacity=".2"/></linearGradient>
+  <linearGradient id="ao" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8F8778" stop-opacity=".5"/><stop offset="1" stop-color="#8F8778" stop-opacity="0"/></linearGradient>
+  <linearGradient id="aoL" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8F8778" stop-opacity=".45"/><stop offset="1" stop-color="#8F8778" stop-opacity="0"/></linearGradient>
+  <linearGradient id="vetro" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3B4A5C"/><stop offset=".3" stop-color="#1B2330"/><stop offset="1" stop-color="#141A24"/></linearGradient>
+  <linearGradient id="vetroRif" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#A9C3D2" stop-opacity="0"/><stop offset=".5" stop-color="#C7D8E2" stop-opacity=".28"/><stop offset="1" stop-color="#A9C3D2" stop-opacity="0"/></linearGradient>
+  <linearGradient id="zinco" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#6F6E6A"/><stop offset=".5" stop-color="#9C9B96"/><stop offset="1" stop-color="#5F5E5A"/></linearGradient>
+  <linearGradient id="allu" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#D9D6CE"/><stop offset="1" stop-color="#9E9B94"/></linearGradient>
+  <linearGradient id="bronzoG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#C8955A"/><stop offset=".5" stop-color="#7A4F26"/><stop offset="1" stop-color="#5C3A1B"/></linearGradient>
+  <linearGradient id="filo" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7A4F26"/><stop offset=".6" stop-color="#C8955A"/><stop offset="1" stop-color="#7A4F26"/></linearGradient>
+  <radialGradient id="ombraC" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#6E6456" stop-opacity=".42"/><stop offset="1" stop-color="#6E6456" stop-opacity="0"/></radialGradient>
+  <pattern id="celle" width="18" height="18" patternUnits="userSpaceOnUse"><rect width="18" height="18" fill="none"/><path d="M0 0H18M0 0V18" stroke="#2F3A4A" stroke-width=".8" fill="none"/><path d="M9 0V18" stroke="#B8BEC6" stroke-width=".5" opacity=".55"/></pattern>
+  <clipPath id="clipPav"><polygon points="0,560 1600,560 1600,900 0,900"/></clipPath>
+</defs>
+
+<!-- cielo visibile attraverso la fessura e sopra il portico -->
+<rect width="1600" height="900" fill="url(#cielo)"/>
+
+<!-- parete di fondo in cemento levigato -->
+<rect x="0" y="0" width="1600" height="560" fill="url(#paretef)"/>
+<!-- linee dei casseri -->
+<g stroke="#A9A496" stroke-width="1" opacity=".55">
+  <line x1="0" y1="118" x2="1600" y2="118"/><line x1="0" y1="236" x2="1600" y2="236"/><line x1="0" y1="354" x2="1600" y2="354"/><line x1="0" y1="472" x2="1600" y2="472"/>
+  <line x1="190" y1="0" x2="190" y2="560"/><line x1="380" y1="0" x2="380" y2="560"/><line x1="570" y1="0" x2="570" y2="560"/><line x1="760" y1="0" x2="760" y2="560"/><line x1="950" y1="0" x2="950" y2="560"/><line x1="1140" y1="0" x2="1140" y2="560"/><line x1="1330" y1="0" x2="1330" y2="560"/>
+</g>
+<!-- fessura lunga nel soffitto: striscia di cielo -->
+<rect x="0" y="0" width="1600" height="26" fill="url(#cielo)"/>
+<rect x="0" y="26" width="1600" height="10" fill="url(#ao)"/>
+
+<!-- bande di luce radente sulla parete (sole da destra, basso) -->
+<g opacity=".9">
+  <polygon points="1600,70 1600,210 760,330 760,250" fill="url(#raggio)"/>
+  <polygon points="1600,300 1600,420 980,520 980,440" fill="url(#raggio)" opacity=".7"/>
+</g>
+
+<!-- portico agrivoltaico rialzato a destra: pilastri di pietra -->
+<g>
+  <rect x="1215" y="130" width="46" height="430" fill="url(#paretel)"/>
+  <rect x="1402" y="100" width="56" height="460" fill="url(#paretel)"/>
+  <rect x="1215" y="130" width="8" height="430" fill="#A39E92" opacity=".7"/>
+  <rect x="1402" y="100" width="9" height="460" fill="#A39E92" opacity=".7"/>
+  <!-- trave -->
+  <polygon points="1180,138 1600,88 1600,112 1180,160" fill="#C4BEB0"/>
+  <polygon points="1180,160 1600,112 1600,118 1180,166" fill="#8F8778" opacity=".5"/>
+</g>
+
+<!-- fila agrivoltaica rialzata (portico): pannelli alti su struttura zinco -->
+<g>
+  <!-- pali in zinco -->
+  <rect x="1150" y="262" width="7" height="298" fill="url(#zinco)"/>
+  <rect x="1296" y="238" width="8" height="322" fill="url(#zinco)"/>
+  <rect x="1500" y="212" width="9" height="348" fill="url(#zinco)"/>
+  <!-- flange in bronzo alla base -->
+  <rect x="1144" y="548" width="19" height="12" fill="url(#bronzoG)"/>
+  <rect x="1289" y="548" width="22" height="12" fill="url(#bronzoG)"/>
+  <rect x="1492" y="548" width="25" height="12" fill="url(#bronzoG)"/>
+  <!-- asse orizzontale -->
+  <polygon points="1100,276 1600,196 1600,206 1100,286" fill="url(#zinco)"/>
+  <!-- pannelli inclinati verso il sole (destra), in prospettiva -->
+  <g>
+    <polygon points="1108,236 1232,218 1226,322 1102,336" fill="url(#vetro)"/>
+    <polygon points="1108,236 1232,218 1226,322 1102,336" fill="url(#celle)" opacity=".6"/>
+    <polygon points="1108,236 1232,218 1226,322 1102,336" fill="none" stroke="url(#allu)" stroke-width="2.5"/>
+    <polygon points="1108,236 1232,218 1232,232 1108,250" fill="url(#vetroRif)"/>
+  </g>
+  <g>
+    <polygon points="1250,214 1392,192 1386,310 1244,324" fill="url(#vetro)"/>
+    <polygon points="1250,214 1392,192 1386,310 1244,324" fill="url(#celle)" opacity=".6"/>
+    <polygon points="1250,214 1392,192 1386,310 1244,324" fill="none" stroke="url(#allu)" stroke-width="2.5"/>
+    <polygon points="1250,214 1392,192 1392,208 1250,230" fill="url(#vetroRif)"/>
+  </g>
+  <g>
+    <polygon points="1412,188 1600,160 1600,290 1406,310" fill="url(#vetro)"/>
+    <polygon points="1412,188 1600,160 1600,290 1406,310" fill="url(#celle)" opacity=".6"/>
+    <polygon points="1412,188 1600,160 1600,290 1406,310" fill="none" stroke="url(#allu)" stroke-width="2.5"/>
+    <polygon points="1412,188 1600,160 1600,178 1412,206" fill="url(#vetroRif)"/>
+  </g>
+</g>
+
+<!-- pavimento in lastre di pietra chiara -->
+<rect x="0" y="560" width="1600" height="340" fill="url(#pav)"/>
+<!-- sfumatura d'angolo pavimento/parete (AO) -->
+<rect x="0" y="560" width="1600" height="70" fill="url(#ao)"/>
+<!-- fughe delle lastre in prospettiva -->
+<g clip-path="url(#clipPav)" stroke="#9B9382" stroke-width="1" opacity=".7" fill="none">
+  <line x1="0" y1="600" x2="1600" y2="600"/><line x1="0" y1="652" x2="1600" y2="652"/><line x1="0" y1="722" x2="1600" y2="722"/><line x1="0" y1="812" x2="1600" y2="812"/>
+  <line x1="800" y1="560" x2="800" y2="900"/>
+  <line x1="640" y1="560" x2="420" y2="900"/><line x1="960" y1="560" x2="1180" y2="900"/>
+  <line x1="480" y1="560" x2="40" y2="900"/><line x1="1120" y1="560" x2="1560" y2="900"/>
+  <line x1="320" y1="560" x2="-340" y2="900"/><line x1="1280" y1="560" x2="1940" y2="900"/>
+</g>
+<!-- venatura leggera, pochi segni -->
+<g stroke="#D1C9B6" stroke-width="1.2" fill="none" opacity=".8">
+  <path d="M120 700 C 220 690, 300 720, 420 705"/><path d="M560 840 C 640 828, 700 850, 790 838"/><path d="M900 660 C 980 650, 1040 672, 1110 664"/>
+</g>
+
+<!-- strisce di sole sul pavimento: entrano di taglio da destra attraverso il portico -->
+<g clip-path="url(#clipPav)">
+  <polygon points="1261,560 1402,560 1120,900 820,900" fill="url(#raggio)"/>
+  <polygon points="1458,560 1600,560 1600,760 1380,900 1230,900" fill="url(#raggio)" opacity=".85"/>
+  <polygon points="1060,560 1150,560 760,900 600,900" fill="url(#raggio)" opacity=".55"/>
+</g>
+
+<!-- filo di bronzo incassato nel pavimento che lega i momenti -->
+<polygon points="0,842 1600,796 1600,801 0,848" fill="url(#filo)"/>
+<polygon points="0,848 1600,801 1600,803 0,850" fill="#FFF2DC" opacity=".45"/>
+
+<!-- ombre di contatto sotto i tracker -->
+<ellipse cx="330" cy="760" rx="300" ry="26" fill="url(#ombraC)"/>
+<ellipse cx="760" cy="700" rx="220" ry="18" fill="url(#ombraC)"/>
+<ellipse cx="1060" cy="660" rx="150" ry="13" fill="url(#ombraC)"/>
+<ellipse cx="1230" cy="568" rx="190" ry="10" fill="url(#ombraC)"/>
+
+<!-- fila di tracker a terra, in prospettiva verso il fondo: dal più vicino al più lontano -->
+<!-- tracker 3 (lontano) -->
+<g>
+  <rect x="1056" y="612" width="6" height="52" fill="url(#zinco)"/>
+  <rect x="1051" y="658" width="16" height="7" fill="url(#bronzoG)"/>
+  <polygon points="930,598 1190,583 1186,620 926,634" fill="url(#vetro)"/>
+  <polygon points="930,598 1190,583 1186,620 926,634" fill="url(#celle)" opacity=".55"/>
+  <polygon points="930,598 1190,583 1186,620 926,634" fill="none" stroke="url(#allu)" stroke-width="1.6"/>
+  <polygon points="930,598 1190,583 1190,590 930,605" fill="url(#vetroRif)"/>
+</g>
+<!-- tracker 2 (medio) -->
+<g>
+  <rect x="754" y="628" width="9" height="72" fill="url(#zinco)"/>
+  <rect x="747" y="692" width="23" height="9" fill="url(#bronzoG)"/>
+  <polygon points="560,606 960,586 954,648 554,668" fill="url(#vetro)"/>
+  <polygon points="560,606 960,586 954,648 554,668" fill="url(#celle)" opacity=".6"/>
+  <polygon points="560,606 960,586 954,648 554,668" fill="none" stroke="url(#allu)" stroke-width="2"/>
+  <polygon points="560,606 960,586 960,596 560,616" fill="url(#vetroRif)"/>
+  <!-- busbar argentati -->
+  <g stroke="#C9CDD2" stroke-width=".8" opacity=".5"><line x1="660" y1="601" x2="654" y2="663"/><line x1="760" y1="596" x2="754" y2="658"/><line x1="860" y1="591" x2="854" y2="653"/></g>
+</g>
+<!-- tracker 1 (vicino, grande) -->
+<g>
+  <!-- palo con flangia e cuscinetto in bronzo -->
+  <rect x="320" y="640" width="14" height="118" fill="url(#zinco)"/>
+  <rect x="310" y="748" width="34" height="12" fill="url(#bronzoG)"/>
+  <circle cx="327" cy="640" r="11" fill="url(#bronzoG)"/>
+  <circle cx="327" cy="640" r="4" fill="#2B2622"/>
+  <!-- motore -->
+  <rect x="338" y="632" width="28" height="18" rx="3" fill="#2B2622"/>
+  <rect x="341" y="636" width="22" height="2" fill="#5A534C"/><rect x="341" y="641" width="22" height="2" fill="#5A534C"/>
+  <!-- asse -->
+  <polygon points="20,648 640,614 640,622 20,656" fill="url(#zinco)"/>
+  <!-- pannello inclinato verso destra, visto di tre quarti -->
+  <polygon points="40,596 640,566 628,668 28,698" fill="url(#vetro)"/>
+  <polygon points="40,596 640,566 628,668 28,698" fill="url(#celle)" opacity=".7"/>
+  <polygon points="40,596 640,566 640,582 40,612" fill="url(#vetroRif)"/>
+  <polygon points="40,596 640,566 628,668 28,698" fill="none" stroke="url(#allu)" stroke-width="3"/>
+  <!-- busbar e divisione fra moduli -->
+  <g stroke="#C9CDD2" stroke-width="1" opacity=".55"><line x1="190" y1="588" x2="178" y2="690"/><line x1="340" y1="581" x2="328" y2="683"/><line x1="490" y1="574" x2="478" y2="676"/></g>
+  <g stroke="#D9D6CE" stroke-width="2" opacity=".8"><line x1="340" y1="581" x2="328" y2="683"/></g>
+  <!-- bulloni in bronzo sulla cornice -->
+  <g fill="#C8955A"><circle cx="64" cy="602" r="2.2"/><circle cx="614" cy="574" r="2.2"/><circle cx="52" cy="690" r="2.2"/><circle cx="604" cy="662" r="2.2"/></g>
+</g>
+
+<!-- scalinata dell'iter: cinque gradini di pietra con alzate incise, a sinistra verso il fondo -->
+<g transform="translate(0,-44)">
+  <!-- gradini (dal basso verso l'alto, in prospettiva verso sinistra) -->
+  <g>
+    <polygon points="0,900 380,900 380,870 0,870" fill="#CFC6B4"/>
+    <polygon points="0,870 380,870 410,858 30,858" fill="#E9E2D3"/>
+  </g>
+  <g>
+    <polygon points="30,858 410,858 410,830 30,830" fill="#CFC6B4"/>
+    <polygon points="30,830 410,830 436,820 56,820" fill="#E9E2D3"/>
+  </g>
+  <g>
+    <polygon points="56,820 436,820 436,794 56,794" fill="#CFC6B4"/>
+    <polygon points="56,794 436,794 458,786 78,786" fill="#E9E2D3"/>
+  </g>
+  <g>
+    <polygon points="78,786 458,786 458,762 78,762" fill="#CFC6B4"/>
+    <polygon points="78,762 458,762 476,755 96,755" fill="#E9E2D3"/>
+  </g>
+  <g>
+    <polygon points="96,755 476,755 476,733 96,733" fill="#CFC6B4"/>
+    <polygon points="96,733 476,733 490,727 110,727" fill="#F1EBDD"/>
+  </g>
+  <!-- sole radente: la pedata del gradino corrente prende la luce -->
+  <polygon points="56,794 436,794 458,786 78,786" fill="#FFF2DC" opacity=".6"/>
+  <polygon points="56,820 436,820 436,794 56,794" fill="#FFF2DC" opacity=".12"/>
+  <!-- parole incise sulle alzate, inserto bronzo: le prime due riempite, la corrente in bronzo chiaro -->
+  <g font-family="Marcellus, serif" font-size="15" letter-spacing="2.8" text-anchor="middle">
+    <text x="190" y="890" fill="#7A4F26">SVILUPPO</text>
+    <text x="220" y="849" fill="#7A4F26">AUTORIZZAZIONI</text>
+    <text x="246" y="812" fill="#C8955A">READY TO BUILD</text>
+    <text x="268" y="779" fill="#A69D8B">COSTRUZIONE</text>
+    <text x="286" y="749" fill="#A69D8B">GESTIONE</text>
+  </g>
+  <!-- ombra della scala sul pavimento (AO laterale) -->
+  <rect x="476" y="727" width="120" height="173" fill="url(#aoL)" opacity=".5"/>
+</g>
+
+<!-- vignettatura calda ai bordi sinistro e inferiore -->
+<rect x="0" y="0" width="300" height="900" fill="url(#aoL)" opacity=".35"/>
+</svg>
+
+<header class="barra">
+  <a class="marchio" href="#"><b>ERI</b><i></i><span>Energie Rinnovabili Italia</span></a>
+  <ul class="menu">
+    <li>Progetti</li><li class="att">Fotovoltaico</li><li>Idroelettrico</li><li class="cont">Contatti</li>
+  </ul>
+</header>
+
+<aside class="colonna">
+  <div class="num">02</div>
+  <div class="etich">Fotovoltaico e agrivoltaico</div>
+  <h1>Pannelli<small>sotto il sole</small></h1>
+  <p class="frase">Tracker a terra nella piazza di pietra e, sul lato del portico, le file agrivoltaiche rialzate: <em>ruotano piano verso la luce</em>, dal primo gradino alla gestione dell'impianto.</p>
+  <div class="iter">
+    <div class="fatto">Sviluppo</div>
+    <div class="fatto">Autorizzazioni</div>
+    <div class="ora">Ready to Build</div>
+    <div>Costruzione</div>
+    <div>Gestione</div>
+  </div>
+  <div class="iter-nota"><b>Ready to Build</b> <span>·</span> pronto per il cantiere</div>
+</aside>
+
+<div class="tav">
+  <div class="nome">Pietra e Bronzo</div>
+  <div class="striscia">
+    <i style="background:#E9E2D3"></i><i style="background:#CFC6B4"></i><i style="background:#B9B5AC"></i><i style="background:#EEF0EA"></i><i style="background:#A9C3D2"></i><i style="background:#7A4F26"></i><i style="background:#C8955A"></i><i style="background:#2B2622"></i><i style="background:#1B2330"></i><i style="background:#FFF2DC"></i><i style="background:#0F3B2C"></i>
+  </div>
+  <div class="hex"><span>E9E2D3</span><span>CFC6B4</span><span>B9B5AC</span><span>EEF0EA</span><span>A9C3D2</span><span>7A4F26</span><span>C8955A</span><span>2B2622</span><span>1B2330</span><span>FFF2DC</span><span>0F3B2C</span></div>
+</div>
+
+<script>
+document.fonts.ready.then(function(){ window.__eri = { pronto: true }; });
+</script>
+</body>
+</html>
