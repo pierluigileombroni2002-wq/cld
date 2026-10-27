@@ -44,6 +44,18 @@ L'iter deve accompagnare ogni momento tecnologico (come lo mostri lo decidi tu, 
 - **Testi:** pochi, grandi, leggibili e comprensibili.
 - **Logo:** `sito-3d/logo/ufficiale/logo-eri-originale.svg`. Su fondo scuro ricolora le scritte verde scuro (#0f3b2c) in chiaro e schiarisci "ITALIA" mantenendo il rame. Non modificare il file originale.
 
+### 4b. Usa tutte le tue potenzialità, ma NIENTE "videogioco"
+
+- L'utente vuole vedere **il massimo che sai fare**: la proposta più wow possibile.
+- **Riferimento da NON imitare:** il prototipo fatto prima da un altro modello. Le foto sono in `sito-3d/riferimenti/prototipo-opus/` (guardale con Read). Al cliente piace l'idea, ma il giudizio è: **"sembra troppo un videogioco"**.
+- Cosa dà l'effetto videogioco: isole e piedistalli sospesi con anelli luminosi, materiali lucidi da giocattolo, bagliori ovunque, interfaccia tipo HUD, proporzioni "da modellino di gioco".
+- Cosa vuole invece: l'estetica di un **film di prodotto di lusso** o di una campagna di un grande marchio (pensa ai film di presentazione di prodotti tecnologici premium, alle visualizzazioni architettoniche di alto livello, alle riviste di design). Quindi:
+  - regia cinematografica: inquadrature composte con cura, profondità, luce morbida e direzionale, contrasti raffinati, sobrietà;
+  - materiali credibili e nobili, colori trattenuti, l'oro usato con misura;
+  - tipografia ed impaginazione editoriali, eleganti;
+  - movimento fluido, calmo e intenzionale.
+- Resta tutto il resto del brief: stilizzato (niente terreni o vegetazione realistici), niente ombre, camera calma, pochi testi, fluido ovunque. Se pensi che una regola limiti troppo il risultato, **chiedi all'utente** invece di ignorarla.
+
 ## 5. Prestazioni (regola dura)
 
 Una versione precedente laggava sul portatile di un collega e il cliente l'ha scartata. Il sito deve essere **fluido su un portatile normale con grafica integrata e su un telefono di fascia media**.
@@ -57,15 +69,15 @@ Una versione precedente laggava sul portatile di un collega e il cliente l'ha sc
 - **Cartella tua:** `sito-3d/v3-fable/`. Non toccare nient'altro (in particolare `sito-3d/v3/`, `sito-3d/v2/`, `sito-3d/prove/`).
 - **Indipendenza:** per un confronto onesto **non leggere** il codice di `sito-3d/v3/` e `sito-3d/prove/`. Puoi usare il logo e questo brief.
 - **Tecnica consigliata:** Three.js r160 da CDN con importmap (`https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js` e `.../examples/jsm/`), GSAP da cdnjs se ti serve, Google Fonts. Modelli procedurali, niente modelli a pagamento.
-- **Anteprima locale:** il server si avvia con
-  `powershell -ExecutionPolicy Bypass -File "C:\Users\pierl\Desktop\sito 3d\sito-3d\strumenti\server.ps1"`
-  e serve la cartella `sito-3d` su `http://localhost:8790/` (quindi la tua pagina è `http://localhost:8790/v3-fable/`). Se la porta è già occupata, il server è già acceso.
+- **Anteprima locale:** lavori in una **copia separata del progetto** (worktree git). Avvia il TUO server dalla tua copia, sulla porta **8792** (la 8790 e la 8791 sono usate dall'altra sessione):
+  `powershell -ExecutionPolicy Bypass -File "<la tua cartella>\sito-3d\strumenti\server.ps1" -Porta 8792`
+  e la tua pagina sarà `http://localhost:8792/v3-fable/`. Meglio lanciarlo in una scheda del terminale che resta aperta.
 - **Foto senza finestra (Chrome headless):** `sito-3d/strumenti/foto-v2.ps1 -Url <url> -Out <cartella> -Passi <file.json> -Larghezza 1600 -Altezza 900 -Porta <porta libera>`. Lo script aspetta che la pagina imposti `window.__eri = { pronto: true }`. Esponi anche `window.__eri.vai(p)` (p da 0 a 1 = posizione nello scorrimento) e `window.__eri.info()` (ms per fotogramma, triangoli, chiamate, qualità). I passi sono JSON: `[{ "nome": "...", "js": "...", "shot": "foto.jpg" }]`.
-- **Git:** `C:\Program Files\Git\cmd\git.exe` (non è nel PATH). Non fare commit sul ramo `claude/charming-planck-l43o5q` se non te lo dice l'utente: usa il tuo ramo o chiedi.
+- **Git:** `C:\Program Files\Git\cmd\git.exe` (non è nel PATH). La tua copia ha il suo ramo: fai commit lì dopo ogni passo. Non toccare il ramo `claude/charming-planck-l43o5q`.
 
 ## 7. Cosa consegnare
 
-1. Il sito funzionante su `http://localhost:8790/v3-fable/`.
+1. Il sito funzionante su `http://localhost:8792/v3-fable/`.
 2. Foto 1600×900 dei 5 momenti, più una da telefono (circa 412×915), mandate all'utente con SendUserFile.
 3. Le misure di fluidità per livello di qualità (ms medi e nel punto peggiore, triangoli, chiamate).
 4. Un breve resoconto in italiano: le scelte fatte e cosa resta da migliorare.
