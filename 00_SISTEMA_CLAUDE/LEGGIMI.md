@@ -12,7 +12,8 @@ AnimeEdits\
 ├── clip\, reel\, musica\, analisi\, render\, REEL FINITI\, ...
 └── 00_SISTEMA_CLAUDE\      ← questa cartella
     ├── LEGGIMI.md          ← questa guida
-    └── AVVIA_CLAUDE.bat    ← avvio di Claude-PowerShell con doppio clic
+    ├── AVVIA_CLAUDE.bat    ← avvio di Claude-PowerShell con doppio clic
+    └── ANALIZZA_SPAZIO.ps1 ← report dello spazio su disco (non cancella niente)
 ```
 
 ---
