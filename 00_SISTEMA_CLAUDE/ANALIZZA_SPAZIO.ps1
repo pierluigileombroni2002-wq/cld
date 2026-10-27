@@ -16,41 +16,46 @@ $protetti = @(
     "$env:ProgramFiles\nodejs"
 ) | ForEach-Object { $_.TrimEnd('\') }
 
+# File di Windows: si riducono dalle impostazioni, mai cancellandoli a mano
+$fileSistema = @('pagefile.sys', 'hiberfil.sys', 'swapfile.sys')
+
+function Dentro($p, $cartella) {
+    $p.Equals($cartella, 'OrdinalIgnoreCase') -or $p.StartsWith("$cartella\", 'OrdinalIgnoreCase')
+}
 function Etichetta($p) {
-    foreach ($x in $protetti) {
-        if ($p -eq $x -or $p.StartsWith("$x\")) { return '[PROTETTO]   ' }
-        if ($x.StartsWith("$p\")) { return '[CONTIENE PROTETTI]' }
-    }
-    if ($p -eq $progetto -or $p.StartsWith("$progetto\")) { return '[CANALE]     ' }
+    if ($fileSistema -contains (Split-Path $p -Leaf)) { return '[SISTEMA]    ' }
+    foreach ($x in $protetti) { if (Dentro $p $x) { return '[PROTETTO]   ' } }
+    foreach ($x in $protetti) { if (Dentro $x $p) { return '[CONTIENE PROTETTI]' } }
+    if (Dentro $p $progetto) { return '[CANALE]     ' }
     return '             '
 }
 function GB($b) { '{0,8:N2} GB' -f ($b / 1GB) }
 
 $cartelle = @{}
 $grandi = New-Object System.Collections.Generic.List[object]
-$saltare = @('Windows', '$Recycle.Bin', 'System Volume Information')
+$dischi = [System.IO.DriveInfo]::GetDrives() | Where-Object { $_.DriveType -eq 'Fixed' -and $_.IsReady }
 
-$dischi = Get-PSDrive -PSProvider FileSystem | Where-Object { $_.Used -gt 0 }
 foreach ($d in $dischi) {
-    Write-Host "Analizzo $($d.Root) ..."
-    Get-ChildItem $d.Root -Force | Where-Object { $saltare -notcontains $_.Name } | ForEach-Object {
-        $voci = if ($_.PSIsContainer) { Get-ChildItem $_.FullName -Recurse -File -Force } else { $_ }
-        foreach ($f in $voci) {
-            if ($f.Length -ge 500MB) { $grandi.Add($f) }
-            $parti = $f.FullName.Split('\')
-            for ($i = 2; $i -le [Math]::Min(6, $parti.Length - 1); $i++) {
-                $k = ($parti[0..($i - 1)] -join '\')
-                $cartelle[$k] = $cartelle[$k] + $f.Length
-            }
+    Write-Host "Analizzo $($d.Name) ..."
+    # La cartella Windows si salta: non c'e' niente da cancellare a mano
+    Get-ChildItem $d.Name -Force | Where-Object { $_.Name -ne 'Windows' } | ForEach-Object {
+        if ($_.PSIsContainer) { Get-ChildItem $_.FullName -Recurse -File -Force } else { $_ }
+    } | ForEach-Object {
+        if ($_.Length -ge 500MB) { $grandi.Add($_) }
+        $parti = $_.FullName.Split('\')
+        for ($i = 2; $i -le [Math]::Min(6, $parti.Length - 1); $i++) {
+            $k = ($parti[0..($i - 1)] -join '\')
+            $cartelle[$k] = $cartelle[$k] + $_.Length
         }
     }
 }
 
 $out = New-Object System.Collections.Generic.List[string]
 $out.Add("REPORT SPAZIO - $(Get-Date)   (nessun file e' stato cancellato)")
+$out.Add("Progetto: $progetto")
 $out.Add('')
 $out.Add('== SPAZIO LIBERO ==')
-foreach ($d in $dischi) { $out.Add("$($d.Root)  libero $(GB $d.Free)  usato $(GB $d.Used)") }
+foreach ($d in $dischi) { $out.Add("$($d.Name)  libero $(GB $d.AvailableFreeSpace)  totale $(GB $d.TotalSize)") }
 
 $out.Add('')
 $out.Add('== CARTELLE PIU'' GRANDI (per livello) ==')
