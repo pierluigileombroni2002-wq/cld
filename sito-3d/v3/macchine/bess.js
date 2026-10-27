@@ -8,6 +8,7 @@ import { Fusore, Montaggio, Dettaglio, istanze, fissaSfera, geoBox, geoBullone, 
 const CL = 2.7, CW = 1.15, CH = 1.25, B = 0.12;           // container: lunghezza (X), larghezza (Z), altezza, piedi
 const AP = 2.28, LW = AP / 6, YP = B + 0.615, ZR = CW / 2 - 0.2; // vano porte, larghezza anta, centro porte, parete dei rack
 const N_MOD = 8;                                           // moduli per rack
+const APRI_DX = 1.6;                                       // ante di destra: 1.6 × l'apertura di quelle di sinistra (≈ 96°)
 const POS = [[-0.775, -0.85], [2.225, -0.85], [-0.775, 0.85], [2.225, 0.85]]; // dietro sx, dietro dx, davanti sx, davanti dx
 const PCS_P = [-3.025, 0.95], TR_P = [-3.15, -0.85];  // PCS davanti, trasformatore dietro (gli isolatori spuntano)
 const X = new THREE.Vector3(1, 0, 0), Yv = new THREE.Vector3(0, 1, 0), LATI = [1, -1];
@@ -201,25 +202,35 @@ export function creaBESS(ctx) {
   }
 
   // strisce di luce dei moduli: la barra di carica (ordine: rack da sinistra a destra, ogni rack dal basso in alto)
-  const nS = 6 * N_MOD, strLoc = [], ord = new Float32Array(POS.length * nS), cnt = new Float32Array(POS.length * nS);
+  // + una sottile barra d'oro sul longherone alto di ogni container che si riempie insieme ai rack (si legge da lontano).
+  // Tutto nella stessa istanza: le barre sono 4 istanze in più (nessuna chiamata in più).
+  const nS = 6 * N_MOD, nB = POS.length, nTot = POS.length * nS + nB, strLoc = [];
+  const ord = new Float32Array(nTot), cnt = new Float32Array(nTot), bar = new Float32Array(nTot);
   for (let k = 0; k < 6; k++) for (let m = 0; m < N_MOD; m++) strLoc.push(mat4(-AP / 2 + LW * (k + 0.5), B + 0.205 + m * 0.118, ZR + 0.0712));
   POS.forEach((_, c) => { for (let j = 0; j < nS; j++) { const k = Math.floor(j / N_MOD), m = j % N_MOD; ord[c * nS + j] = (k + (m + 0.5) / N_MOD) / 6; cnt[c * nS + j] = c; } });
+  for (let c = 0; c < nB; c++) { cnt[POS.length * nS + c] = c; bar[POS.length * nS + c] = 1; }
   const geoStr = new THREE.PlaneGeometry(LW - 0.1, 0.016);
+  const barLoc = mat4(0, B + CH - 0.035, CW / 2 + 0.002, 0, 0, 0, AP / (LW - 0.1), 1.4, 1);
   geoStr.setAttribute('aOrd', new THREE.InstancedBufferAttribute(ord, 1));
   geoStr.setAttribute('aCont', new THREE.InstancedBufferAttribute(cnt, 1));
+  geoStr.setAttribute('aBarra', new THREE.InstancedBufferAttribute(bar, 1));
+  // uLon: 0 da vicino (come prima), 1 dall'inquadratura larga (strisce più spesse e più luminose)
   const matStr = new THREE.ShaderMaterial({
-    uniforms: { uLiv: { value: 0 }, uT: { value: 0 }, uC: { value: C('#ffd59a', 2.6) }, uSpento: { value: C('#10131a') } },
-    vertexShader: `attribute float aOrd; attribute float aCont; uniform float uLiv, uT; varying float vOn, vFr, vB; varying vec2 vU;
-      void main(){ float liv = clamp(uLiv * 1.2 - aCont * 0.065, 0.0, 1.0);
-        vOn = smoothstep(aOrd - 0.004, aOrd + 0.004, liv);
-        vFr = exp(-pow((liv - aOrd) * 34.0, 2.0)) * step(0.002, liv) * step(liv, 0.998);
-        vB = 0.86 + 0.14 * sin(uT * 1.2 - aOrd * 8.0);
-        vU = uv; gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position, 1.0); }`,
-    fragmentShader: `uniform vec3 uC, uSpento; varying float vOn, vFr, vB; varying vec2 vU;
-      void main(){ float b = smoothstep(0.0, 0.1, vU.x) * smoothstep(1.0, 0.9, vU.x);
-        gl_FragColor = vec4(uSpento + uC * (vOn * vB + vFr * 2.2) * b, 1.0); }`,
+    uniforms: { uLiv: { value: 0 }, uT: { value: 0 }, uLon: { value: 0 }, uC: { value: C('#ffc87e', 2.9) }, uSpento: { value: C('#10131a') } },
+    vertexShader: `attribute float aOrd; attribute float aCont; attribute float aBarra; uniform float uLiv, uLon; varying float vOrd, vLiv, vBar; varying vec2 vU;
+      void main(){ vLiv = clamp(uLiv * 1.2 - aCont * 0.065, 0.0, 1.0); vOrd = aOrd; vBar = aBarra; vU = uv;
+        vec3 p = position; p.y *= 1.0 + 0.8 * uLon * (1.0 - aBarra);
+        gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(p, 1.0); }`,
+    fragmentShader: `uniform vec3 uC, uSpento; uniform float uT, uLon; varying float vOrd, vLiv, vBar; varying vec2 vU;
+      void main(){ float o = mix(vOrd, vU.x, vBar);
+        float on = smoothstep(o - 0.004, o + 0.004, vLiv);
+        float fr = exp(-pow((vLiv - o) * 34.0, 2.0)) * step(0.002, vLiv) * step(vLiv, 0.998);
+        float br = 0.86 + 0.14 * sin(uT * 1.2 - o * 8.0);
+        float b = mix(smoothstep(0.0, 0.1, vU.x) * smoothstep(1.0, 0.9, vU.x), smoothstep(0.0, 0.006, vU.x) * smoothstep(1.0, 0.994, vU.x), vBar);
+        float k = mix(1.0 + 0.5 * uLon, 0.8, vBar);
+        gl_FragColor = vec4(uSpento + uC * ((on * br + fr * 2.2) * k + vBar * 0.08) * b, 1.0); }`,
   });
-  const strisce = istanze(geoStr, matStr, Array.from({ length: POS.length * nS }, () => new THREE.Matrix4()), gruppo);
+  const strisce = istanze(geoStr, matStr, Array.from({ length: nTot }, () => new THREE.Matrix4()), gruppo);
 
   // ---- PCS e trasformatore ----
   const pcsG = new THREE.Group(); pcsG.position.set(PCS_P[0], 0, PCS_P[1]); gruppo.add(pcsG);
@@ -256,14 +267,16 @@ export function creaBESS(ctx) {
       const s = segna[c]; s.updateMatrix();
       for (let i = 0; i < contIms.length; i++) contIms[i].setMatrixAt(c, s.matrix);
       for (let j = 0; j < nS; j++) { _a.multiplyMatrices(s.matrix, strLoc[j]); strisce.setMatrixAt(c * nS + j, _a); }
+      _a.multiplyMatrices(s.matrix, barLoc); strisce.setMatrixAt(POS.length * nS + c, _a);
     }
     for (let i = 0; i < contIms.length; i++) contIms[i].instanceMatrix.needsUpdate = true;
     strisce.instanceMatrix.needsUpdate = true;
   }
+  // le ante di destra (che dalla camera coprono i rack) si aprono di più, oltre l'angolo retto, verso la camera
   function sincPorte(th) {
     for (let l = 0; l < 2; l++) {
       const lato = LATI[l], ims = porte[lato].ims, cer = cerniere[lato];
-      _r.makeRotationY(-lato * th);
+      _r.makeRotationY(-lato * th * (lato < 0 ? APRI_DX : 1));
       for (let c = 0; c < segna.length; c++) for (let p = 0; p < 3; p++) {
         const h = cer[p]; _b.makeTranslation(h.x, h.y, h.z).multiply(_r);
         _a.multiplyMatrices(segna[c].matrix, _b);
@@ -306,7 +319,7 @@ export function creaBESS(ctx) {
       if (cambiato || s.montaggio !== montPrima) sincContainer();
       if (cambiato || th !== thPrima) sincPorte(th);
       thPrima = th; montPrima = s.montaggio;
-      matStr.uniforms.uLiv.value = rampa(f, 0.22, 1.0); matStr.uniforms.uT.value = t;
+      matStr.uniforms.uLiv.value = rampa(f, 0.22, 1.0); matStr.uniforms.uT.value = t; matStr.uniforms.uLon.value = 1 - (s.vicino || 0);
       strisce.visible = f > 0.001;
       // ventole
       ang += dt * 7 * rampa(f, 0.08, 0.4);

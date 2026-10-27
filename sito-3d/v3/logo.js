@@ -1,6 +1,7 @@
 // ERI v3 · logo: il sole d'oro si apre e i suoi petali si compongono nel logo ufficiale COMPLETO.
 // Il logo non ruota e non si deforma: i petali escono dal sole (traslazione + scala), l'oro sfuma nei colori veri,
-// stelo, collina e foglia si disegnano da sinistra, poi le scritte. Su fondo scuro solo le scritte #0f3b2c diventano avorio.
+// stelo, collina e foglia si disegnano da sinistra, poi le scritte. Su fondo scuro le scritte #0f3b2c diventano avorio
+// e "ITALIA" resta rame ma più chiaro e luminoso (il rame scuro dell'originale sul crepuscolo non si legge).
 const URL_LOGO = new URL('../logo/ufficiale/logo-eri-originale.svg', import.meta.url);
 const NS = 'http://www.w3.org/2000/svg';
 const ORDINE = ['p-arancio', 'p-lime', 'p-rosso', 'p-giallo-sx', 'p-giallo-dx', 'p-arancio-sx', 'p-verde']; // dal centro verso i lati
@@ -11,9 +12,15 @@ const cl = x => (x < 0 ? 0 : x > 1 ? 1 : x);
 const fuori4 = x => 1 - Math.pow(1 - cl(x), 4);
 const dentroFuori = x => { x = cl(x); return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };
 
+// rame chiaro di "ITALIA" su fondo scuro: stessa tinta calda dell'originale (#c4642f → #a8472a), più luminosa
+const ITALIA_SU_SCURO = ['#f0a06a', '#e3895a'];
+const rameChiaro = testo => testo.replace(/(<linearGradient id="italia"[\s\S]*?<\/linearGradient>)/, g => {
+  let i = 0; return g.replace(/stop-color="[^"]*"/g, s => (i < 2 ? `stop-color="${ITALIA_SU_SCURO[i++]}"` : s));
+});
+
 // testo SVG con id prefissati (due copie nella stessa pagina non devono condividere i gradienti)
 function prefissa(testo, pref) {
-  return testo.replace(/<\?xml[^>]*>/, '').replace(/#0f3b2c/gi, '#fbf3e6')
+  return rameChiaro(testo.replace(/<\?xml[^>]*>/, '')).replace(/#0f3b2c/gi, '#fbf3e6')
     .replace(/id="([^"]+)"/g, `id="${pref}$1"`).replace(/url\(#([^)]+)\)/g, `url(#${pref}$1)`);
 }
 

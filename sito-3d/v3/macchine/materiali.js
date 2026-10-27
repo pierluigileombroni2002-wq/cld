@@ -81,7 +81,8 @@ export function creaMateriali(THREE, qualita = 'alta') {
     }
     g.fillStyle = 'rgba(200,205,215,0.9)'; g.fillRect(m, h / 2 - 4 * k, w - m * 2, 8 * k);
   }, { anis });
-  M.vetroModulo = fis({ map: M.texCelle, color: '#ffffff', metalness: 0.1, roughness: 0.16, clearcoat: 1, clearcoatRoughness: 0.24, envMapIntensity: 1.2, specularIntensity: 1 }, true);
+  // vetro con trattamento antiriflesso: velo di vernice e riflessi più tenui (a luce radente non diventa uno specchio bianco)
+  M.vetroModulo = fis({ map: M.texCelle, color: '#ffffff', metalness: 0.1, roughness: 0.16, clearcoat: 0.45, clearcoatRoughness: 0.28, envMapIntensity: 0.8, specularIntensity: 0.6 }, true);
   M.retroModulo = fis({ color: '#141a2a', metalness: 0.2, roughness: 0.25, clearcoat: 0.6 });
 
   // tetto ai riflessi: le grandi superfici lisce che riflettono la luce principale non devono "accecare" il bloom
@@ -95,9 +96,19 @@ export function creaMateriali(THREE, qualita = 'alta') {
   const tetti = {
     alluminio: 3, acciaio: 3, acciaioScuro: 3, zincato: 2.5, inox: 10, inoxSatinato: 4, cromo: 10, grafite: 2.5, grafiteOpaca: 2.5, grafiteSatinata: 1.2, velluto: 0.8,
     bianco: 2.2, biancoGriglia: 2.2, trasformatore: 2.5, podio: 1.6, oro: 6, ottone: 6, rame: 4, ceramica: 3, cemento: 2, nero: 2, gomma: 2, cavo: 2,
-    rosso: 2.5, giallo: 2.5, vetroModulo: 1.3, retroModulo: 1.6,
+    rosso: 2.5, giallo: 2.5, retroModulo: 1.6,
   };
   for (const k in tetti) limita(M[k], tetti[k]);
+  // vetro dei moduli: tetto morbido che conserva la tinta (il riflesso resta caldo invece di diventare bianco)
+  // e resta sotto la soglia del bloom: niente lampi accecanti, il luccichio del vetro rimane
+  const limitaMorbido = (m, gin, max) => {
+    const g = gin.toFixed(2), d = (max - gin).toFixed(2);
+    m.onBeforeCompile = s => { s.fragmentShader = s.fragmentShader.replace('#include <opaque_fragment>', `{ float mx = max(max(outgoingLight.r, outgoingLight.g), outgoingLight.b);
+        if (mx > ${g}) outgoingLight *= (${g} + ${d} * (1.0 - exp(-(mx - ${g}) / ${d}))) / mx; }\n#include <opaque_fragment>`); };
+    m.customProgramCacheKey = () => 'eriMorb' + g + '_' + d;
+    return m;
+  };
+  limitaMorbido(M.vetroModulo, 0.6, 1.0);
   // copia a doppia faccia (per superfici sottili) che conserva il tetto ai riflessi
   M.doppiaFaccia = m => { const c = m.clone(); c.side = THREE.DoubleSide; c.onBeforeCompile = m.onBeforeCompile; c.customProgramCacheKey = m.customProgramCacheKey; return c; };
 
