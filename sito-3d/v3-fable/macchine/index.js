@@ -2,6 +2,9 @@
 // Ogni macchina si compone con lo scorrimento (vedi scena/assemblaggio.js).
 import * as THREE from 'three';
 import { MOMENTI, assemblaggioDi } from '../ui/testi.js';
+import { creaFotovoltaico } from './fotovoltaico.js';
+import { creaBess } from './bess.js';
+import { creaTurbine } from './turbine.js';
 
 export function creaMacchine(scena, env) {
   const gruppi = { fotovoltaico: new THREE.Group(), bess: new THREE.Group(), idroelettrico: new THREE.Group() };
@@ -10,12 +13,17 @@ export function creaMacchine(scena, env) {
   gruppi.idroelettrico.position.set(140, 0, 0);
   for (const g of Object.values(gruppi)) scena.add(g);
 
-  const costruttori = []; // { gruppo, assemblaggio, momento, aggiorna(t, camera) }
+  const costruttori = []; // { gruppo, assemblaggio, momento, aggiorna(tempo, camera, a), setQualita(liv) }
+  costruttori.push({ momento: MOMENTI[1], ...creaFotovoltaico(gruppi.fotovoltaico) });
+  costruttori.push({ momento: MOMENTI[2], ...creaBess(gruppi.bess) });
+  const turbine = creaTurbine(gruppi.idroelettrico);
+  costruttori.push({ momento: MOMENTI[3], ...turbine });
   const pronto = Promise.resolve();
 
   return {
     gruppi,
     pronto,
+    ancoreTurbine: () => turbine.ancore(),
     aggiorna(p, tempo, camera) {
       for (const c of costruttori) {
         const a = assemblaggioDi(p, c.momento);

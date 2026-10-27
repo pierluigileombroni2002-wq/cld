@@ -1,5 +1,6 @@
-// Ambiente: cielo del crepuscolo, stelle, polvere d'oro, pavimento da studio, luci e mappa d'ambiente.
+// Ambiente: cielo del crepuscolo, stelle, polvere d'oro, pavimento da studio (con un riflesso satinato), luci e mappa d'ambiente.
 import * as THREE from 'three';
+import { Reflector } from 'three/addons/objects/Reflector.js';
 
 export const COLORI = {
   alto: new THREE.Color('#151335'),
@@ -15,6 +16,7 @@ export const COLORI = {
 
 // Il sole sta dietro la scena, basso sull'orizzonte: controluce morbido.
 export const DIR_SOLE = new THREE.Vector3(0.18, 0.045, -1).normalize();
+export const STRATO_CIELO = 1; // cielo, stelle e polvere non entrano nel riflesso del pavimento
 
 const vertCielo = /* glsl */`
   varying vec3 vDir;
@@ -28,8 +30,8 @@ const vertCielo = /* glsl */`
 const fragCielo = /* glsl */`
   varying vec3 vDir;
   uniform vec3 cAlto, cMedio, cOrizzonte, cOrizzonteChiaro, cSotto, cSole;
-  uniform vec3 dirSole;
   uniform vec3 cViola;
+  uniform vec3 dirSole;
   uniform float finale;   // 0..1: nel finale il sole sale e inonda il cielo
   void main() {
     vec3 d = normalize(vDir);
@@ -46,7 +48,7 @@ const fragCielo = /* glsl */`
     c = mix(c, cBanda, banda * (0.42 + 0.45 * versoSole));
     // il sole: un disco piccolo e lontano, con un alone misurato
     float ang = max(dot(d, ds), 0.0);
-    c += cSole * (pow(ang, 1400.0) * (0.9 + finale * 1.6) + pow(ang, 40.0) * (0.22 + finale * 0.6) + pow(ang, 5.0) * (0.05 + finale * 0.4));
+    c += cSole * (pow(ang, 1400.0) * (0.9 + finale * 1.6) + pow(ang, 40.0) * (0.22 + finale * 0.5) + pow(ang, 5.0) * (0.05 + finale * 0.25));
     c = mix(c, cSotto, smoothstep(0.0, -0.12, h));
     gl_FragColor = vec4(c, 1.0);
     #include <tonemapping_fragment>
@@ -54,18 +56,21 @@ const fragCielo = /* glsl */`
   }`;
 
 const vertPavimento = /* glsl */`
-  varying vec3 vPos;
+  varying vec3 vPos; varying vec4 vUv4;
+  uniform mat4 textureMatrix;
   void main() {
     vec4 w = modelMatrix * vec4(position, 1.0);
     vPos = w.xyz;
+    vUv4 = textureMatrix * vec4(position, 1.0);
     gl_Position = projectionMatrix * viewMatrix * w;
   }`;
 
 const fragPavimento = /* glsl */`
-  varying vec3 vPos;
-  uniform vec3 cVicino, cLontano, cSole, cOrizzonte;
+  varying vec3 vPos; varying vec4 vUv4;
+  uniform vec3 cVicino, cLontano, cSole, cOrizzonte, color;
   uniform vec3 posCam, dirSole;
-  uniform float finale;
+  uniform float finale, riflesso;
+  uniform sampler2D tDiffuse;
   void main() {
     vec3 v = normalize(posCam - vPos);
     float dist = length(posCam.xz - vPos.xz);
@@ -77,8 +82,18 @@ const fragPavimento = /* glsl */`
     float a = max(dot(r, ds), 0.0);
     float striscia = pow(a, 140.0) * 0.55 + pow(a, 18.0) * 0.06;
     c += cSole * striscia * (1.0 + finale * 1.4);
+    // riflesso satinato delle macchine (solo ai livelli di qualità che se lo possono permettere)
+    if (riflesso > 0.0) {
+      vec2 uv = vUv4.xy / vUv4.w;
+      vec4 s = texture2D(tDiffuse, uv);
+      s += texture2D(tDiffuse, uv + vec2(0.0025, 0.0)); s += texture2D(tDiffuse, uv - vec2(0.0025, 0.0));
+      s += texture2D(tDiffuse, uv + vec2(0.0, 0.004)); s += texture2D(tDiffuse, uv - vec2(0.0, 0.004));
+      s *= 0.2;
+      float radente = pow(1.0 - max(v.y, 0.0), 1.5);
+      c += s.rgb * s.a * (0.12 + 0.38 * radente) * riflesso;
+    }
     // leggerissima grana, per non avere un gradiente piatto
-    float grana = fract(sin(dot(floor(vPos.xz * 6.0), vec2(12.9898, 78.233))) * 43758.5453) * 0.008;
+    float grana = fract(sin(dot(floor(vPos.xz * 48.0), vec2(12.9898, 78.233))) * 43758.5453) * 0.004;
     c += grana;
     gl_FragColor = vec4(c, 1.0);
     #include <tonemapping_fragment>
@@ -112,6 +127,7 @@ export function creaAmbiente(renderer, scena) {
   cielo.scale.setScalar(1500);
   cielo.renderOrder = -10;
   cielo.frustumCulled = false;
+  cielo.layers.set(STRATO_CIELO);
   gruppo.add(cielo);
 
   // --- stelle ---
@@ -150,6 +166,7 @@ export function creaAmbiente(renderer, scena) {
   });
   const stelle = new THREE.Points(geoS, matS);
   stelle.renderOrder = -9; stelle.frustumCulled = false;
+  stelle.layers.set(STRATO_CIELO);
   gruppo.add(stelle);
 
   // --- polvere d'oro (segue la camera, deriva lenta) ---
@@ -188,31 +205,38 @@ export function creaAmbiente(renderer, scena) {
   });
   const polvere = new THREE.Points(geoP, matP);
   polvere.frustumCulled = false;
+  polvere.layers.set(STRATO_CIELO);
   gruppo.add(polvere);
 
-  // --- pavimento ---
-  const unifPav = {
+  // --- pavimento: uno con il riflesso (Reflector), uno piatto per i livelli bassi ---
+  const uniformiPavimento = () => ({
     cVicino: { value: COLORI.pavimentoVicino }, cLontano: { value: COLORI.pavimentoLontano },
-    cSole: { value: COLORI.sole }, cOrizzonte: { value: COLORI.orizzonte },
-    posCam: { value: new THREE.Vector3() }, dirSole: { value: DIR_SOLE }, finale: { value: 0 },
-  };
-  const pavimento = new THREE.Mesh(
-    new THREE.PlaneGeometry(4000, 4000, 1, 1),
-    new THREE.ShaderMaterial({ uniforms: unifPav, vertexShader: vertPavimento, fragmentShader: fragPavimento })
-  );
-  pavimento.rotation.x = -Math.PI / 2;
-  pavimento.frustumCulled = false;
-  gruppo.add(pavimento);
+    cSole: { value: COLORI.sole }, cOrizzonte: { value: COLORI.orizzonte }, color: { value: new THREE.Color(0) },
+    posCam: { value: new THREE.Vector3() }, dirSole: { value: DIR_SOLE }, finale: { value: 0 }, riflesso: { value: 0 },
+    tDiffuse: { value: null }, textureMatrix: { value: new THREE.Matrix4() },
+  });
+  const geoPav = new THREE.PlaneGeometry(4000, 4000, 1, 1);
+  const pavimentoPiatto = new THREE.Mesh(geoPav, new THREE.ShaderMaterial({ uniforms: uniformiPavimento(), vertexShader: vertPavimento, fragmentShader: fragPavimento }));
+  pavimentoPiatto.rotation.x = -Math.PI / 2; pavimentoPiatto.frustumCulled = false;
+  gruppo.add(pavimentoPiatto);
+  const riflettore = new Reflector(geoPav, {
+    textureWidth: 1024, textureHeight: 512, clipBias: 0.003,
+    shader: { uniforms: uniformiPavimento(), vertexShader: vertPavimento, fragmentShader: fragPavimento },
+  });
+  riflettore.rotation.x = -Math.PI / 2; riflettore.frustumCulled = false;
+  riflettore.material.uniforms.riflesso.value = 1;
+  gruppo.add(riflettore);
+  const unifPav = [pavimentoPiatto.material.uniforms, riflettore.material.uniforms];
 
   // --- luci (niente ombre) ---
   const chiave = new THREE.DirectionalLight('#ffd9a8', 1.35);          // dal lato del sole, bassa: controluce caldo
   chiave.position.copy(DIR_SOLE).multiplyScalar(100);
-  const riempimento = new THREE.DirectionalLight('#8fa0ff', 0.55);     // fredda, dall'alto davanti: modella le forme
+  const riempimento = new THREE.DirectionalLight('#e4ddff', 0.8);      // dall'alto davanti, appena fredda: modella le forme
   riempimento.position.set(-40, 80, 90);
-  const emisfero = new THREE.HemisphereLight('#3b3570', '#3a2418', 0.5);
+  const emisfero = new THREE.HemisphereLight('#514a8c', '#6e4a2c', 0.7); // il pavimento rimanda un po' di caldo
   gruppo.add(chiave, riempimento, emisfero);
 
-  // --- mappa d'ambiente: cielo + "softbox" dorato all'orizzonte, per riflessi credibili sui metalli ---
+  // --- mappa d'ambiente: cielo + grandi "softbox" da studio, per riflessi credibili su vetro e metalli ---
   const pmrem = new THREE.PMREMGenerator(renderer);
   const scenaEnv = new THREE.Scene();
   const cieloEnv = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 16), new THREE.ShaderMaterial({
@@ -220,12 +244,14 @@ export function creaAmbiente(renderer, scena) {
   }));
   cieloEnv.scale.setScalar(100);
   scenaEnv.add(cieloEnv);
-  const softbox = new THREE.Mesh(new THREE.PlaneGeometry(90, 9), new THREE.MeshBasicMaterial({ color: new THREE.Color('#ffd7a0').multiplyScalar(2.2) }));
-  softbox.position.copy(DIR_SOLE).multiplyScalar(60); softbox.position.y = 4; softbox.lookAt(0, 0, 0);
-  scenaEnv.add(softbox);
-  const softboxFreddo = new THREE.Mesh(new THREE.PlaneGeometry(50, 30), new THREE.MeshBasicMaterial({ color: new THREE.Color('#9fb0ff').multiplyScalar(0.9) }));
-  softboxFreddo.position.set(-30, 60, 50); softboxFreddo.lookAt(0, 0, 0);
-  scenaEnv.add(softboxFreddo);
+  const softbox = (w, h, colore, forza, pos) => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: new THREE.Color(colore).multiplyScalar(forza), side: THREE.DoubleSide }));
+    m.position.set(...pos); m.lookAt(0, 0, 0); scenaEnv.add(m);
+  };
+  softbox(90, 9, '#ffd7a0', 2.2, [DIR_SOLE.x * 60, 4, DIR_SOLE.z * 60]);   // la striscia dorata dell'orizzonte
+  softbox(90, 36, '#ffe6c4', 0.6, [0, 55, -45]);                             // grande softbox caldo, alto dietro: si specchia nei vetri inclinati
+  softbox(50, 30, '#aeb8ff', 0.8, [-40, 60, 55]);                            // softbox freddo davanti: il contrasto del crepuscolo
+  softbox(120, 50, '#ffe9d6', 0.9, [10, 28, 85]);                            // grande softbox caldo dietro la camera: i metalli si accendono
   const pavEnv = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), new THREE.MeshBasicMaterial({ color: '#1a1428' }));
   pavEnv.rotation.x = -Math.PI / 2; pavEnv.position.y = -1;
   scenaEnv.add(pavEnv);
@@ -235,26 +261,27 @@ export function creaAmbiente(renderer, scena) {
 
   scena.add(gruppo);
 
-  const tmp = new THREE.Vector3();
   return {
     gruppo,
     env,
+    aggiorra: null,
     aggiorna(tempo, camera, finale = 0) {
       cielo.position.copy(camera.position);
       stelle.position.copy(camera.position);
       matS.uniforms.t.value = tempo;
       matP.uniforms.t.value = tempo;
       matP.uniforms.centro.value.copy(camera.position);
-      unifPav.posCam.value.copy(camera.position);
       unifCielo.finale.value = finale;
-      unifPav.finale.value = finale;
+      for (const u of unifPav) { u.posCam.value.copy(camera.position); u.finale.value = finale; }
     },
-    setQualita(q) {
+    setQualita(q, livello) {
       const dpr = renderer.getPixelRatio();
       matS.uniforms.dpr.value = dpr; matP.uniforms.dpr.value = dpr;
       const n = q === 'alta' ? nPolvereMax : q === 'media' ? 700 : 300;
       geoP.setDrawRange(0, n);
-      stelle.visible = true;
+      const riflessi = !!livello.riflessi;
+      riflettore.visible = riflessi; pavimentoPiatto.visible = !riflessi;
+      if (riflessi) riflettore.getRenderTarget().setSize(Math.round(innerWidth * 0.5 * Math.min(dpr, 1.25)), Math.round(innerHeight * 0.5 * Math.min(dpr, 1.25)));
     },
   };
 }

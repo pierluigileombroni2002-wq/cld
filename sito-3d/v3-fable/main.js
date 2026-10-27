@@ -28,9 +28,11 @@ renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 0.95;
 renderer.shadowMap.enabled = false;
+renderer.info.autoReset = false; // il riflesso del pavimento è un secondo passaggio: i conteggi si azzerano a mano, una volta per fotogramma
 
 const scena = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 3000);
+camera.layers.enable(1); // vede anche cielo, stelle e polvere (che il riflesso del pavimento ignora)
 const ambiente = creaAmbiente(renderer, scena);
 const macchine = creaMacchine(scena, ambiente.env);
 
@@ -61,17 +63,18 @@ modulo.addEventListener('submit', (e) => {
 
 // ---------- regia della camera: pochi movimenti lenti e continui ----------
 // Le tre tecnologie stanno in fila lungo x; la camera scivola di lato, come su un binario.
+// (i punti di mira stanno a distanze simili tra loro: la curva che li unisce resta morbida, senza sbandate)
 const CHIAVI = [
-  { p: 0.00, pos: [-52, 4.2, 34], mira: [8, 6.5, -300] },
-  { p: 0.10, pos: [-46, 4.4, 33], mira: [-20, 5.0, -200] },
-  { p: 0.16, pos: [-26, 5.2, 30], mira: [-2, 2.2, 0] },
-  { p: 0.36, pos: [16, 4.6, 27], mira: [2, 2.4, 0] },
-  { p: 0.43, pos: [50, 4.4, 25], mira: [70, 2.4, 0] },
-  { p: 0.60, pos: [86, 3.9, 21], mira: [70, 2.6, 0] },
-  { p: 0.67, pos: [118, 3.4, 19], mira: [130, 1.9, 0] },
-  { p: 0.84, pos: [153, 3.4, 17], mira: [146, 2.0, 0] },
-  { p: 0.90, pos: [170, 5.5, 10], mira: [182, 7, -300] },
-  { p: 1.00, pos: [176, 7.5, 0], mira: [178, 12, -300] },
+  { p: 0.00, pos: [-52, 4.2, 34], mira: [-41, 6.8, -26] },
+  { p: 0.10, pos: [-46, 4.4, 33], mira: [-30, 5.0, -20] },
+  { p: 0.16, pos: [-26, 5.0, 34], mira: [1, 1.8, 0] },
+  { p: 0.36, pos: [18, 4.4, 32], mira: [3, 1.8, 0] },
+  { p: 0.43, pos: [52, 4.0, 27], mira: [70, 1.6, 0] },
+  { p: 0.60, pos: [86, 3.6, 25], mira: [70, 1.6, 0] },
+  { p: 0.67, pos: [119, 2.7, 13], mira: [128, 1.4, 0] },
+  { p: 0.84, pos: [160, 3.2, 16], mira: [145, 1.5, 0] },
+  { p: 0.90, pos: [170, 5.0, 10], mira: [176, 6.5, -40] },
+  { p: 1.00, pos: [176, 7.5, 0], mira: [187, 10.5, -60] },
 ].map((k) => ({ p: k.p, pos: new THREE.Vector3(...k.pos), mira: new THREE.Vector3(...k.mira) }));
 
 const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _dir = new THREE.Vector3(), _dx = new THREE.Vector3(), _dy = new THREE.Vector3();
@@ -98,7 +101,7 @@ function posaCamera(p) {
 // in basso sul telefono (il testo sta in alto). Nessuna distorsione: si sposta il binario, non l'obiettivo.
 function inquadra(pos, mira) {
   const stretto = innerHeight > innerWidth || innerWidth < 820;
-  const sx = stretto ? 0 : 0.42, sy = stretto ? -0.5 : -0.02;
+  const sx = stretto ? 0 : 0.34, sy = stretto ? -0.5 : -0.04;
   _dir.subVectors(mira, pos); const dist = _dir.length(); _dir.normalize();
   const mezzaH = Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2) * dist;
   const mezzaW = mezzaH * camera.aspect;
@@ -110,9 +113,29 @@ function inquadra(pos, mira) {
   camera.lookAt(_b);
 }
 
-// ---------- testi, logo ----------
+// ---------- testi, logo, etichette delle turbine ----------
 const testi = creaTesti();
 let logo = null;
+const etichette = {};
+for (const el of document.querySelectorAll('.etichetta')) etichette[el.dataset.turbina] = el;
+const _proj = new THREE.Vector3();
+function etichetteTurbine(p) {
+  const m = MOMENTI[3];
+  const dentro = p > m.da && p < m.a + 0.02;
+  const a = assemblaggioDi(p, m);
+  for (const { nome, pos } of macchine.ancoreTurbine()) {
+    const el = etichette[nome]; if (!el) continue;
+    const i = nome === 'pelton' ? 0 : nome === 'francis' ? 1 : 2;
+    const visibile = dentro && a > i * 0.3 + 0.3;
+    if (!visibile) { el.classList.remove('visibile'); continue; }
+    _proj.copy(pos).project(camera);
+    const x = (_proj.x * 0.5 + 0.5) * innerWidth, y = (-_proj.y * 0.5 + 0.5) * innerHeight;
+    const stretto = innerHeight > innerWidth || innerWidth < 820;
+    const dentroSchermo = _proj.z < 1 && x > (stretto ? 40 : innerWidth * 0.42) && x < innerWidth - 40 && y > 150 && y < innerHeight - 40;
+    el.classList.toggle('visibile', dentroSchermo);
+    el.style.transform = `translate(${x.toFixed(0)}px, ${y.toFixed(0)}px) translate(-50%, -100%)`;
+  }
+}
 
 function ridimensiona() {
   const w = innerWidth, h = innerHeight;
@@ -121,7 +144,7 @@ function ridimensiona() {
   camera.aspect = w / h;
   camera.fov = h > w ? 58 : 36;
   camera.updateProjectionMatrix();
-  ambiente.setQualita(stato.qualita);
+  ambiente.setQualita(stato.qualita, LIVELLI[stato.qualita]);
 }
 addEventListener('resize', ridimensiona);
 
@@ -151,8 +174,10 @@ function fotogramma() {
   ambiente.aggiorna(stato.tempo, camera, finale);
   macchine.aggiorna(p, stato.tempo, camera);
   testi.aggiorna(p);
+  etichetteTurbine(p);
   if (logo) { logo.componi(Math.min(1, p / 0.05 + apertura.k)); logo.posiziona(p, innerWidth, innerHeight); }
 
+  renderer.info.reset();
   renderer.render(scena, camera);
 
   // misura dei fotogrammi e discesa automatica di qualità
@@ -218,4 +243,15 @@ stato.info = () => ({
   qualita: stato.qualita, dpr: renderer.getPixelRatio(), p: +stato.p.toFixed(3),
 });
 stato.azzeraMisure = () => { stato.msPeggio = 0; campioni = []; };
+// misura per qualche secondo nel punto in cui si è: ms per fotogramma (media e peggiore) e ms di lavoro del render
+stato.misura = (durataMs = 3000) => new Promise((ok) => {
+  const t0 = performance.now(); const fotogrammi = []; let peggio = 0, lavoro = 0, n = 0, prima = t0;
+  (function f() {
+    const ora = performance.now(); const dt = ora - prima; prima = ora;
+    if (n > 2) { fotogrammi.push(dt); peggio = Math.max(peggio, dt); lavoro += stato.ms; }
+    n++;
+    if (ora - t0 < durataMs) requestAnimationFrame(f);
+    else ok({ qualita: stato.qualita, dpr: renderer.getPixelRatio(), msFotogrammaMedio: +(fotogrammi.reduce((a, b) => a + b, 0) / fotogrammi.length).toFixed(1), msFotogrammaPeggiore: +peggio.toFixed(1), msRenderMedio: +(lavoro / fotogrammi.length).toFixed(2), triangoli: renderer.info.render.triangles, chiamate: renderer.info.render.calls, p: +stato.p.toFixed(3) });
+  })();
+});
 stato.qualitaImposta = (q) => applicaQualita(q);

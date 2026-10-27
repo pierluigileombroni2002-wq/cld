@@ -43,7 +43,7 @@ export class Assemblaggio {
       const a = obj.userData.ass;
       const inizio = a.ordine * (1 - a.durata);
       const k = a.facilita(finestra(t, inizio, a.durata));
-      if (k <= 0) { obj.visible = false; continue; }
+      if (k <= 0 || obj.userData.spento) { obj.visible = false; continue; }
       obj.visible = true;
       obj.position.copy(a.base).addScaledVector(a.da, 1 - k);
       const sc = a.scala + (1 - a.scala) * k;
@@ -68,7 +68,7 @@ export class Assemblaggio {
         mesh.setMatrixAt(i, _m);
       }
       mesh.instanceMatrix.needsUpdate = true;
-      mesh.visible = visibili > 0;
+      mesh.visible = visibili > 0 && !mesh.userData.spento;
     }
   }
 }
