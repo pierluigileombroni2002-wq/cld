@@ -221,7 +221,7 @@ body[data-font="b"] .etichetta b { font-family: var(--testo); font-weight: 300; 
 /* ---------- telefono e schermi stretti ---------- */
 @media (max-width: 820px), (orientation: portrait) {
   :root { --colonna: 100%; --margine: 20px; }
-  #logo { top: 34%; width: min(240px, 60vw); }
+  #logo { width: min(230px, 56vw); }
   .testata { padding: 16px var(--margine); }
   .nav a:not(.nav-contatti) { display: none; }
   .momento { align-items: flex-start; padding-top: 86px; }
