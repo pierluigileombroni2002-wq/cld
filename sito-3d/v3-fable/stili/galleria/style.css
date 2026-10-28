@@ -1,0 +1,267 @@
+/* ERI · Galleria Bianca · impaginazione da catalogo di museo sopra (e sotto) la scena 3D */
+
+:root {
+  --avorio: #F6F3EC;
+  --avorio2: #EBE6DC;
+  --pav: #DDD8CD;
+  --nero: #1C1B18;
+  --grigio: #75706A;
+  --linea: #BDB6AA;
+  --rame: #B5633A;
+  --rame2: #D9A98C;
+  --verde: #0F3B2C;
+  --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --tight: 'Inter Tight', Inter, system-ui, sans-serif;
+  --testo: Inter, system-ui, sans-serif;
+  --schermi: 7.5;
+  --margine: clamp(20px, 6vw, 96px);
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: auto; }
+body {
+  margin: 0;
+  background: var(--avorio);
+  color: var(--nero);
+  font-family: var(--testo);
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+#scorrimento { height: calc(var(--schermi) * 100vh); height: calc(var(--schermi) * 100svh); }
+a { color: inherit; text-decoration: none; }
+
+/* ---------- la sala (ciclorama in CSS: la tela 3D è trasparente sulla parete) ---------- */
+.sala {
+  position: fixed; inset: 0; z-index: 0;
+  background: linear-gradient(180deg, #F7F4ED 0%, #F2EEE5 30%, #EBE6DC 50%, #E6E1D6 60%, #DFDACF 78%, #DBD6CB 100%);
+}
+.sala::after {
+  /* la finestra fuori inquadratura: più chiaro in alto a destra */
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(120% 90% at 92% -10%, rgba(255,253,248,0.9) 0%, rgba(255,253,248,0) 60%);
+}
+.finestra {
+  position: fixed; z-index: 0; left: 18vw; top: -60vh; width: 22vw; height: 220vh;
+  transform: rotate(28deg); transform-origin: center;
+  background: linear-gradient(90deg, rgba(251,249,244,0) 0%, rgba(251,249,244,0.6) 45%, rgba(251,249,244,0.75) 55%, rgba(251,249,244,0) 100%);
+  filter: blur(26px);
+  pointer-events: none;
+  will-change: transform;
+}
+.vetrata {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0;
+  background: linear-gradient(90deg, #FFFDF8 0%, #FFFDF8 40%, rgba(255,253,248,0) 78%);
+}
+
+#titoli { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
+.titolo-grande {
+  position: absolute; left: var(--margine); top: clamp(96px, 13vh, 140px); margin: 0;
+  width: min(1200px, 74vw);
+  font-family: var(--tight); font-weight: 300; line-height: 0.95; letter-spacing: -0.03em;
+  font-size: clamp(56px, 9vw, 150px);
+  color: var(--nero);
+  opacity: 0; visibility: hidden;
+  transition: opacity 0.5s ease, visibility 0s linear 0.5s;
+}
+.titolo-grande.attivo { opacity: 1; visibility: visible; transition: opacity 0.3s ease, visibility 0s; }
+.titolo-grande .l {
+  display: inline-block; white-space: pre;
+  transform: translateY(0.45em); opacity: 0;
+  transition: transform 0.8s cubic-bezier(.2,.7,.2,1) calc(var(--i) * 20ms), opacity 0.5s ease calc(var(--i) * 20ms);
+}
+.titolo-grande.attivo .l { transform: none; opacity: 1; }
+.titolo-grande[data-m="0"] { top: auto; bottom: 30vh; width: min(1200px, 80vw); }
+
+#scena { position: fixed; inset: 0; width: 100%; height: 100%; display: block; z-index: 2; pointer-events: none; }
+
+/* ---------- caricamento ---------- */
+#caricamento {
+  position: fixed; inset: 0; z-index: 50; background: var(--avorio);
+  display: grid; place-items: center;
+  transition: opacity 0.9s ease;
+}
+#caricamento span { width: 120px; height: 1px; background: rgba(28,27,24,0.1); position: relative; overflow: hidden; display: block; }
+#caricamento span::after {
+  content: ''; position: absolute; inset: 0; background: var(--rame); transform-origin: left;
+  animation: carica 1.6s ease-in-out infinite;
+}
+@keyframes carica { 0% { transform: scaleX(0); } 60% { transform: scaleX(1); transform-origin: left; } 100% { transform: scaleX(0); transform-origin: right; } }
+#caricamento.via { opacity: 0; pointer-events: none; }
+
+/* ---------- logo (colori originali, mai ricolorato su avorio) ---------- */
+#logo {
+  position: fixed; z-index: 20; left: 0; top: 0;
+  width: min(300px, 62vw);
+  transform-origin: 0 0;
+  will-change: transform, width;
+  pointer-events: none;
+  opacity: 0; transition: opacity 1.2s ease;
+}
+#logo.visibile { opacity: 1; }
+#logo svg { width: 100%; height: auto; display: block; overflow: visible; }
+#logo.in-testata { pointer-events: auto; }
+
+/* ---------- testata ---------- */
+.testata {
+  position: fixed; inset: 0 0 auto 0; z-index: 15;
+  display: flex; justify-content: flex-end; align-items: center;
+  padding: 30px var(--margine);
+  pointer-events: none;
+}
+.nav { display: flex; gap: clamp(18px, 2.6vw, 40px); align-items: center; pointer-events: auto; }
+.nav a {
+  font-family: var(--mono); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 400;
+  color: var(--nero); transition: color 0.3s;
+}
+.nav a:hover { color: var(--rame); }
+.nav .nav-contatti { background: var(--rame); color: var(--avorio); padding: 11px 18px; border-radius: 2px; }
+.nav .nav-contatti:hover { background: #a3562f; color: var(--avorio); }
+
+/* ---------- momenti (sopra la tela) ---------- */
+#momenti { position: fixed; inset: 0; z-index: 10; pointer-events: none; }
+.momento {
+  position: absolute; inset: 0;
+  opacity: 0; visibility: hidden;
+  transition: opacity 0.6s ease, visibility 0s linear 0.6s;
+}
+.momento.attivo { opacity: 1; visibility: visible; transition: opacity 0.8s ease 0.1s, visibility 0s; }
+
+.mono { font-family: var(--mono); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--nero); font-weight: 500; }
+
+/* cartellino da museo, in basso a sinistra */
+.cartellino {
+  position: absolute; left: var(--margine); bottom: clamp(48px, 10vh, 92px); width: min(600px, 44vw); pointer-events: auto;
+  transform: translateY(14px); transition: transform 0.9s cubic-bezier(.2,.7,.2,1);
+}
+.momento.attivo .cartellino { transform: none; }
+.cartellino p { margin: 12px 0 0; font-size: 18px; line-height: 26px; color: var(--grigio); }
+
+/* iter: colonna di numeri di sala, allineata in basso a destra */
+.iter {
+  position: absolute; right: calc(var(--margine) - 16px); bottom: clamp(24px, 4vh, 44px);
+  list-style: none; margin: 0; padding: 0; width: 300px; pointer-events: auto;
+}
+.iter li { display: flex; align-items: baseline; gap: 16px; margin-top: 10px; flex-wrap: wrap; }
+.iter .n { font-family: var(--tight); font-weight: 300; font-size: 40px; line-height: 1; letter-spacing: -0.02em; color: var(--linea); width: 52px; transition: color 0.4s; }
+.iter .w { font-family: var(--mono); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--grigio); transition: color 0.4s; }
+.iter .d { flex-basis: 100%; margin: 3px 0 0 68px; font-size: 15px; line-height: 21px; color: var(--grigio); display: none; }
+.iter li.acceso .n { color: #9C958A; }
+.iter li.corrente .n { color: var(--rame); }
+.iter li.corrente .w { color: var(--nero); font-weight: 500; }
+.iter li.corrente .d { display: block; animation: dissolvi 0.3s ease; }
+@keyframes dissolvi { from { opacity: 0; } to { opacity: 1; } }
+
+/* barra a cinque segmenti: solo sul telefono */
+.barra { display: none; }
+
+/* nome della fase sotto la macchina */
+.fase {
+  position: fixed; left: 50%; bottom: clamp(60px, 12vh, 110px); z-index: 10; transform: translateX(-10%);
+  font-family: var(--mono); font-size: 22px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--nero);
+  opacity: 0; pointer-events: none; white-space: nowrap;
+}
+.fase.mostra { animation: fase 1.5s ease forwards; }
+@keyframes fase { 0% { opacity: 0; transform: translate(-10%, 6px); } 18% { opacity: 0.3; transform: translate(-10%, 0); } 70% { opacity: 0.3; } 100% { opacity: 0; } }
+
+/* apertura */
+.momento-apertura .blocco {
+  position: absolute; left: var(--margine); bottom: clamp(60px, 14vh, 130px); width: min(620px, 60vw); pointer-events: auto;
+}
+.sotto { margin: 0; max-width: 46ch; font-size: clamp(1rem, 1.2vw, 1.15rem); line-height: 1.55; color: var(--grigio); }
+.bottone {
+  display: inline-flex; align-items: center; gap: 12px; margin-top: 28px;
+  padding: 14px 22px; border-radius: 2px; border: 0;
+  background: var(--rame); color: var(--avorio);
+  font-family: var(--mono); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 500;
+  cursor: pointer; transition: background 0.3s, transform 0.3s;
+}
+.bottone:hover { background: #a3562f; transform: translateY(-1px); }
+.bottone:active { background: var(--rame2); }
+.invito {
+  position: absolute; right: var(--margine); bottom: 40px; margin: 0;
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--grigio);
+}
+.invito::after {
+  content: ''; display: block; width: 1px; height: 34px; margin: 10px auto 0;
+  background: var(--nero); opacity: 0.4; animation: invito 2.4s ease-in-out infinite;
+}
+@keyframes invito { 0%, 100% { transform: scaleY(0.4); transform-origin: top; opacity: 0.2; } 50% { transform: scaleY(1); opacity: 0.5; } }
+
+/* ---------- etichette turbine ---------- */
+.etichette { position: absolute; inset: 0; }
+.etichetta {
+  position: absolute; left: 0; top: 0; transform: translate(-50%, -100%);
+  text-align: center; opacity: 0; transition: opacity 0.6s; white-space: nowrap;
+}
+.etichetta.visibile { opacity: 1; }
+.etichetta b { display: block; font-family: var(--tight); font-weight: 300; font-size: 1.9rem; letter-spacing: -0.02em; line-height: 1.1; color: var(--nero); }
+.etichetta span { font-family: var(--mono); font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--grigio); }
+.etichetta::after { content: ''; display: block; width: 1px; height: 30px; margin: 10px auto 0; background: var(--linea); }
+
+/* ---------- contatti ---------- */
+.scheda {
+  position: absolute; right: var(--margine); top: 50%; transform: translateY(-50%);
+  width: min(460px, 40vw); pointer-events: auto;
+  background: transparent; padding: 0;
+}
+.scheda .sotto { margin-top: 14px; font-size: 1rem; }
+.modulo { margin-top: 26px; display: grid; gap: 18px; }
+.modulo label { display: grid; gap: 6px; }
+.modulo label span { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--grigio); }
+.modulo input, .modulo textarea {
+  width: 100%; background: transparent; border: 0; border-bottom: 1px solid var(--linea);
+  color: var(--nero); font: inherit; font-size: 1rem; padding: 8px 0; outline: none; resize: vertical; border-radius: 0;
+  transition: border-color 0.3s;
+}
+.modulo input:focus, .modulo textarea:focus { border-bottom-color: var(--nero); }
+.riga-invio { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 4px; }
+.riga-invio .bottone { margin-top: 0; }
+.riga-invio small { color: var(--grigio); font-size: 0.74rem; }
+.conferma { margin: 6px 0 0; color: var(--nero); font-size: 1rem; }
+.recapiti { margin: 26px 0 0; font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; color: var(--grigio); display: flex; gap: 12px; flex-wrap: wrap; }
+.recapiti a:hover { color: var(--rame); }
+
+/* ---------- telefono e schermi stretti: testi in alto, macchina sotto, mai sovrapposti ---------- */
+@media (max-width: 760px), (orientation: portrait) {
+  :root { --margine: 20px; }
+  #logo { width: min(210px, 54vw); }
+  .testata { padding: 16px var(--margine); }
+  .nav a:not(.nav-contatti) { display: none; }
+  .nav .nav-contatti { padding: 9px 14px; font-size: 11px; }
+
+  .titolo-grande { top: 112px; width: calc(100vw - 40px); font-size: clamp(36px, 10.5vw, 44px); line-height: 1.0; letter-spacing: -0.025em; }
+  .titolo-grande[data-m="0"] { top: auto; bottom: 34vh; width: calc(100vw - 40px); font-size: clamp(38px, 11vw, 46px); }
+  .titolo-grande[data-m="4"] { top: 100px; }
+
+  .cartellino { left: var(--margine); bottom: auto; top: 76px; width: calc(100vw - 40px); transform: none; }
+  .cartellino p { display: none; }
+  .cartellino .mono { font-size: 11px; }
+  .iter { display: none; }
+  .barra {
+    display: block; position: absolute; left: var(--margine); right: var(--margine); top: 212px; height: 2px;
+    display: flex; gap: 4px;
+  }
+  .barra i { flex: 1; height: 2px; background: var(--linea); transition: background 0.4s; }
+  .barra i.acceso { background: #9C958A; }
+  .barra i.corrente { background: var(--rame); }
+  .barra-testo { position: absolute; left: 0; top: 12px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--nero); white-space: nowrap; }
+  .barra-testo b { color: var(--rame); font-weight: 500; }
+  .fase { display: none; }
+
+  .momento-apertura .blocco { bottom: 90px; width: calc(100vw - 40px); }
+  .sotto { font-size: 0.98rem; }
+  .bottone { margin-top: 20px; }
+  .invito { right: auto; left: var(--margine); bottom: 22px; }
+  .etichetta b { font-size: 1.2rem; }
+
+  .momento-contatti { overflow-y: auto; pointer-events: auto; }
+  .scheda { position: relative; right: auto; top: auto; transform: none; width: 100%; margin: 215px 0 40px; padding: 0 var(--margine); background: transparent; }
+  .modulo textarea { rows: 2; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .invito::after { animation: none; }
+  .titolo-grande .l { transition: none; }
+}

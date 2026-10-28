@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ERI · Energie Rinnovabili Italia</title>
+<meta name="description" content="ERI sviluppa, autorizza, costruisce e gestisce impianti fotovoltaici, agrivoltaici, di accumulo e idroelettrici.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter+Tight:wght@300;400&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+
+<!-- La sala: parete avorio che si curva nel pavimento; la finestra alta si vede solo come striscia di luce -->
+<div class="sala" aria-hidden="true"></div>
+<div class="finestra" aria-hidden="true"></div>
+<div class="vetrata" aria-hidden="true"></div>
+
+<!-- I titoli stanno SOTTO la tela 3D: la macchina li copre in parte, come una copertina -->
+<div id="titoli" aria-hidden="true">
+  <h2 class="titolo-grande" data-m="1">Seguire il sole,<br>ogni giorno.</h2>
+  <h2 class="titolo-grande" data-m="2">L'energia che<br>aspetta.</h2>
+  <h2 class="titolo-grande" data-m="3">L'acqua, con la<br>turbina giusta.</h2>
+  <h2 class="titolo-grande" data-m="4">Parliamo<br>del progetto.</h2>
+</div>
+
+<canvas id="scena" aria-hidden="true"></canvas>
+<div id="scorrimento" aria-hidden="true"></div>
+
+<!-- Logo: grande al centro nell'apertura, poi viaggia in alto a sinistra -->
+<a id="logo" href="#" aria-label="ERI · Energie Rinnovabili Italia"></a>
+
+<header class="testata">
+  <nav class="nav" aria-label="Sezioni">
+    <a href="#" data-vai="0.22">Fotovoltaico</a>
+    <a href="#" data-vai="0.50">Accumulo</a>
+    <a href="#" data-vai="0.74">Idroelettrico</a>
+    <a href="#" data-vai="1" class="nav-contatti">Contatti</a>
+  </nav>
+</header>
+
+<main id="momenti">
+
+  <section class="momento momento-apertura" data-m="0">
+    <!-- nell'apertura nessuna macchina copre il titolo: sta sopra la tela, come il resto dei testi -->
+    <h1 class="titolo-grande" data-m="0">Dal disegno<br>alla rete.</h1>
+    <div class="blocco">
+      <p class="sotto">Fotovoltaico, accumulo e idroelettrico. Di ogni impianto seguiamo tutto l'iter: dallo sviluppo alla gestione.</p>
+      <a href="#" class="bottone" data-vai="1">Parliamo del progetto</a>
+    </div>
+    <p class="invito">Scorri</p>
+  </section>
+
+  <section class="momento momento-tech" data-m="1">
+    <div class="cartellino">
+      <div class="mono">01 · Fotovoltaico e agrivoltaico</div>
+      <p>Tracker a terra e filari agrivoltaici alti,<br>progettati e costruiti da ERI fino alla rete.</p>
+    </div>
+    <ol class="iter" aria-label="L'iter che seguiamo">
+      <li><span class="n">01</span><span class="w">Sviluppo</span><span class="d">Terreno, studio e progetto.</span></li>
+      <li><span class="n">02</span><span class="w">Autorizzazioni</span><span class="d">Permessi e connessione alla rete.</span></li>
+      <li><span class="n">03</span><span class="w">Ready to Build</span><span class="d">Pronto per il cantiere.</span></li>
+      <li><span class="n">04</span><span class="w">Costruzione</span><span class="d">Cantiere e collaudo.</span></li>
+      <li><span class="n">05</span><span class="w">Gestione</span><span class="d">Esercizio e manutenzione, per tutta la vita dell'impianto.</span></li>
+    </ol>
+    <div class="barra" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><span class="barra-testo"></span></div>
+  </section>
+
+  <section class="momento momento-tech" data-m="2">
+    <div class="cartellino">
+      <div class="mono">02 · Accumulo BESS</div>
+      <p>Batterie che conservano l'energia<br>e la restituiscono alla rete quando serve.</p>
+    </div>
+    <ol class="iter" aria-label="L'iter che seguiamo">
+      <li><span class="n">01</span><span class="w">Sviluppo</span><span class="d">Terreno, studio e progetto.</span></li>
+      <li><span class="n">02</span><span class="w">Autorizzazioni</span><span class="d">Permessi e connessione alla rete.</span></li>
+      <li><span class="n">03</span><span class="w">Ready to Build</span><span class="d">Pronto per il cantiere.</span></li>
+      <li><span class="n">04</span><span class="w">Costruzione</span><span class="d">Cantiere e collaudo.</span></li>
+      <li><span class="n">05</span><span class="w">Gestione</span><span class="d">Esercizio e manutenzione, per tutta la vita dell'impianto.</span></li>
+    </ol>
+    <div class="barra" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><span class="barra-testo"></span></div>
+  </section>
+
+  <section class="momento momento-tech" data-m="3">
+    <div class="cartellino">
+      <div class="mono">03 · Idroelettrico</div>
+      <p>Pelton per i salti alti, Francis per quelli medi,<br>Kaplan per i salti bassi.</p>
+    </div>
+    <ol class="iter" aria-label="L'iter che seguiamo">
+      <li><span class="n">01</span><span class="w">Sviluppo</span><span class="d">Terreno, studio e progetto.</span></li>
+      <li><span class="n">02</span><span class="w">Autorizzazioni</span><span class="d">Permessi e connessione alla rete.</span></li>
+      <li><span class="n">03</span><span class="w">Ready to Build</span><span class="d">Pronto per il cantiere.</span></li>
+      <li><span class="n">04</span><span class="w">Costruzione</span><span class="d">Cantiere e collaudo.</span></li>
+      <li><span class="n">05</span><span class="w">Gestione</span><span class="d">Esercizio e manutenzione, per tutta la vita dell'impianto.</span></li>
+    </ol>
+    <div class="barra" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><span class="barra-testo"></span></div>
+    <div class="etichette" aria-hidden="true">
+      <div class="etichetta" data-turbina="pelton"><b>Pelton</b><span>Salto alto</span></div>
+      <div class="etichetta" data-turbina="francis"><b>Francis</b><span>Salto medio</span></div>
+      <div class="etichetta" data-turbina="kaplan"><b>Kaplan</b><span>Salto basso</span></div>
+    </div>
+  </section>
+
+  <section class="momento momento-contatti" data-m="4">
+    <div class="scheda">
+      <div class="mono">05 · Contatti</div>
+      <p class="sotto">Un terreno, un'idea, un impianto da far crescere: raccontaci da dove parti.</p>
+      <form class="modulo" novalidate>
+        <label><span>Nome</span><input type="text" name="nome" autocomplete="name" required></label>
+        <label><span>Email</span><input type="email" name="email" autocomplete="email" required></label>
+        <label><span>Messaggio</span><textarea name="messaggio" rows="3" required></textarea></label>
+        <div class="riga-invio">
+          <button type="submit" class="bottone">Invia</button>
+          <small>Pagina di prova: il modulo non invia dati.</small>
+        </div>
+        <p class="conferma" hidden>Grazie, ti scriviamo entro due giorni.</p>
+      </form>
+      <p class="recapiti"><a href="mailto:info@eri-esempio.it">info@eri-esempio.it</a><span>·</span><a href="tel:+39000000000">+39 000 000 0000</a></p>
+    </div>
+  </section>
+
+</main>
+
+<!-- Il nome della fase, grande e in mono, sotto la macchina: compare un attimo al cambio di fase -->
+<div class="fase" aria-hidden="true"></div>
+
+<div id="caricamento"><span></span></div>
+
+<script type="module" src="main.js"></script>
+</body>
+</html>

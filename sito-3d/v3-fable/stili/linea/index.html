@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ERI · Energie Rinnovabili Italia</title>
+<meta name="description" content="ERI sviluppa, autorizza, costruisce e gestisce impianti fotovoltaici, agrivoltaici, di accumulo e idroelettrici.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+
+<!-- le parole enormi stanno DIETRO la tela: la macchina passa davanti alla parte bassa delle lettere -->
+<div id="titoli" aria-hidden="true">
+  <h1 class="parola filigrana" data-m="0">ERI</h1>
+  <h1 class="parola" data-m="1">Sole</h1>
+  <h1 class="parola" data-m="2">Accumulo</h1>
+  <h1 class="parola" data-m="3">Acqua</h1>
+</div>
+
+<canvas id="scena" aria-hidden="true"></canvas>
+<div id="grana" aria-hidden="true"></div>
+<div id="chiaro" aria-hidden="true"></div>
+<div id="scorrimento" aria-hidden="true"></div>
+
+<!-- la riga di luce: a un terzo dal basso, è la linea su cui si disegnano le macchine e che diventa iter -->
+<div id="riga" aria-hidden="true"></div>
+
+<a id="logo" href="#" aria-label="ERI · Energie Rinnovabili Italia"></a>
+
+<header class="testata">
+  <nav class="nav mono" aria-label="Sezioni">
+    <a href="#" data-vai="0.23" data-m="1">Fotovoltaico</a>
+    <a href="#" data-vai="0.50" data-m="2">Accumulo</a>
+    <a href="#" data-vai="0.74" data-m="3">Idroelettrico</a>
+    <a href="#" data-vai="1" data-m="4">Contatti</a>
+  </nav>
+  <div class="momento-num mono" aria-hidden="true"><em>01</em> / 05 &nbsp;·&nbsp; <span>Apertura</span></div>
+</header>
+
+<main id="momenti">
+
+  <section class="momento momento-apertura" data-m="0">
+    <div class="blocco">
+      <p class="sotto">Fotovoltaico, accumulo, idroelettrico. Di ogni impianto seguiamo tutto l'iter.</p>
+      <a href="#" class="cta" data-vai="1">Parliamo del progetto</a>
+    </div>
+    <p class="invito mono">Scorri</p>
+  </section>
+
+  <section class="momento momento-tech" data-m="1">
+    <div class="note mono">
+      <div><b>01 &nbsp;Tracker monoassiale</b><br>pali · tavola · bulloni</div>
+      <div><b>02 &nbsp;Agrivoltaico rialzato</b><br>h 4,50 m · campo sotto</div>
+    </div>
+    <p class="frase">Tracker a un asse e strutture agrivoltaiche rialzate. Dal disegno alla rete, seguiamo tutto l'iter.</p>
+    <ol class="iter" aria-label="L'iter che seguiamo">
+      <li data-sigla="SVI"><b>Sviluppo</b><span>Terreno e progetto</span></li>
+      <li data-sigla="AUT"><b>Autorizzazioni</b><span>Permessi e rete</span></li>
+      <li data-sigla="RTB"><b>Ready to Build</b><span>Pronto al cantiere</span></li>
+      <li data-sigla="COS"><b>Costruzione</b><span>Materia e metallo</span></li>
+      <li data-sigla="GES"><b>Gestione</b><span>In esercizio</span></li>
+    </ol>
+  </section>
+
+  <section class="momento momento-tech" data-m="2">
+    <div class="note mono">
+      <div><b>01 &nbsp;Container batterie</b><br>rack · porte · led</div>
+      <div><b>02 &nbsp;PCS e trasformatore</b><br>inverter · alette · isolatori</div>
+    </div>
+    <p class="frase">Batterie che conservano l'energia e la restituiscono alla rete quando serve.</p>
+    <ol class="iter" aria-label="L'iter che seguiamo">
+      <li data-sigla="SVI"><b>Sviluppo</b><span>Terreno e progetto</span></li>
+      <li data-sigla="AUT"><b>Autorizzazioni</b><span>Permessi e rete</span></li>
+      <li data-sigla="RTB"><b>Ready to Build</b><span>Pronto al cantiere</span></li>
+      <li data-sigla="COS"><b>Costruzione</b><span>Materia e metallo</span></li>
+      <li data-sigla="GES"><b>Gestione</b><span>In esercizio</span></li>
+    </ol>
+  </section>
+
+  <section class="momento momento-tech" data-m="3">
+    <div class="note mono">
+      <div><b>01 &nbsp;Pelton</b><br>salto alto · ugello</div>
+      <div><b>02 &nbsp;Francis</b><br>salto medio · spirale</div>
+      <div><b>03 &nbsp;Kaplan</b><br>salto basso · elica</div>
+    </div>
+    <p class="frase">Pelton per i salti alti, Francis per quelli medi, Kaplan per i salti bassi.</p>
+    <ol class="iter" aria-label="L'iter che seguiamo">
+      <li data-sigla="SVI"><b>Sviluppo</b><span>Terreno e progetto</span></li>
+      <li data-sigla="AUT"><b>Autorizzazioni</b><span>Permessi e rete</span></li>
+      <li data-sigla="RTB"><b>Ready to Build</b><span>Pronto al cantiere</span></li>
+      <li data-sigla="COS"><b>Costruzione</b><span>Materia e metallo</span></li>
+      <li data-sigla="GES"><b>Gestione</b><span>In esercizio</span></li>
+    </ol>
+    <div class="etichette" aria-hidden="true">
+      <div class="etichetta mono" data-turbina="pelton"><b>Pelton</b><span>salto alto</span></div>
+      <div class="etichetta mono" data-turbina="francis"><b>Francis</b><span>salto medio</span></div>
+      <div class="etichetta mono" data-turbina="kaplan"><b>Kaplan</b><span>salto basso</span></div>
+    </div>
+  </section>
+
+  <section class="momento momento-contatti" data-m="4">
+    <h1 class="parola parola-contatti">Parliamo</h1>
+    <div class="blocco scheda">
+      <p class="sotto">Un terreno, un'idea, un impianto da far crescere: raccontaci da dove parti.</p>
+      <form class="modulo" novalidate>
+        <label><span class="mono">Nome</span><input type="text" name="nome" autocomplete="name" required></label>
+        <label><span class="mono">Email</span><input type="email" name="email" autocomplete="email" required></label>
+        <label><span class="mono">Messaggio</span><textarea name="messaggio" rows="2" required></textarea></label>
+        <div class="riga-invio">
+          <button type="submit" class="bottone">Invia</button>
+          <small class="mono">Pagina di prova: il modulo non invia dati.</small>
+        </div>
+        <p class="conferma" hidden>Grazie, ti scriviamo presto.</p>
+      </form>
+      <p class="recapiti mono"><a href="mailto:info@eri-esempio.it">info@eri-esempio.it</a><span>·</span><a href="tel:+39000000000">+39 000 000 0000</a></p>
+    </div>
+  </section>
+
+</main>
+
+<div id="caricamento"><span></span></div>
+
+<script type="module" src="main.js"></script>
+</body>
+</html>
