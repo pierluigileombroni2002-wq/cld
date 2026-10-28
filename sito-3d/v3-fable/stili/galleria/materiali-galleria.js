@@ -72,7 +72,8 @@ export function rivestiScena(scena) {
       if (hex === 'ffd27a') m.color.set('#FFFFFF');          // i led dei rack: bianchi, senza alone
       if (hex === '2a2a40') m.color.set('#2E3136');          // lo schermo del PCS
       if (hex === 'dfeeff') { m.opacity = 0.55; m.blending = THREE.NormalBlending; m.color.set('#E8F0F6'); } // il getto della Pelton: un filo d'acqua chiaro, non un bagliore
-    } else if (m.isMeshStandardMaterial && !Object.values(MAT).includes(m)) {
+    } else if (m.isMeshStandardMaterial && !Object.values(MAT).includes(m) && !m.userData.proprio) {
+      // (i materiali propri del BESS e delle turbine di galleria, segnati con userData.proprio, restano come sono)
       // materiali inline (pale Francis, condotto Kaplan): stessa famiglia
       if (m.metalness >= 0.9) { m.color.set('#D6D4CF'); m.roughness = 0.3; m.envMapIntensity = 1.2; }
       else { m.color.set('#ECE8E0'); m.roughness = 0.5; m.envMapIntensity = 0.6; }

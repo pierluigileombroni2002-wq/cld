@@ -72,7 +72,8 @@ a { color: inherit; text-decoration: none; }
   transition: transform 0.8s cubic-bezier(.2,.7,.2,1) calc(var(--i) * 20ms), opacity 0.5s ease calc(var(--i) * 20ms);
 }
 .titolo-grande.attivo .l { transform: none; opacity: 1; }
-.titolo-grande[data-m="0"] { top: auto; bottom: 30vh; width: min(1200px, 80vw); }
+/* apertura: titolo a sinistra, a metà altezza; il logo grande sta a centro-destra (vedi logo.js) */
+.titolo-grande[data-m="0"] { top: auto; bottom: 37vh; width: min(900px, 56vw); }
 
 #scena { position: fixed; inset: 0; width: 100%; height: 100%; display: block; z-index: 2; pointer-events: none; }
 
@@ -167,7 +168,7 @@ a { color: inherit; text-decoration: none; }
 
 /* apertura */
 .momento-apertura .blocco {
-  position: absolute; left: var(--margine); bottom: clamp(60px, 14vh, 130px); width: min(620px, 60vw); pointer-events: auto;
+  position: absolute; left: var(--margine); bottom: clamp(60px, 17vh, 170px); width: min(620px, 50vw); pointer-events: auto;
 }
 .sotto { margin: 0; max-width: 46ch; font-size: clamp(1rem, 1.2vw, 1.15rem); line-height: 1.55; color: var(--grigio); }
 .bottone {
@@ -191,14 +192,15 @@ a { color: inherit; text-decoration: none; }
 
 /* ---------- etichette turbine ---------- */
 .etichette { position: absolute; inset: 0; }
+/* targhette di sala: pendono dal bordo del basamento, maiuscoletto spaziato scuro */
 .etichetta {
-  position: absolute; left: 0; top: 0; transform: translate(-50%, -100%);
+  position: absolute; left: 0; top: 0; transform: translate(-50%, 0);
   text-align: center; opacity: 0; transition: opacity 0.6s; white-space: nowrap;
+  font-family: var(--mono); font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--nero);
 }
 .etichetta.visibile { opacity: 1; }
-.etichetta b { display: block; font-family: var(--tight); font-weight: 300; font-size: 1.9rem; letter-spacing: -0.02em; line-height: 1.1; color: var(--nero); }
-.etichetta span { font-family: var(--mono); font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--grigio); }
-.etichetta::after { content: ''; display: block; width: 1px; height: 30px; margin: 10px auto 0; background: var(--linea); }
+.etichetta b { font-weight: 500; }
+.etichetta i { display: block; width: 1px; height: 24px; margin: 0 auto 10px; background: var(--nero); opacity: 0.35; }
 
 /* ---------- contatti ---------- */
 .scheda {
@@ -217,6 +219,7 @@ a { color: inherit; text-decoration: none; }
 }
 .modulo input:focus, .modulo textarea:focus { border-bottom-color: var(--nero); }
 .riga-invio { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 4px; }
+.riga-invio[hidden] { display: none; }
 .riga-invio .bottone { margin-top: 0; }
 .riga-invio small { color: var(--grigio); font-size: 0.74rem; }
 .conferma { margin: 6px 0 0; color: var(--nero); font-size: 1rem; }
@@ -254,7 +257,8 @@ a { color: inherit; text-decoration: none; }
   .sotto { font-size: 0.98rem; }
   .bottone { margin-top: 20px; }
   .invito { right: auto; left: var(--margine); bottom: 22px; }
-  .etichetta b { font-size: 1.2rem; }
+  .etichetta { font-size: 10px; letter-spacing: 0.16em; }
+  .etichetta i { height: 14px; margin-bottom: 6px; }
 
   .momento-contatti { overflow-y: auto; pointer-events: auto; }
   .scheda { position: relative; right: auto; top: auto; transform: none; width: 100%; margin: 215px 0 40px; padding: 0 var(--margine); background: transparent; }

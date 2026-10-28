@@ -36,6 +36,8 @@ const fragPavimento = /* glsl */`
     float d = vPos.x * 0.55 + vPos.z * 0.83 - fase;
     float banda = exp(-abs(d) * 0.09);
     c = mix(c, cLuce, banda * (0.38 + finale * 0.5));
+    // nel finale la luce della vetrata lava anche il pavimento: niente orizzonte scuro sotto il modulo
+    c = mix(c, cLuce, finale * 0.45);
     // riflesso satinato delle macchine: debole, sfumato, solo radente
     if (riflesso > 0.0) {
       vec2 uv = vUv4.xy / vUv4.w;

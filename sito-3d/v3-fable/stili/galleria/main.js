@@ -2,7 +2,9 @@
 // Motore e macchine sono quelli di v3-fable; cambiano ambiente, luce, materiali, testi e impaginazione.
 import * as THREE from 'three';
 import { creaAmbiente } from './ambiente.js';
-import { creaMacchine } from '../../macchine/index.js';
+import { creaMacchine } from './macchine-galleria.js';
+import { POSA } from './bess-galleria.js';
+import { DIST } from './turbine-galleria.js';
 import { creaLogo } from './logo.js';
 import { MOMENTI, assemblaggioDi } from '../../ui/testi.js';
 import { rivestiMateriali, rivestiScena } from './materiali-galleria.js';
@@ -39,7 +41,7 @@ const scena = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 3000);
 rivestiMateriali();
 const ambiente = creaAmbiente(renderer, scena);
-const macchine = creaMacchine(scena, ambiente.env);
+const macchine = creaMacchine(scena);
 rivestiScena(scena);
 
 // ---------- ombre di contatto dipinte e disegno a terra ----------
@@ -50,12 +52,12 @@ const ombreFv = creaOmbre([
 ]);
 macchine.gruppi.fotovoltaico.parent.add(ombreFv.gruppo); ombreFv.gruppo.position.copy(macchine.gruppi.fotovoltaico.position);
 const ombreBess = creaOmbre([
-  { x: -4.3, z: -2.5, w: 8.5, d: 5.2 }, { x: 4.3, z: -2.5, w: 8.5, d: 5.2 },
-  { x: -6.0, z: 3.0, w: 3.6, d: 2.6 }, { x: 5.5, z: 3.2, w: 3.6, d: 3.0 },
+  { x: POSA.containerA.x - 0.3, z: POSA.containerA.z, w: 9.0, d: 5.0 }, { x: POSA.containerB.x + 0.3, z: POSA.containerB.z, w: 9.0, d: 5.0 },
+  { x: POSA.pcs.x, z: POSA.pcs.z, w: 3.6, d: 2.6 }, { x: POSA.trafo.x, z: POSA.trafo.z, w: 3.6, d: 3.2 },
 ]);
 scena.add(ombreBess.gruppo); ombreBess.gruppo.position.copy(macchine.gruppi.bess.position);
 const ombreIdro = creaOmbre([
-  { x: -12, z: 0, w: 6.5, d: 5 }, { x: 0, z: 0, w: 6.5, d: 5 }, { x: 12, z: 0, w: 6.5, d: 5 },
+  { x: -DIST, z: 0, w: 6.8, d: 5.2 }, { x: 0, z: 0, w: 6.8, d: 5.2 }, { x: DIST, z: 0, w: 6.8, d: 5.2 },
 ]);
 scena.add(ombreIdro.gruppo); ombreIdro.gruppo.position.copy(macchine.gruppi.idroelettrico.position);
 const xPali = [-L / 2 + 1.2, -L / 6, L / 6, L / 2 - 1.2];
@@ -65,10 +67,11 @@ const disegnoFv = creaDisegno([
 ]);
 scena.add(disegnoFv.gruppo); disegnoFv.gruppo.position.copy(macchine.gruppi.fotovoltaico.position);
 const disegnoBess = creaDisegno([
-  { x: -4.3, z: -2.5, w: 6.3, d: 2.7 }, { x: 4.3, z: -2.5, w: 6.3, d: 2.7 }, { x: -6.0, z: 3.0, w: 2.3, d: 1.3 }, { x: 5.5, z: 3.2, w: 2.3, d: 1.7 },
+  { x: POSA.containerA.x, z: POSA.containerA.z, w: 6.3, d: 2.7 }, { x: POSA.containerB.x, z: POSA.containerB.z, w: 6.3, d: 2.7 },
+  { x: POSA.pcs.x, z: POSA.pcs.z, w: 2.3, d: 1.3 }, { x: POSA.trafo.x, z: POSA.trafo.z, w: 2.3, d: 1.7 },
 ]);
 scena.add(disegnoBess.gruppo); disegnoBess.gruppo.position.copy(macchine.gruppi.bess.position);
-const disegnoIdro = creaDisegno([{ x: -12, z: 0, w: 4.8, d: 3.4 }, { x: 0, z: 0, w: 4.8, d: 3.4 }, { x: 12, z: 0, w: 4.8, d: 3.4 }]);
+const disegnoIdro = creaDisegno([{ x: -DIST, z: 0, w: 4.8, d: 3.4 }, { x: 0, z: 0, w: 4.8, d: 3.4 }, { x: DIST, z: 0, w: 4.8, d: 3.4 }]);
 scena.add(disegnoIdro.gruppo); disegnoIdro.gruppo.position.copy(macchine.gruppi.idroelettrico.position);
 const terra = [
   { m: MOMENTI[1], ombre: ombreFv, disegno: disegnoFv },
@@ -112,22 +115,55 @@ modulo.addEventListener('submit', (e) => {
 
 // ---------- regia della camera: una persona che cammina in una galleria, all'altezza degli occhi ----------
 // Le tre sculture stanno in fila lungo x; tra una e l'altra la camera cammina di lato, dentro ogni momento gira piano.
-const CHIAVI = [
-  { p: 0.00, pos: [-52, 2.6, 30], mira: [-44, 4.5, -30] },
+// Ogni chiave ha anche dove sta il soggetto sullo schermo (sx, sy: frazioni della mezza larghezza e della mezza altezza)
+// e, se serve, una posa diversa per il telefono (tel), dove la camera non arretra e segue la macchina da vicino.
+// (le chiavi ripetute subito dopo una posa servono a fermare la curva: senza, il punto successivo lontano la piega)
+const DESKTOP = [
+  { p: 0.00, pos: [-52, 2.6, 30], mira: [-44, 5.6, -30] },
   { p: 0.10, pos: [-46, 2.6, 29], mira: [-30, 3.0, -22] },
-  // fotovoltaico: la fila davanti parte vicina a sinistra e si allontana verso destra, vista dal basso di tre quarti
-  // (occhio a 1,9-2 m, sguardo appena verso l'alto: i pannelli stanno sopra l'orizzonte e sotto il titolo)
+  // fotovoltaico (approvato, non si tocca): la fila davanti parte vicina a sinistra e si allontana verso destra, vista dal basso di tre quarti
   { p: 0.16, pos: [-30, 2.0, 27], mira: [-4, 2.5, 4] },
   { p: 0.36, pos: [-12, 1.9, 25], mira: [9, 2.5, 3] },
-  // BESS: frontale a tre quarti, tutto in campo
   { p: 0.43, pos: [46, 2.3, 26], mira: [72, 1.6, 0] },
-  { p: 0.60, pos: [82, 2.1, 24], mira: [73, 1.4, 0] },
-  // le tre turbine: la camera passa davanti e si ferma a metà sulla Francis
-  { p: 0.67, pos: [122, 2.2, 22], mira: [130, 1.3, 0] },
-  { p: 0.84, pos: [154, 2.2, 24], mira: [141, 1.2, 0] },
+  // BESS: la camera arriva da sinistra, si abbassa all'altezza degli occhi e si ferma di tre quarti davanti alle porte aperte, il blocco a centro-sinistra
+  { p: 0.47, pos: [60, 1.8, 27], mira: [69, 1.3, -1], sx: -0.14, sy: -0.14 },
+  { p: 0.60, pos: [80, 1.7, 21.5], mira: [69.5, 1.3, -1], sx: -0.2, sy: -0.14 },
+  { p: 0.62, pos: [80.5, 1.7, 21.3], mira: [69.5, 1.3, -1], sx: -0.2, sy: -0.14 },
+  // le tre turbine: la camera passa davanti alla fila, bassa, e si ferma sulla Francis
+  { p: 0.66, pos: [118, 1.7, 29], mira: [137, 1.2, 0], sx: -0.16, sy: -0.1 },
+  { p: 0.84, pos: [133.5, 1.65, 24.5], mira: [140, 1.2, 0], sx: -0.16, sy: -0.1 },
+  { p: 0.86, pos: [134.2, 1.65, 24.3], mira: [140, 1.2, 0], sx: -0.16, sy: -0.1 },
   { p: 0.90, pos: [166, 2.6, 8], mira: [176, 5.0, -40] },
   { p: 1.00, pos: [176, 4.0, 0], mira: [187, 7.5, -60] },
-].map((k) => ({ p: k.p, pos: new THREE.Vector3(...k.pos), mira: new THREE.Vector3(...k.mira) }));
+];
+// Telefono: apertura, fotovoltaico e contatti arretrano (la scultura sta nella fascia bassa); BESS e turbine si guardano da vicino,
+// una macchina alla volta, con la camera che cammina lungo la fila.
+const TELEFONO = [
+  { p: 0.00, pos: [-52, 2.6, 30], mira: [-44, 5.6, -30], arretra: 1.55 },
+  { p: 0.10, pos: [-46, 2.6, 29], mira: [-30, 3.0, -22], arretra: 1.55 },
+  { p: 0.16, pos: [-30, 2.0, 27], mira: [-4, 2.5, 4], arretra: 1.55 },
+  { p: 0.36, pos: [-12, 1.9, 25], mira: [9, 2.5, 3], arretra: 1.55 },
+  // BESS: prima il container A con il PCS davanti, poi la camera cammina a destra e si ferma davanti al container B
+  // (tutto in campo: il trasformatore davanti alle porte chiuse, le porte aperte libere a destra; il container A resta fuori dal bordo)
+  { p: 0.43, pos: [58, 2.0, 24], mira: [65, 1.3, -1] },
+  { p: 0.49, pos: [66, 1.9, 20], mira: [67.5, 1.2, -1] },
+  { p: 0.55, pos: [74.5, 1.8, 21], mira: [74.75, 1.2, -1] },
+  { p: 0.60, pos: [74.6, 1.8, 21], mira: [74.75, 1.2, -1] },
+  // turbine: una alla volta, frontali e vicine (le vicine restano fuori dal bordo anche sugli schermi meno stretti)
+  { p: 0.64, pos: [126, 1.8, 20], mira: [140 - DIST, 1.1, 0] },
+  { p: 0.69, pos: [140.15 - DIST, 1.7, 11.8], mira: [140.15 - DIST, 1.1, 0] },
+  { p: 0.72, pos: [140.15 - DIST, 1.7, 11.8], mira: [140.15 - DIST, 1.1, 0] },
+  { p: 0.75, pos: [140, 1.7, 11.8], mira: [140, 1.1, 0] },
+  { p: 0.78, pos: [140, 1.7, 11.8], mira: [140, 1.1, 0] },
+  { p: 0.81, pos: [140 + DIST, 1.7, 11.8], mira: [140 + DIST, 1.1, 0] },
+  { p: 0.84, pos: [140 + DIST, 1.7, 11.8], mira: [140 + DIST, 1.1, 0] },
+  { p: 0.90, pos: [166, 2.6, 8], mira: [176, 5.0, -40], arretra: 1.55 },
+  { p: 1.00, pos: [176, 4.0, 0], mira: [187, 7.5, -60], arretra: 1.55 },
+];
+const chiave = (k, t) => ({ p: k.p, pos: new THREE.Vector3(...k.pos), mira: new THREE.Vector3(...k.mira),
+  sx: k.sx ?? (t ? 0 : 0.02), sy: k.sy ?? (t ? -0.22 : -0.18), arretra: k.arretra ?? 1 });
+const CHIAVI_DESK = DESKTOP.map((k) => chiave(k, false));
+const CHIAVI_TEL = TELEFONO.map((k) => chiave(k, true));
 
 const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _dir = new THREE.Vector3(), _dx = new THREE.Vector3(), _dy = new THREE.Vector3();
 function catmull(out, p0, p1, p2, p3, t) {
@@ -138,6 +174,7 @@ function catmull(out, p0, p1, p2, p3, t) {
   return out;
 }
 function posaCamera(p) {
+  const CHIAVI = stretto() ? CHIAVI_TEL : CHIAVI_DESK;
   let i = 0;
   while (i < CHIAVI.length - 2 && p > CHIAVI[i + 1].p) i++;
   const k0 = CHIAVI[Math.max(0, i - 1)], k1 = CHIAVI[i], k2 = CHIAVI[i + 1], k3 = CHIAVI[Math.min(CHIAVI.length - 1, i + 2)];
@@ -146,16 +183,14 @@ function posaCamera(p) {
   catmull(_a, k0.pos, k1.pos, k2.pos, k3.pos, e);
   catmull(_b, k0.mira, k1.mira, k2.mira, k3.mira, e);
   _a.y += Math.sin(stato.tempo * 0.35) * 0.03; // respiro impercettibile
-  inquadra(_a, _b);
+  inquadra(_a, _b, k1.sx + (k2.sx - k1.sx) * e, k1.sy + (k2.sy - k1.sy) * e, k1.arretra + (k2.arretra - k1.arretra) * e);
 }
 // Il soggetto sta a centro-destra su desktop (il titolo è dietro, in alto a sinistra), in basso sul telefono (i testi stanno in alto).
 function stretto() { return innerHeight > innerWidth || innerWidth <= 760; }
-function inquadra(pos, mira) {
-  const s = stretto();
-  // sul telefono la camera arretra: la scultura deve stare tutta nella fascia bassa dello schermo
+function inquadra(pos, mira, sx, sy, arretra) {
+  // sul telefono la camera arretra (salvo le pose pensate per il telefono): la scultura deve stare tutta nella fascia bassa dello schermo
   _dir.subVectors(mira, pos); let dist = _dir.length(); _dir.normalize();
-  if (s) { pos = _a.copy(pos).addScaledVector(_dir, -dist * 0.55); dist *= 1.55; }
-  const sx = s ? 0 : 0.02, sy = s ? -0.2 : -0.18;
+  if (arretra !== 1) { pos = _a.copy(pos).addScaledVector(_dir, -dist * (arretra - 1)); dist *= arretra; }
   const mezzaH = Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2) * dist;
   const mezzaW = mezzaH * camera.aspect;
   _dx.crossVectors(_dir, camera.up).normalize();
@@ -240,12 +275,14 @@ function etichetteTurbine(p) {
     const i = nome === 'pelton' ? 0 : nome === 'francis' ? 1 : 2;
     const visibile = dentro && a > i * 0.3 + 0.3;
     if (!visibile) { el.classList.remove('visibile'); continue; }
+    // l'ancora sta al bordo anteriore del basamento: l'etichetta pende sotto, come una targhetta di sala
     _proj.copy(pos).project(camera);
     const x = (_proj.x * 0.5 + 0.5) * innerWidth, y = (-_proj.y * 0.5 + 0.5) * innerHeight;
     const s = stretto();
-    const dentroSchermo = _proj.z < 1 && x > 40 && x < innerWidth - 40 && y > (s ? innerHeight * 0.5 : innerHeight * 0.47) && y < innerHeight - 40;
+    const mezza = el.offsetWidth / 2 + 12;
+    const dentroSchermo = _proj.z < 1 && x > mezza && x < innerWidth - mezza && y > (s ? innerHeight * 0.5 : innerHeight * 0.4) && y < innerHeight - (s ? 60 : 150);
     el.classList.toggle('visibile', dentroSchermo);
-    el.style.transform = `translate(${x.toFixed(0)}px, ${y.toFixed(0)}px) translate(-50%, -100%)`;
+    el.style.transform = `translate(${x.toFixed(0)}px, ${y.toFixed(0)}px) translate(-50%, 0)`;
   }
 }
 
@@ -351,8 +388,11 @@ stato.info = () => ({
   ms: +stato.ms.toFixed(2), msPeggio: +stato.msPeggio.toFixed(1),
   triangoli: renderer.info.render.triangles, chiamate: renderer.info.render.calls,
   qualita: stato.qualita, dpr: renderer.getPixelRatio(), p: +stato.p.toFixed(3),
+  cam: camera.position.toArray().map((v) => +v.toFixed(2)), fov: camera.fov, aspect: +camera.aspect.toFixed(3), stretto: stretto(),
 });
 stato.azzeraMisure = () => { stato.msPeggio = 0; campioni = []; };
+stato.proietta = (x, y, z) => { const v = new THREE.Vector3(x, y, z).project(camera); return [+((v.x * 0.5 + 0.5) * innerWidth).toFixed(0), +((-v.y * 0.5 + 0.5) * innerHeight).toFixed(0), +v.z.toFixed(3)]; };
+stato.posizioni = () => { const out = {}; for (const [n, g] of Object.entries(macchine.gruppi)) { g.traverse((o) => { if (o.isMesh && o.geometry.type === 'LatheGeometry') { const w = new THREE.Vector3(); o.getWorldPosition(w); out[n + '-isolatori'] = w.toArray().map((v) => +v.toFixed(2)); } }); } return out; };
 stato.misura = (durataMs = 3000) => new Promise((ok) => {
   const t0 = performance.now(); const fotogrammi = []; let peggio = 0, lavoro = 0, n = 0, prima = t0;
   (function f() {
