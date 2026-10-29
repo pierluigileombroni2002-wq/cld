@@ -59,3 +59,15 @@ Tutto molto sotto i limiti del brief (600k triangoli, 250 chiamate). I ms di ren
 - Carattere: in uso la variante A (serif); da confermare con l'utente (B con `?font=b`).
 - Telefono: controllare i testi lunghi su schermi molto piccoli e la scheda contatti con la tastiera aperta.
 - Pulizia finale: togliere `__eri.*` di prova prima di pubblicare, ottimizzare le font (subset) e aggiungere i meta social.
+
+## Aggiornamento · stile scelto: Galleria Bianca (2026-10-29)
+
+La versione "crepuscolo" qui sopra è stata scartata dall'utente perché troppo simile all'altra proposta. Dopo tre tavole
+di stile (`stili/galleria-bianca.html`, `stili/linea-di-luce.html`, `stili/pietra-e-bronzo.html`) e due bozzetti 3D,
+lo stile scelto è **Galleria Bianca**: `stili/galleria/` (pagina `http://localhost:8792/v3-fable/stili/galleria/`).
+Sala bianca da museo, pavimento di cemento opaco con ombre di contatto dipinte (niente shadow map), acciaio chiaro,
+vetro antracite con la striscia di luce della finestra, titoli enormi neri sottili, iter a numeri 01-05, rame del logo
+come unico accento, logo nei colori originali. Le macchine condivise sono riusate; BESS e turbine hanno copie proprie
+(`bess-galleria.js`, `turbine-galleria.js`), i contatti mostrano le tre macchine in piccolo (`collezione.js`).
+Misure (headless, alta): idro 31,6k triangoli / 94 chiamate, BESS 126 chiamate; nessun errore ai tre livelli, desktop e telefono.
+`stili/linea/` (Linea di Luce) resta un bozzetto non rifinito.

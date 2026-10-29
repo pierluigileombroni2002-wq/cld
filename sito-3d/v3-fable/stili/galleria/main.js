@@ -7,8 +7,9 @@ import { POSA } from './bess-galleria.js';
 import { DIST } from './turbine-galleria.js';
 import { creaLogo } from './logo.js';
 import { MOMENTI, assemblaggioDi } from '../../ui/testi.js';
-import { rivestiMateriali, rivestiScena } from './materiali-galleria.js';
+import { rivestiMateriali, rivestiScena, setFaseVetro, vetroModulo } from './materiali-galleria.js';
 import { creaOmbre, creaDisegno } from './ombre.js';
+import { creaCollezione } from './collezione.js';
 
 const param = new URLSearchParams(location.search);
 const tela = document.getElementById('scena');
@@ -42,6 +43,13 @@ const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 3000);
 rivestiMateriali();
 const ambiente = creaAmbiente(renderer, scena);
 const macchine = creaMacchine(scena);
+// la collezione del finale: tracker, container e Francis in fila davanti alla vetrata, piccoli e lontani, nella metà sinistra
+const collezione = creaCollezione(scena);
+collezione.disponi([
+  { pos: [169.1, 0, -65.1], rot: 28 },
+  { pos: [175.5, 0, -63.9], rot: 24 },
+  { pos: [181.9, 0, -62.7], rot: 20 },
+]);
 rivestiScena(scena);
 
 // ---------- ombre di contatto dipinte e disegno a terra ----------
@@ -126,13 +134,14 @@ const DESKTOP = [
   { p: 0.36, pos: [-12, 1.9, 25], mira: [9, 2.5, 3] },
   { p: 0.43, pos: [46, 2.3, 26], mira: [72, 1.6, 0] },
   // BESS: la camera arriva da sinistra, si abbassa all'altezza degli occhi e si ferma di tre quarti davanti alle porte aperte, il blocco a centro-sinistra
-  { p: 0.47, pos: [60, 1.8, 27], mira: [69, 1.3, -1], sx: -0.14, sy: -0.14 },
-  { p: 0.60, pos: [80, 1.7, 21.5], mira: [69.5, 1.3, -1], sx: -0.2, sy: -0.14 },
-  { p: 0.62, pos: [80.5, 1.7, 21.3], mira: [69.5, 1.3, -1], sx: -0.2, sy: -0.14 },
-  // le tre turbine: la camera passa davanti alla fila, bassa, e si ferma sulla Francis
-  { p: 0.66, pos: [118, 1.7, 29], mira: [137, 1.2, 0], sx: -0.16, sy: -0.1 },
-  { p: 0.84, pos: [133.5, 1.65, 24.5], mira: [140, 1.2, 0], sx: -0.16, sy: -0.1 },
-  { p: 0.86, pos: [134.2, 1.65, 24.3], mira: [140, 1.2, 0], sx: -0.16, sy: -0.1 },
+  { p: 0.47, pos: [60, 1.8, 27], mira: [69, 1.3, -1], sx: -0.2, sy: -0.14 },
+  { p: 0.60, pos: [80, 1.7, 21.5], mira: [69.5, 1.3, -1], sx: -0.26, sy: -0.14 },
+  { p: 0.62, pos: [80.5, 1.7, 21.3], mira: [69.5, 1.3, -1], sx: -0.26, sy: -0.14 },
+  // le tre turbine: la camera passa davanti alla fila, bassa, e si ferma vicina sulla Francis (la fila riempie la pagina,
+  // le basi restano sopra il blocco iter, che nel momento idro è più basso e più stretto)
+  { p: 0.66, pos: [118, 1.7, 29], mira: [137, 1.2, 0], sx: -0.14, sy: -0.14 },
+  { p: 0.84, pos: [135.6, 1.5, 19.7], mira: [140.3, 1.25, 0], sx: -0.08, sy: -0.24 },
+  { p: 0.86, pos: [136.1, 1.5, 19.6], mira: [140.3, 1.25, 0], sx: -0.08, sy: -0.24 },
   { p: 0.90, pos: [166, 2.6, 8], mira: [176, 5.0, -40] },
   { p: 1.00, pos: [176, 4.0, 0], mira: [187, 7.5, -60] },
 ];
@@ -141,14 +150,15 @@ const DESKTOP = [
 const TELEFONO = [
   { p: 0.00, pos: [-52, 2.6, 30], mira: [-44, 5.6, -30], arretra: 1.55 },
   { p: 0.10, pos: [-46, 2.6, 29], mira: [-30, 3.0, -22], arretra: 1.55 },
-  { p: 0.16, pos: [-30, 2.0, 27], mira: [-4, 2.5, 4], arretra: 1.55 },
-  { p: 0.36, pos: [-12, 1.9, 25], mira: [9, 2.5, 3], arretra: 1.55 },
+  // fotovoltaico: più vicino che su desktop in proporzione, la fila davanti riempie la fascia bassa, spostata verso il centro
+  { p: 0.16, pos: [-30, 2.0, 27], mira: [-4, 2.5, 4], arretra: 1.3, sx: 0.1, sy: -0.24 },
+  { p: 0.36, pos: [-12, 1.9, 25], mira: [9, 2.5, 3], arretra: 1.3, sx: 0.1, sy: -0.24 },
   // BESS: prima il container A con il PCS davanti, poi la camera cammina a destra e si ferma davanti al container B
   // (tutto in campo: il trasformatore davanti alle porte chiuse, le porte aperte libere a destra; il container A resta fuori dal bordo)
   { p: 0.43, pos: [58, 2.0, 24], mira: [65, 1.3, -1] },
   { p: 0.49, pos: [66, 1.9, 20], mira: [67.5, 1.2, -1] },
-  { p: 0.55, pos: [74.5, 1.8, 21], mira: [74.75, 1.2, -1] },
-  { p: 0.60, pos: [74.6, 1.8, 21], mira: [74.75, 1.2, -1] },
+  { p: 0.55, pos: [75.15, 1.8, 21], mira: [75.4, 1.2, -1] },
+  { p: 0.60, pos: [75.25, 1.8, 21], mira: [75.4, 1.2, -1] },
   // turbine: una alla volta, frontali e vicine (le vicine restano fuori dal bordo anche sugli schermi meno stretti)
   { p: 0.64, pos: [126, 1.8, 20], mira: [140 - DIST, 1.1, 0] },
   { p: 0.69, pos: [140.15 - DIST, 1.7, 11.8], mira: [140.15 - DIST, 1.1, 0] },
@@ -157,8 +167,9 @@ const TELEFONO = [
   { p: 0.78, pos: [140, 1.7, 11.8], mira: [140, 1.1, 0] },
   { p: 0.81, pos: [140 + DIST, 1.7, 11.8], mira: [140 + DIST, 1.1, 0] },
   { p: 0.84, pos: [140 + DIST, 1.7, 11.8], mira: [140 + DIST, 1.1, 0] },
-  { p: 0.90, pos: [166, 2.6, 8], mira: [176, 5.0, -40], arretra: 1.55 },
-  { p: 1.00, pos: [176, 4.0, 0], mira: [187, 7.5, -60], arretra: 1.55 },
+  // contatti: la camera guarda un po' più in basso, così la collezione davanti alla vetrata sta nella fascia tra il titolo e il modulo
+  { p: 0.90, pos: [166, 2.6, 8], mira: [172, -2.5, -40], sx: 0.1, sy: 0 },
+  { p: 1.00, pos: [176, 4.0, 0], mira: [181, -4.5, -60], sx: 0.1, sy: 0 },
 ];
 const chiave = (k, t) => ({ p: k.p, pos: new THREE.Vector3(...k.pos), mira: new THREE.Vector3(...k.mira),
   sx: k.sx ?? (t ? 0 : 0.02), sy: k.sy ?? (t ? -0.22 : -0.18), arretra: k.arretra ?? 1 });
@@ -232,6 +243,7 @@ function aggiornaTesti(p) {
   if (idx !== momentoAttivo) {
     sezioni.forEach((s) => s.classList.toggle('attivo', +s.dataset.m === idx));
     titoli.forEach((t) => t.classList.toggle('attivo', +t.dataset.m === idx));
+    document.body.dataset.momento = idx; // il CSS lascia libera la fascia dell'iter a destra nei momenti tecnologici
     momentoAttivo = idx; faseAttiva = -1;
   }
   if (idx >= 1 && idx <= 3) {
@@ -270,15 +282,22 @@ function etichetteTurbine(p) {
   const m = MOMENTI[3];
   const dentro = p > m.da && p < m.a + 0.02;
   const a = assemblaggioDi(p, m);
-  for (const { nome, pos } of macchine.ancoreTurbine()) {
+  const s = stretto();
+  // l'ancora sta al bordo anteriore del basamento: l'etichetta pende sotto, come una targhetta di sala;
+  // su desktop le tre targhette stanno su una sola riga, appesa alla piastra più bassa
+  const ancore = macchine.ancoreTurbine().map(({ nome, pos }) => {
+    _proj.copy(pos).project(camera);
+    return { nome, x: (_proj.x * 0.5 + 0.5) * innerWidth, y: (-_proj.y * 0.5 + 0.5) * innerHeight, z: _proj.z };
+  });
+  const yRiga = Math.max(...ancore.map((q) => q.y)) + 4;
+  for (const q of ancore) {
+    const { nome, x, z } = q;
+    const y = s ? q.y + 4 : yRiga;
     const el = etichette[nome]; if (!el) continue;
     const i = nome === 'pelton' ? 0 : nome === 'francis' ? 1 : 2;
     const visibile = dentro && a > i * 0.3 + 0.3;
     if (!visibile) { el.classList.remove('visibile'); continue; }
-    // l'ancora sta al bordo anteriore del basamento: l'etichetta pende sotto, come una targhetta di sala
-    _proj.copy(pos).project(camera);
-    const x = (_proj.x * 0.5 + 0.5) * innerWidth, y = (-_proj.y * 0.5 + 0.5) * innerHeight;
-    const s = stretto();
+    _proj.z = z;
     const mezza = el.offsetWidth / 2 + 12;
     const dentroSchermo = _proj.z < 1 && x > mezza && x < innerWidth - mezza && y > (s ? innerHeight * 0.5 : innerHeight * 0.4) && y < innerHeight - (s ? 60 : 150);
     el.classList.toggle('visibile', dentroSchermo);
@@ -322,6 +341,9 @@ function fotogramma() {
   const finale = Math.min(1, Math.max(0, (p - 0.86) / 0.14));
   ambiente.aggiorna(stato.tempo, camera, finale, p);
   macchine.aggiorna(p, stato.tempo, camera);
+  collezione.aggiorna(finale, stato.tempo);
+  // la striscia della finestra sul vetro dei moduli attraversa la fila con lo scorrimento del momento fotovoltaico
+  if (!stato.faseVetroFissa) setFaseVetro(-18 + (p - 0.13) / 0.23 * 36);
   aggiornaTerra(p);
   aggiornaTesti(p);
   etichetteTurbine(p);
@@ -404,3 +426,5 @@ stato.misura = (durataMs = 3000) => new Promise((ok) => {
   })();
 });
 stato.qualitaImposta = (q) => applicaQualita(q);
+stato.vetro = vetroModulo();
+stato.setFaseVetro = (x) => { setFaseVetro(x); stato.faseVetroFissa = true; };

@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import { Assemblaggio, facile } from '../../scena/assemblaggio.js';
 import { GEO, istanze, bulloniInCerchio } from '../../macchine/materiali.js';
 
-export const DIST = 6.2; // distanza tra le turbine lungo x
+export const DIST = 5.4; // distanza tra le turbine lungo x
 
 // materiali propri delle turbine in galleria
 export const MAT_T = {
@@ -45,19 +45,35 @@ function flangia(raggio, spessore, nBulloni, mat = MAT_T.inox) {
 function pelton(gruppo, x, ass, o0) {
   base(gruppo, x, ass, o0);
   const g = new THREE.Group(); g.position.set(x, 0, 0); gruppo.add(g);
-  const R = 1.05, yC = 1.55;
-  // sostegni e albero (lungo z: la ruota guarda la camera)
-  for (const sz of [-0.55, 0.55]) {
-    const s = new THREE.Mesh(new THREE.BoxGeometry(0.5, yC - 0.3, 0.3), MAT_T.ghisaChiara); s.position.set(0, 0.14 + (yC - 0.3) / 2, sz); g.add(s);
-    ass.aggiungi(s, { ordine: o0 + 0.04, da: [0, -1.2, 0], durata: 0.1, scala: 1 });
-    const cappello = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.34, 20), MAT_T.acciaio); cappello.rotation.x = Math.PI / 2; cappello.position.set(0, yC, sz); g.add(cappello);
-    ass.aggiungi(cappello, { ordine: o0 + 0.08, da: [0, 0.5, 0], durata: 0.1, scala: 1 });
-  }
-  const albero = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 1.5, 16), MAT_T.inox); albero.rotation.x = Math.PI / 2; albero.position.set(0, yC, 0); g.add(albero);
+  const R = 1.0, yC = 1.5, Rc = R + 0.3; // ruota, quota dell'albero, raggio della cassa (il fondo della cassa sfiora il basamento)
+  // la cassa: un tamburo in ghisa verniciata, chiuso dietro e aperto davanti (in sezione), con il bordo in acciaio lucido:
+  // la ruota resta visibile ma dentro un corpo solido e scuro
+  const piede = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.5, 1.0), MAT_T.ghisaChiara); piede.position.set(0, 0.14 + 0.25, 0); g.add(piede);
+  ass.aggiungi(piede, { ordine: o0 + 0.02, da: [0, -0.6, 0], durata: 0.1, scala: 1 });
+  const cassa = new THREE.Group(); cassa.position.set(0, yC, 0); g.add(cassa);
+  const fondo = new THREE.Mesh(new THREE.CylinderGeometry(Rc, Rc, 0.05, 48), MAT_T.ghisa); fondo.rotation.x = Math.PI / 2; fondo.position.z = -0.45; cassa.add(fondo);
+  const tamburo = new THREE.Mesh(new THREE.CylinderGeometry(Rc, Rc, 0.9, 48, 1, true), proprio(new THREE.MeshStandardMaterial({ color: '#3E4247', metalness: 0.55, roughness: 0.5, side: THREE.DoubleSide, envMapIntensity: 0.95 })));
+  tamburo.rotation.x = Math.PI / 2; cassa.add(tamburo);
+  const bordo = new THREE.Mesh(new THREE.TorusGeometry(Rc, 0.03, 8, 48), MAT_T.acciaio); bordo.position.z = 0.45; cassa.add(bordo);
+  const bulCassa = istanze(GEO.bullone, MAT_T.bullone, bulloniInCerchio(24, Rc - 0.1, { y: 0.46, asse: 'z' })); cassa.add(bulCassa); cassa.userData.minuteria = bulCassa;
+  ass.aggiungi(cassa, { ordine: o0 + 0.05, da: [0, 0.8, 0], durata: 0.14, scala: 0.9 });
+  // il cuscinetto davanti: una colonna stretta fuori dalla cassa, con il cappello in acciaio sull'albero
+  const sostegno = new THREE.Mesh(new THREE.BoxGeometry(0.4, yC - 0.3, 0.3), MAT_T.ghisaChiara); sostegno.position.set(0, 0.14 + (yC - 0.3) / 2, 0.72); g.add(sostegno);
+  ass.aggiungi(sostegno, { ordine: o0 + 0.04, da: [0, -1.2, 0], durata: 0.1, scala: 1 });
+  const cappello = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.32, 20), MAT_T.acciaio); cappello.rotation.x = Math.PI / 2; cappello.position.set(0, yC, 0.72); g.add(cappello);
+  ass.aggiungi(cappello, { ordine: o0 + 0.08, da: [0, 0.5, 0], durata: 0.1, scala: 1 });
+  // l'albero attraversa la cassa e arriva al generatore, dietro, sul suo piedistallo (una fascia in rame a vista)
+  const albero = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 2.0, 16), MAT_T.inox); albero.rotation.x = Math.PI / 2; albero.position.set(0, yC, -0.1); g.add(albero);
   ass.aggiungi(albero, { ordine: o0 + 0.1, da: [0, 0, 1.5], durata: 0.1, scala: 1 });
+  const generatore = new THREE.Group(); generatore.position.set(0, 0, -1.2); g.add(generatore);
+  const piedeGen = new THREE.Mesh(new THREE.BoxGeometry(0.9, yC - 0.45 - 0.14, 0.6), MAT_T.ghisaChiara); piedeGen.position.set(0, 0.14 + (yC - 0.45 - 0.14) / 2, 0); generatore.add(piedeGen);
+  const corpoGen = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.46, 0.66, 32), MAT_T.ghisa); corpoGen.rotation.x = Math.PI / 2; corpoGen.position.set(0, yC, 0); generatore.add(corpoGen);
+  const rameGen = new THREE.Mesh(new THREE.CylinderGeometry(0.47, 0.47, 0.12, 32, 1, true), MAT_T.rame); rameGen.rotation.x = Math.PI / 2; rameGen.position.set(0, yC, 0.2); generatore.add(rameGen);
+  const testaGen = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.06, 32), MAT_T.acciaio); testaGen.rotation.x = Math.PI / 2; testaGen.position.set(0, yC, 0.36); generatore.add(testaGen);
+  ass.aggiungi(generatore, { ordine: o0 + 0.16, da: [0, 0, -1.2], durata: 0.12, scala: 0.8 });
   // la ruota: disco, mozzo con bulloni, 20 cucchiai doppi
   const ruota = new THREE.Group(); ruota.position.set(0, yC, 0); g.add(ruota);
-  const disco = new THREE.Mesh(new THREE.CylinderGeometry(R - 0.1, R - 0.1, 0.1, 48), MAT_T.inox); disco.rotation.x = Math.PI / 2; ruota.add(disco);
+  const disco = new THREE.Mesh(new THREE.CylinderGeometry(R - 0.1, R - 0.1, 0.1, 48), MAT_T.acciaio); disco.rotation.x = Math.PI / 2; ruota.add(disco);
   const mozzo = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.2, 24), MAT_T.acciaio); mozzo.rotation.x = Math.PI / 2; ruota.add(mozzo);
   const bulMozzo = istanze(GEO.bullone, MAT_T.bullone, bulloniInCerchio(10, 0.22, { y: 0.105, asse: 'z' })); ruota.add(bulMozzo);
   const geoCucchiaio = new THREE.SphereGeometry(1, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2); // mezza sfera: il cucchiaio
@@ -80,24 +96,21 @@ function pelton(gruppo, x, ass, o0) {
   assRuota.aggiungiIstanze(cucchiai, trCuc, { durata: 0.15, scala: 0.5 });
   assRuota.aggiungiIstanze(radici, trRad, { durata: 0.15, scala: 0.5 });
   ass.aggiungi(ruota, { ordine: o0 + 0.12, da: [0, 0.8, 0], durata: 0.14, scala: 0.6, rotazione: 1.2, asse: 'z' });
-  // l'ugello: tubo con gomito e flange, che punta tangente alla ruota, dal basso a destra; due selle lo reggono
+  // l'ugello: il tubo in pressione arriva da destra, basso, posato su due selle, e si imbullona alla cassa con una flangia;
+  // dentro la cassa il cono inox spara il getto orizzontale sui cucchiai in basso (la ruota lo attraversa: è così che lavora)
+  const yU = yC - R; // la quota del getto: il cerchio primitivo dei cucchiai
   const ugello = new THREE.Group(); g.add(ugello);
-  const tubo = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, 1.7, 20), MAT_T.acciaio); tubo.rotation.z = Math.PI / 2; tubo.position.set(1.75, 0.45, 0); ugello.add(tubo);
-  for (const sx of [1.7, 2.3]) { const sella = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.34, 0.5), MAT_T.ghisaChiara); sella.position.set(sx, 0.14 + 0.17, 0); ugello.add(sella); }
-  const gomito = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.17, 14, 20, Math.PI / 2), MAT_T.acciaio); gomito.position.set(0.9, 0.95, 0); gomito.rotation.z = Math.PI; ugello.add(gomito);
-  const canna = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, 0.5, 20), MAT_T.acciaio); canna.position.set(0.4, 0.95 + 0.25, 0); ugello.add(canna);
-  const cono = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.07, 0.35, 20), MAT_T.inox); cono.position.set(0.4, 1.2 + 0.17, 0); ugello.add(cono);
-  const fl1 = flangia(0.26, 0.06, 12); fl1.rotation.z = Math.PI / 2; fl1.position.set(1.4, 0.45, 0); ugello.add(fl1);
-  const fl2 = flangia(0.26, 0.06, 12); fl2.rotation.z = Math.PI / 2; fl2.position.set(2.55, 0.45, 0); ugello.add(fl2);
-  const fl3 = flangia(0.24, 0.05, 10); fl3.position.set(0.4, 1.0, 0); ugello.add(fl3);
+  const tubo = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 1.8, 20), MAT_T.acciaio); tubo.rotation.z = Math.PI / 2; tubo.position.set(1.8, yU, 0); ugello.add(tubo);
+  for (const sx of [1.5, 2.35]) { const sella = new THREE.Mesh(new THREE.BoxGeometry(0.3, yU - 0.14, 0.5), MAT_T.ghisaChiara); sella.position.set(sx, 0.14 + (yU - 0.14) / 2, 0); ugello.add(sella); }
+  const flCassa = flangia(0.27, 0.07, 12); flCassa.rotation.z = Math.PI / 2; flCassa.position.set(0.98, yU, 0); ugello.add(flCassa);
+  const flFine = flangia(0.26, 0.06, 12); flFine.rotation.z = Math.PI / 2; flFine.position.set(2.66, yU, 0); ugello.add(flFine);
+  const canna = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.3, 20), MAT_T.acciaio); canna.rotation.z = Math.PI / 2; canna.position.set(0.8, yU, 0); ugello.add(canna);
+  const cono = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.14, 0.32, 20), MAT_T.inox); cono.rotation.z = Math.PI / 2; cono.position.set(0.5, yU, 0); ugello.add(cono);
   ass.aggiungi(ugello, { ordine: o0 + 0.22, da: [1.5, 0, 0], durata: 0.12, scala: 1 });
-  // il getto: un filo d'acqua chiaro dall'ugello ai cucchiai
-  const getto = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.05, 0.75, 10), MAT_T.acqua);
-  getto.position.set(0.4, 1.38 + 0.37, 0); ugello.add(getto);
-  ass.aggiungi(getto, { ordine: o0 + 0.3, da: [0, -0.3, 0], durata: 0.08, scala: 0.2 });
-  // cappa deflettrice sopra la ruota
-  const cappa = new THREE.Mesh(new THREE.TorusGeometry(R + 0.26, 0.09, 10, 40, Math.PI * 0.9), MAT_T.acciaio); cappa.position.set(0, yC, 0); cappa.rotation.z = Math.PI * 0.05; g.add(cappa);
-  ass.aggiungi(cappa, { ordine: o0 + 0.26, da: [0, 0.6, 0], durata: 0.1, scala: 1 });
+  // il getto: un filo d'acqua chiaro dal cono ai cucchiai
+  const getto = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.03, 0.6, 10), MAT_T.acqua);
+  getto.rotation.z = Math.PI / 2; getto.position.set(0.05, yU, 0); ugello.add(getto);
+  ass.aggiungi(getto, { ordine: o0 + 0.3, da: [0.4, 0, 0], durata: 0.08, scala: 0.2 });
   return { ruota, assRuota, ancora: new THREE.Vector3(x, 0, 1.7), nome: 'pelton' };
 }
 

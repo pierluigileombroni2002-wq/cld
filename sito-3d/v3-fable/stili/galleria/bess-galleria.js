@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import { Assemblaggio, facile } from '../../scena/assemblaggio.js';
 import { MAT, GEO } from '../../macchine/materiali.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 const CONT = { l: 6.06, h: 2.9, p: 2.44 };
 
@@ -18,10 +19,13 @@ export const MAT_BESS = {
   ferro:     new THREE.MeshStandardMaterial({ color: '#9A9791', metalness: 0.9,  roughness: 0.35, envMapIntensity: 1.1 }),
   ghisa:     new THREE.MeshStandardMaterial({ color: '#3E4247', metalness: 0.5,  roughness: 0.55, envMapIntensity: 0.9 }),
   rackScuro: new THREE.MeshStandardMaterial({ color: '#2C2F33', metalness: 0.4,  roughness: 0.6,  envMapIntensity: 0.7 }),
-  modulo:    new THREE.MeshStandardMaterial({ color: '#4A4E54', metalness: 0.4,  roughness: 0.55, envMapIntensity: 0.8 }),
-  led:       new THREE.MeshBasicMaterial({ color: '#FFFFFF' }),
+  modulo:    new THREE.MeshStandardMaterial({ color: '#D9D5CD', metalness: 0.2,  roughness: 0.5,  envMapIntensity: 0.8 }), // i moduli: cassetti chiari
+  fascia:    new THREE.MeshStandardMaterial({ color: '#25282C', metalness: 0.4,  roughness: 0.6,  envMapIntensity: 0.6 }), // la fascia scura con il led
+  led:       new THREE.MeshBasicMaterial({ color: '#FFF4E2', toneMapped: false }), // led bianco caldo, pieno, senza alone
   schermo:   new THREE.MeshBasicMaterial({ color: '#2E3136' }),
   porcellana: new THREE.MeshStandardMaterial({ color: '#ECE8E0', metalness: 0.05, roughness: 0.4, envMapIntensity: 0.8 }),
+  interno:   new THREE.MeshStandardMaterial({ color: '#2A2D31', metalness: 0.3,  roughness: 0.7,  envMapIntensity: 0.4, side: THREE.BackSide }), // le pareti interne del container
+  nulla:     new THREE.MeshBasicMaterial({ visible: false }), // la faccia anteriore del corpo: non c'è, ci sono le porte
 };
 
 for (const m of Object.values(MAT_BESS)) m.userData.proprio = true;
@@ -41,12 +45,17 @@ export function creaBess(gruppo) {
   const minuterie = []; // bulloni, feritoie, cerniere: spenti al livello basso
   const porte = [], ventole = [];
 
-  const geoPorta = new THREE.BoxGeometry(0.93, 2.46, 0.04);
+  // la porta: lamiera con tre nervature verticali fuse in una sola geometria (una chiamata per porta)
+  const geoPorta = mergeGeometries([
+    new THREE.BoxGeometry(0.93, 2.46, 0.04),
+    ...[-0.29, 0, 0.29].map((x) => new THREE.BoxGeometry(0.07, 2.26, 0.016).translate(x, 0, 0.026)),
+  ]);
   const geoManiglia = new THREE.CylinderGeometry(0.014, 0.014, 0.30, 10);
   const geoStaffa = new THREE.BoxGeometry(0.05, 0.04, 0.06);
   const geoCerniera = new THREE.CylinderGeometry(0.02, 0.02, 0.16, 8);
-  const geoModulo = new THREE.BoxGeometry(0.82, 0.1, 0.62);
-  const geoLed = new THREE.BoxGeometry(0.03, 0.012, 0.006);
+  const geoModulo = new THREE.BoxGeometry(0.8, 0.24, 0.14);   // il fronte di un modulo batteria
+  const geoFascia = new THREE.BoxGeometry(0.8, 0.07, 0.014);   // fascia scura in basso al modulo
+  const geoLed = new THREE.BoxGeometry(0.52, 0.03, 0.012);     // striscia led, una per modulo
   const geoAletta = new THREE.BoxGeometry(1.06, 0.03, 0.05);
   const geoNervatura = new THREE.BoxGeometry(0.06, CONT.h - 0.3, 0.03);
 
@@ -56,11 +65,16 @@ export function creaBess(gruppo) {
     // slitta d'acciaio scuro, corpo in lamiera, tetto più scuro con un bordo
     const slitta = new THREE.Mesh(new THREE.BoxGeometry(CONT.l - 0.1, 0.16, CONT.p - 0.2), MAT_BESS.giunto); slitta.position.y = 0.08; c.add(slitta);
     ass.aggiungi(slitta, { ordine: ord, da: [0, -0.3, 0], durata: 0.12, scala: 1 });
-    const corpo = new THREE.Mesh(new THREE.BoxGeometry(CONT.l, CONT.h, CONT.p), MAT_BESS.lamiera); corpo.position.y = 0.16 + CONT.h / 2; c.add(corpo);
+    // il corpo: lamiera su cinque lati, il fronte è aperto (ci sono le porte); dentro, pareti scure
+    const corpo = new THREE.Mesh(new THREE.BoxGeometry(CONT.l, CONT.h, CONT.p), [MAT_BESS.lamiera, MAT_BESS.lamiera, MAT_BESS.lamiera, MAT_BESS.lamiera, MAT_BESS.nulla, MAT_BESS.lamiera]); corpo.position.y = 0.16 + CONT.h / 2; c.add(corpo);
     ass.aggiungi(corpo, { ordine: ord + 0.06, da: [0, 2.2, 0], durata: 0.16, scala: 0.96 });
-    // il fronte dietro le porte: un pannello scuro, così le fughe tra le porte si leggono
-    const retro = new THREE.Mesh(new THREE.BoxGeometry(CONT.l - 0.16, CONT.h - 0.3, 0.02), MAT_BESS.giunto); retro.position.set(0, 0.16 + CONT.h / 2, CONT.p / 2 + 0.005); c.add(retro);
-    ass.aggiungi(retro, { ordine: ord + 0.08, da: [0, 2.2, 0], durata: 0.16, scala: 0.96 });
+    const interno = new THREE.Mesh(new THREE.BoxGeometry(CONT.l - 0.03, CONT.h - 0.03, CONT.p - 0.03), MAT_BESS.interno); interno.position.y = 0.16 + CONT.h / 2; c.add(interno);
+    ass.aggiungi(interno, { ordine: ord + 0.06, da: [0, 2.2, 0], durata: 0.16, scala: 0.96 });
+    // dietro le porte chiuse: un pannello scuro per vano, così le fughe tra le porte si leggono; dietro quelle aperte c'è il rack
+    const trRetro = [];
+    for (let i = 0; i < 6; i++) if (!aperte[i]) trRetro.push({ pos: new THREE.Vector3(-CONT.l / 2 + 0.085 + i * 0.985 + 0.465, 0.16 + CONT.h / 2, CONT.p / 2 + 0.005), ordine: ord + 0.08, da: [0, 2.2, 0] });
+    const retro = new THREE.InstancedMesh(new THREE.BoxGeometry(0.985, CONT.h - 0.3, 0.02), MAT_BESS.giunto, trRetro.length); c.add(retro);
+    ass.aggiungiIstanze(retro, trRetro, { durata: 0.16, scala: 0.96 });
     const tetto = new THREE.Mesh(new THREE.BoxGeometry(CONT.l + 0.1, 0.08, CONT.p + 0.1), MAT_BESS.tetto); tetto.position.y = 0.16 + CONT.h + 0.03; c.add(tetto);
     ass.aggiungi(tetto, { ordine: ord + 0.16, da: [0, 0.6, 0], durata: 0.1, scala: 1 });
     const cornice = new THREE.Mesh(new THREE.BoxGeometry(CONT.l + 0.12, 0.06, CONT.p + 0.12), MAT_BESS.giunto); cornice.position.y = 0.16 + CONT.h - 0.03; c.add(cornice);
@@ -96,16 +110,19 @@ export function creaBess(gruppo) {
       const aperta = !!aperte[i];
       porte.push({ cerniera, aperta, lato, ordine: ord + 0.42 + i * 0.02 });
       if (aperta) {
-        // il rack dietro la porta: telaio scuro, moduli impilati, un led bianco per modulo
-        const rack = new THREE.Group(); rack.position.set(x0 + 0.49, 0.16, CONT.p / 2 - 0.55); c.add(rack);
-        const telaio = new THREE.Mesh(new THREE.BoxGeometry(0.9, 2.55, 0.9), MAT_BESS.rackScuro); telaio.position.set(0, 1.28, -0.2); rack.add(telaio);
+        // il rack dietro la porta: telaio antracite, otto moduli chiari impilati, ognuno con la fascia scura e la striscia led
+        const rack = new THREE.Group(); rack.position.set(x0 + 0.49, 0.16, CONT.p / 2 - 0.6); c.add(rack);
+        const telaio = new THREE.Mesh(new THREE.BoxGeometry(0.98, 2.72, 0.7), MAT_BESS.rackScuro); telaio.position.set(0, 1.36, -0.35); rack.add(telaio);
         ass.aggiungi(telaio, { ordine: ord + 0.3 + i * 0.02, da: [0, 0, -0.8], durata: 0.12, scala: 1 });
-        const trMod = [], trLed = [];
-        for (let k = 0; k < 16; k++) {
-          trMod.push({ pos: new THREE.Vector3(0, 0.22 + k * 0.145, 0.1), ordine: ord + 0.36 + i * 0.02 + k * 0.012, da: [0, 0, -0.5] });
-          trLed.push({ pos: new THREE.Vector3(0.3, 0.22 + k * 0.145 + 0.02, 0.415), ordine: ord + 0.55 + k * 0.02, da: [0, 0, 0] });
+        const trMod = [], trFas = [], trLed = [];
+        for (let k = 0; k < 8; k++) {
+          const y = 0.24 + k * 0.29;
+          trMod.push({ pos: new THREE.Vector3(0, y, 0.07), ordine: ord + 0.36 + i * 0.02 + k * 0.02, da: [0, 0, -0.5] });
+          trFas.push({ pos: new THREE.Vector3(0, y - 0.085, 0.146), ordine: ord + 0.36 + i * 0.02 + k * 0.02, da: [0, 0, -0.5] });
+          trLed.push({ pos: new THREE.Vector3(0, y - 0.085, 0.158), ordine: ord + 0.55 + k * 0.03, da: [0, 0, 0] });
         }
         const moduli = new THREE.InstancedMesh(geoModulo, MAT_BESS.modulo, trMod.length); rack.add(moduli); ass.aggiungiIstanze(moduli, trMod, { durata: 0.1, scala: 1 });
+        const fasce = new THREE.InstancedMesh(geoFascia, MAT_BESS.fascia, trFas.length); rack.add(fasce); ass.aggiungiIstanze(fasce, trFas, { durata: 0.1, scala: 1 });
         const leds = new THREE.InstancedMesh(geoLed, MAT_BESS.led, trLed.length); rack.add(leds); ass.aggiungiIstanze(leds, trLed, { durata: 0.06, scala: 1 });
       }
     }

@@ -1,35 +1,31 @@
 // Ambiente "Galleria Bianca": niente cielo. La parete avorio sta nel CSS (la tela è trasparente);
-// qui ci sono il pavimento di cemento levigato chiaro (con un riflesso debole da studio bianco ai livelli alti),
-// la striscia di luce della finestra, le luci morbide e la mappa d'ambiente con la finestra alta e stretta.
+// qui ci sono il pavimento di cemento opaco chiaro (nessun riflesso: le ombre di contatto sono dipinte, vedi ombre.js),
+// la striscia di luce della finestra, le luci morbide, la mappa d'ambiente della sala e la vetrata luminosa del finale.
 import * as THREE from 'three';
-import { Reflector } from 'three/addons/objects/Reflector.js';
 
 export const COLORI = {
   pavimentoVicino: new THREE.Color('#DDD8CD'),
   pavimentoLontano: new THREE.Color('#E6E1D6'),
   luce: new THREE.Color('#FBF9F4'),
+  vetrata: new THREE.Color('#FFFDF8'),
 };
 
 const vertPavimento = /* glsl */`
-  varying vec3 vPos; varying vec4 vUv4;
-  uniform mat4 textureMatrix;
+  varying vec3 vPos;
   void main() {
     vec4 w = modelMatrix * vec4(position, 1.0);
     vPos = w.xyz;
-    vUv4 = textureMatrix * vec4(position, 1.0);
     gl_Position = projectionMatrix * viewMatrix * w;
   }`;
 
 // Il pavimento esce con i colori esatti della palette (niente tone mapping) e sfuma in trasparenza lontano,
-// dove la parete del CSS prende il suo posto: il ciclorama non ha spigoli.
+// dove la parete del CSS prende il suo posto: il ciclorama non ha spigoli. Cemento opaco: nessun riflesso.
 const fragPavimento = /* glsl */`
-  varying vec3 vPos; varying vec4 vUv4;
+  varying vec3 vPos;
   uniform vec3 cVicino, cLontano, cLuce;
   uniform vec3 posCam;
-  uniform float riflesso, fase, finale;
-  uniform sampler2D tDiffuse;
+  uniform float fase, finale;
   void main() {
-    vec3 v = normalize(posCam - vPos);
     float dist = length(posCam.xz - vPos.xz);
     vec3 c = mix(cVicino, cLontano, smoothstep(4.0, 70.0, dist));
     // la striscia della finestra, in diagonale sul pavimento: si sposta lentissima con lo scorrimento
@@ -38,16 +34,6 @@ const fragPavimento = /* glsl */`
     c = mix(c, cLuce, banda * (0.38 + finale * 0.5));
     // nel finale la luce della vetrata lava anche il pavimento: niente orizzonte scuro sotto il modulo
     c = mix(c, cLuce, finale * 0.45);
-    // riflesso satinato delle macchine: debole, sfumato, solo radente
-    if (riflesso > 0.0) {
-      vec2 uv = vUv4.xy / vUv4.w;
-      vec4 s = texture2D(tDiffuse, uv);
-      s += texture2D(tDiffuse, uv + vec2(0.003, 0.0)); s += texture2D(tDiffuse, uv - vec2(0.003, 0.0));
-      s += texture2D(tDiffuse, uv + vec2(0.0, 0.005)); s += texture2D(tDiffuse, uv - vec2(0.0, 0.005));
-      s *= 0.2;
-      float radente = pow(1.0 - max(v.y, 0.0), 2.0);
-      c = mix(c, s.rgb, s.a * (0.07 + 0.26 * radente) * riflesso);
-    }
     // una grana appena percettibile: cemento, non plastica
     float grana = fract(sin(dot(floor(vPos.xz * 40.0), vec2(12.9898, 78.233))) * 43758.5453) * 0.012 - 0.006;
     c += grana;
@@ -56,46 +42,69 @@ const fragPavimento = /* glsl */`
     #include <colorspace_fragment>
   }`;
 
+// La vetrata del finale: una parete di luce che sale dal pavimento, più chiara a sinistra, sfumata ai bordi.
+// (alphaMap legge il canale verde: la maschera è in luminanza, non nell'alpha)
+function texturaVetrata() {
+  const w = 256, h = 128;
+  const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+  const g = cv.getContext('2d');
+  const img = g.createImageData(w, h);
+  const liscia = (x) => x * x * (3 - 2 * x);
+  for (let y = 0; y < h; y++) {
+    const v = y / (h - 1);
+    // sale dal pavimento (bordo basso morbido) e si perde in alto nella parete avorio: il titolo, che sta dietro la tela, resta nero
+    const alto = liscia(Math.min(1, v / 0.6));
+    const basso = 0.4 + 0.6 * liscia(Math.min(1, (1 - v) / 0.14));
+    for (let x = 0; x < w; x++) {
+      const u = x / (w - 1);
+      const sx = liscia(Math.min(1, u / 0.08)), dx = liscia(Math.min(1, (1 - u) / 0.38));
+      const a = Math.round(255 * 0.95 * alto * basso * sx * dx);
+      const i = (y * w + x) * 4;
+      img.data[i] = a; img.data[i + 1] = a; img.data[i + 2] = a; img.data[i + 3] = 255;
+    }
+  }
+  g.putImageData(img, 0, 0);
+  const t = new THREE.CanvasTexture(cv);
+  t.colorSpace = THREE.NoColorSpace;
+  return t;
+}
+
 export function creaAmbiente(renderer, scena) {
   const gruppo = new THREE.Group();
   gruppo.name = 'ambiente';
 
-  // --- pavimento: uno con il riflesso (Reflector), uno piatto per i livelli medio e basso ---
-  const uniformiPavimento = () => ({
+  // --- pavimento: cemento opaco, un solo piano per tutti i livelli di qualità ---
+  const uniformi = {
     cVicino: { value: COLORI.pavimentoVicino }, cLontano: { value: COLORI.pavimentoLontano }, cLuce: { value: COLORI.luce },
-    posCam: { value: new THREE.Vector3() }, riflesso: { value: 0 }, fase: { value: 0 }, finale: { value: 0 },
-    color: { value: new THREE.Color(0) }, // il Reflector lo pretende, anche se qui non serve
-    tDiffuse: { value: null }, textureMatrix: { value: new THREE.Matrix4() },
-  });
+    posCam: { value: new THREE.Vector3() }, fase: { value: 0 }, finale: { value: 0 },
+  };
   const geoPav = new THREE.PlaneGeometry(3000, 3000, 1, 1);
-  const pavimentoPiatto = new THREE.Mesh(geoPav, new THREE.ShaderMaterial({ uniforms: uniformiPavimento(), vertexShader: vertPavimento, fragmentShader: fragPavimento, transparent: true }));
-  pavimentoPiatto.rotation.x = -Math.PI / 2; pavimentoPiatto.frustumCulled = false; pavimentoPiatto.renderOrder = -5;
-  gruppo.add(pavimentoPiatto);
-  const riflettore = new Reflector(geoPav, {
-    textureWidth: 1024, textureHeight: 512, clipBias: 0.003,
-    shader: { uniforms: uniformiPavimento(), vertexShader: vertPavimento, fragmentShader: fragPavimento },
-  });
-  riflettore.rotation.x = -Math.PI / 2; riflettore.frustumCulled = false; riflettore.renderOrder = -5;
-  riflettore.material.transparent = true;
-  riflettore.material.uniforms.riflesso.value = 1;
-  gruppo.add(riflettore);
-  const unifPav = [pavimentoPiatto.material.uniforms, riflettore.material.uniforms];
+  const pavimento = new THREE.Mesh(geoPav, new THREE.ShaderMaterial({ uniforms: uniformi, vertexShader: vertPavimento, fragmentShader: fragPavimento, transparent: true }));
+  pavimento.rotation.x = -Math.PI / 2; pavimento.frustumCulled = false; pavimento.renderOrder = -5;
+  gruppo.add(pavimento);
+
+  // --- la vetrata del finale: in fondo alla galleria, davanti alla camera dei contatti ---
+  const vetrata = new THREE.Mesh(new THREE.PlaneGeometry(170, 13), new THREE.MeshBasicMaterial({ color: COLORI.vetrata, alphaMap: texturaVetrata(), transparent: true, depthWrite: false, toneMapped: false, opacity: 0 }));
+  vetrata.position.set(190, 6.2, -78);
+  vetrata.lookAt(176, 4, 0);
+  vetrata.renderOrder = -4.5; vetrata.visible = false;
+  gruppo.add(vetrata);
 
   // --- luci (niente ombre): un solo "sole" freddo dalla finestra in alto a destra, un fill caldo debole, l'emisfero chiaro ---
   const chiave = new THREE.DirectionalLight('#F4F6FF', 1.5);
   chiave.position.set(60, 90, 70);
-  const riempimento = new THREE.DirectionalLight('#FFE9D2', 0.35);
+  const riempimento = new THREE.DirectionalLight('#FFE9D2', 0.4);
   riempimento.position.set(-70, 30, 40);
   const controluce = new THREE.DirectionalLight('#FFFFFF', 0.35);
   controluce.position.set(-20, 40, -90);
   const emisfero = new THREE.HemisphereLight('#F6F3EC', '#BDB6AA', 0.7);
   gruppo.add(chiave, riempimento, controluce, emisfero);
 
-  // --- mappa d'ambiente: una sala chiara con una grande finestra alta e stretta, un softbox e due bande scure,
-  // così vetro e acciaio hanno la striscia di luce e un bordo con contrasto, invece di un grigio spento ---
+  // --- mappa d'ambiente: una sala avorio con un grande pannello caldo a sinistra, uno piccolo freddo a destra,
+  // due bande scure (dietro e a destra) e un soffitto scuro verso il fondo attraversato dalla finestra alta e stretta:
+  // il vetro inclinato dei moduli riflette proprio quel soffitto, quindi resta antracite con una sola striscia di luce ---
   const pmrem = new THREE.PMREMGenerator(renderer);
   const scenaEnv = new THREE.Scene();
-  // le pareti all'altezza degli occhi sono avorio chiaro: i pali e le strutture (che riflettono l'orizzonte) restano acciaio chiaro
   const stanza = new THREE.Mesh(new THREE.BoxGeometry(120, 60, 120), new THREE.MeshBasicMaterial({ color: new THREE.Color('#DED9CF').multiplyScalar(0.9), side: THREE.BackSide }));
   stanza.position.y = 20;
   scenaEnv.add(stanza);
@@ -103,14 +112,15 @@ export function creaAmbiente(renderer, scena) {
     const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: new THREE.Color(colore).multiplyScalar(forza), side: THREE.DoubleSide }));
     m.position.set(...pos); m.lookAt(...mira); scenaEnv.add(m);
   };
-  // I vetri inclinati dei moduli riflettono la zona dietro di loro (verso -z) a 20-55 gradi di elevazione:
-  // lì sta una grande banda scura (il vetro resta antracite) attraversata dalla finestra alta e stretta (la striscia di luce).
-  pannello(150, 60, '#2E3135', 1.0, [0, 36, -54]);            // banda scura dietro, alta: dà il blu-nero al vetro
-  pannello(16, 56, '#FFFFFF', 6.0, [14, 36, -51]);            // la finestra: alta, stretta, bianchissima
-  pannello(60, 26, '#FFF6EA', 0.9, [0, 58, 6], [0, 0, 6]);    // lucernario morbido sopra: il satinato dei metalli
-  pannello(5, 40, '#EEF3FF', 2.4, [-54, 22, 14]);             // filo di luce fredda a sinistra: i bordi dei metalli
-  pannello(6, 40, '#FFFFFF', 3.0, [50, 24, 30]);              // secondo filo, caldo, a destra davanti
-  pannello(12, 60, '#3A3B3E', 1.0, [58, 20, -24]);            // banda scura a destra: contrasto sul vetro e sull'inox
+  pannello(150, 60, '#2E3135', 1.0, [0, 36, -54]);              // banda scura dietro, alta
+  pannello(150, 64, '#272A2E', 1.0, [0, 54, -30], [0, 0, -30]);  // soffitto scuro verso il fondo: il vetro resta antracite
+  // (la striscia della finestra sul vetro è nello shader del vetro, non qui: nella mappa sfocata una finestra bianchissima ingrigirebbe tutto)
+  pannello(40, 16, '#FFF6EA', 0.7, [0, 58, 16], [0, 0, 16]);     // lucernario morbido sopra la camera: il satinato dei metalli
+  pannello(34, 38, '#FFE7CC', 1.5, [-57, 24, 8], [0, 24, 8]);    // pannello caldo grande a sinistra (3500 K)
+  // banda scura grande sulla parete destra: la camera guarda le file di tre quarti e il vetro riflette proprio lì;
+  // senza, il vetro rifletterebbe la parete avorio e diventerebbe grigio. Il filo freddo sta sul suo bordo.
+  pannello(80, 52, '#2E3135', 1.0, [58, 30, -14], [0, 30, -14]);
+  pannello(7, 40, '#E4ECFF', 3.0, [56, 24, 28], [0, 24, 28]);    // filo freddo piccolo a destra (6000 K): i bordi dei metalli
   const pavEnv = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshBasicMaterial({ color: '#B8B2A6' }));
   pavEnv.rotation.x = -Math.PI / 2; pavEnv.position.y = -1;
   scenaEnv.add(pavEnv);
@@ -124,17 +134,12 @@ export function creaAmbiente(renderer, scena) {
     gruppo,
     env,
     aggiorna(tempo, camera, finale = 0, p = 0) {
-      for (const u of unifPav) {
-        u.posCam.value.copy(camera.position);
-        u.finale.value = finale;
-        u.fase.value = camera.position.x * 0.55 + camera.position.z * 0.83 - 14 + p * 40;
-      }
+      uniformi.posCam.value.copy(camera.position);
+      uniformi.finale.value = finale;
+      uniformi.fase.value = camera.position.x * 0.55 + camera.position.z * 0.83 - 14 + p * 40;
+      vetrata.material.opacity = finale;
+      vetrata.visible = finale > 0.002;
     },
-    setQualita(q, livello) {
-      const dpr = renderer.getPixelRatio();
-      const riflessi = !!livello.riflessi;
-      riflettore.visible = riflessi; pavimentoPiatto.visible = !riflessi;
-      if (riflessi) riflettore.getRenderTarget().setSize(Math.round(innerWidth * 0.5 * Math.min(dpr, 1.25)), Math.round(innerHeight * 0.5 * Math.min(dpr, 1.25)));
-    },
+    setQualita() {},
   };
 }

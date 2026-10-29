@@ -1,4 +1,5 @@
 // Ombre di contatto dipinte (nessuna shadow map) e il disegno a terra della fase "Sviluppo".
+// L'ombra è un piano con sfumatura radiale #AFA89B in multiply: scurisce il cemento senza coprirlo.
 import * as THREE from 'three';
 
 function texturaOmbra(larghezza = 256, altezza = 128) {
@@ -10,7 +11,7 @@ function texturaOmbra(larghezza = 256, altezza = 128) {
   g.translate(larghezza / 2, altezza / 2);
   g.scale(larghezza / 2, altezza / 2);
   const r = g.createRadialGradient(0, 0, 0, 0, 0, 1);
-  r.addColorStop(0, 'rgba(0,0,0,1)'); r.addColorStop(0.45, 'rgba(0,0,0,0.6)'); r.addColorStop(0.8, 'rgba(0,0,0,0.12)'); r.addColorStop(1, 'rgba(0,0,0,0)');
+  r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(0.45, 'rgba(255,255,255,0.6)'); r.addColorStop(0.8, 'rgba(255,255,255,0.12)'); r.addColorStop(1, 'rgba(255,255,255,0)');
   g.fillStyle = r; g.beginPath(); g.arc(0, 0, 1, 0, Math.PI * 2); g.fill();
   g.restore();
   const t = new THREE.CanvasTexture(cv);
@@ -21,25 +22,40 @@ function texturaOmbra(larghezza = 256, altezza = 128) {
 let _tex = null;
 const _geo = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
 
+// multiply: il colore in uscita è mix(bianco, colore, alpha*opacità); il pavimento viene moltiplicato, quindi si scurisce solo lì
+const vertOmbra = /* glsl */`
+  varying vec2 vUv;
+  void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
+const fragOmbra = /* glsl */`
+  varying vec2 vUv;
+  uniform sampler2D tMaschera; uniform vec3 colore; uniform float opacita;
+  void main() {
+    float a = texture2D(tMaschera, vUv).a * opacita;
+    gl_FragColor = vec4(mix(vec3(1.0), colore, a), 1.0);
+  }`;
+
 // forme: [{ x, z, w, d, forza? }] nel sistema del gruppo. Restituisce { gruppo, set(k) } con k 0..1 = quanto è visibile.
-export function creaOmbre(forme, { colore = '#6E685C', opacita = 0.36 } = {}) {
+export function creaOmbre(forme, { colore = '#AFA89B', opacita = 0.45 } = {}) {
   _tex = _tex || texturaOmbra();
   const gruppo = new THREE.Group(); gruppo.name = 'ombre';
-  const mat = new THREE.MeshBasicMaterial({ map: _tex, color: colore, transparent: true, opacity: 0, depthWrite: false, toneMapped: false });
-  const forza = [];
+  const mat = new THREE.ShaderMaterial({
+    uniforms: { tMaschera: { value: _tex }, colore: { value: new THREE.Color(colore) }, opacita: { value: 0 } },
+    vertexShader: vertOmbra, fragmentShader: fragOmbra,
+    transparent: true, blending: THREE.MultiplyBlending, depthWrite: false,
+  });
   for (const f of forme) {
     const m = new THREE.Mesh(_geo, mat);
     m.position.set(f.x, 0.012, f.z);
     m.scale.set(f.w, 1, f.d);
     m.renderOrder = -4;
+    m.userData.forza = f.forza ?? 1;
     gruppo.add(m);
-    forza.push(f.forza ?? 1);
   }
   return {
     gruppo,
     set(k) {
       const o = Math.min(1, Math.max(0, k)) * opacita;
-      mat.opacity = o;
+      mat.uniforms.opacita.value = o;
       gruppo.visible = o > 0.002;
     },
   };

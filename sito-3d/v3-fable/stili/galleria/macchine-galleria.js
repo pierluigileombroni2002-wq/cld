@@ -7,7 +7,7 @@ import { creaTurbine } from './turbine-galleria.js';
 
 export function creaMacchine(scena) {
   const gruppi = { fotovoltaico: new THREE.Group(), bess: new THREE.Group(), idroelettrico: new THREE.Group() };
-  gruppi.fotovoltaico.position.set(0, 0, 0);
+  gruppi.fotovoltaico.position.set(1.5, 0, 0); // 1,5 m a destra: il tracker vicino a sinistra non è più tagliato dal bordo
   gruppi.bess.position.set(70, 0, 0);
   gruppi.idroelettrico.position.set(140, 0, 0);
   for (const g of Object.values(gruppi)) scena.add(g);
