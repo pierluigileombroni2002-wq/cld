@@ -7,7 +7,7 @@ import { POSA } from './bess-galleria.js';
 import { DIST } from './turbine-galleria.js';
 import { creaLogo } from './logo.js';
 import { MOMENTI, assemblaggioDi } from '../../ui/testi.js';
-import { rivestiMateriali, rivestiScena, setFaseVetro, vetroModulo } from './materiali-galleria.js';
+import { rivestiMateriali, rivestiScena, setFaseVetro, setTintaVetro, vetroModulo } from './materiali-galleria.js';
 import { creaOmbre, creaDisegno } from './ombre.js';
 import { creaCollezione } from './collezione.js';
 
@@ -91,9 +91,10 @@ function aggiornaTerra(p) {
     const vicino = p > t.m.da - 0.1 && p < t.m.a + 0.1;
     if (!vicino) { t.ombre.set(0); t.disegno.set(0); continue; }
     const a = assemblaggioDi(p, t.m);
+    const entra = Math.min(1, Math.max(0, (p - (t.m.da - 0.1)) / 0.04)); // prima del momento il disegno affiora piano
     const sfuma = 1 - Math.min(1, Math.max(0, (p - t.m.a) / 0.06)); // dopo il momento il disegno svanisce
-    t.ombre.set(Math.min(1, Math.max(0, (a - 0.25) / 0.5)) * sfuma);
-    t.disegno.set((1 - Math.min(1, Math.max(0, (a - 0.2) / 0.5))) * sfuma);
+    t.ombre.set(Math.min(1, Math.max(0, (a - 0.25) / 0.5)) * sfuma * entra);
+    t.disegno.set((1 - Math.min(1, Math.max(0, (a - 0.2) / 0.5))) * sfuma * entra);
   }
 }
 
@@ -150,9 +151,13 @@ const DESKTOP = [
 const TELEFONO = [
   { p: 0.00, pos: [-52, 2.6, 30], mira: [-44, 5.6, -30], arretra: 1.55 },
   { p: 0.10, pos: [-46, 2.6, 29], mira: [-30, 3.0, -22], arretra: 1.55 },
-  // fotovoltaico: più vicino che su desktop in proporzione, la fila davanti riempie la fascia bassa, spostata verso il centro
-  { p: 0.16, pos: [-30, 2.0, 27], mira: [-4, 2.5, 4], arretra: 1.3, sx: 0.1, sy: -0.24 },
-  { p: 0.36, pos: [-12, 1.9, 25], mira: [9, 2.5, 3], arretra: 1.3, sx: 0.1, sy: -0.24 },
+  // fotovoltaico: di tre quarti dal capo della fila davanti, più arretrata e più alta che su desktop: la fila (16 m) si allontana
+  // in diagonale verso destra e sta tutta in campo, il capo vicino compreso; le altre file restano dietro, a sinistra
+  // (le chiavi doppie fermano la curva: tra 0.20 e 0.32 la camera scivola appena, senza piegarsi verso l'apertura o il BESS)
+  { p: 0.16, pos: [-26.6, 6.1, 26.6], mira: [3.8, 1.4, 8.2], sx: 0, sy: -0.24 },
+  { p: 0.20, pos: [-26.6, 6.1, 26.6], mira: [3.8, 1.4, 8.2], sx: 0, sy: -0.24 },
+  { p: 0.32, pos: [-25.4, 5.9, 25.4], mira: [4.2, 1.4, 7.8], sx: 0, sy: -0.24 },
+  { p: 0.36, pos: [-25.4, 5.9, 25.4], mira: [4.2, 1.4, 7.8], sx: 0, sy: -0.24 },
   // BESS: prima il container A con il PCS davanti, poi la camera cammina a destra e si ferma davanti al container B
   // (tutto in campo: il trasformatore davanti alle porte chiuse, le porte aperte libere a destra; il container A resta fuori dal bordo)
   { p: 0.43, pos: [58, 2.0, 24], mira: [65, 1.3, -1] },
@@ -185,6 +190,10 @@ function catmull(out, p0, p1, p2, p3, t) {
   return out;
 }
 function posaCamera(p) {
+  if (stato.prova) { // posa forzata, solo per le prove di inquadratura (strumenti)
+    const q = stato.prova; _a.set(...q.pos); _b.set(...q.mira);
+    inquadra(_a, _b, q.sx ?? 0, q.sy ?? -0.24, q.arretra ?? 1); return;
+  }
   const CHIAVI = stretto() ? CHIAVI_TEL : CHIAVI_DESK;
   let i = 0;
   while (i < CHIAVI.length - 2 && p > CHIAVI[i + 1].p) i++;
@@ -268,15 +277,29 @@ function aggiornaTesti(p) {
       faseEl.classList.remove('mostra'); void faseEl.offsetWidth; faseEl.classList.add('mostra');
     }
   }
+  aggiornaMaschera(p);
   // la finestra gira piano nella sala con lo scorrimento; nel finale la parete diventa vetrata
   finestra.style.transform = `rotate(${28 - p * 10}deg) translateX(${p * 30}vw)`;
   const finale = Math.min(1, Math.max(0, (p - 0.86) / 0.14));
   vetrata.style.opacity = (finale * 0.9).toFixed(3);
 }
 
+// Su desktop, nei momenti fotovoltaico e BESS, la scena sfuma nella luce della parete a destra (la colonna dell'iter ha la sua
+// fascia libera). La maschera entra e esce con p, in modo continuo: niente scatti tra un momento e l'altro.
+const liscia = (x) => { x = Math.min(1, Math.max(0, x)); return x * x * (3 - 2 * x); };
+let mascheraUltima = '';
+function aggiornaMaschera(p) {
+  const k = stretto() ? 0 : Math.min(liscia((p - 0.10) / 0.03), 1 - liscia((p - 0.60) / 0.04));
+  const chiave = k < 0.005 ? '' : `linear-gradient(90deg, #000 calc(100% - 520px), rgba(0,0,0,${(1 - k).toFixed(2)}) calc(100% - 300px))`;
+  if (chiave === mascheraUltima) return;
+  mascheraUltima = chiave;
+  tela.style.webkitMaskImage = chiave; tela.style.maskImage = chiave;
+}
+
 // ---------- etichette delle turbine ----------
 const etichette = {};
 for (const el of document.querySelectorAll('.etichetta')) etichette[el.dataset.turbina] = el;
+const cartellinoIdro = document.querySelector('.momento[data-m="3"] .cartellino');
 const _proj = new THREE.Vector3();
 function etichetteTurbine(p) {
   const m = MOMENTI[3];
@@ -290,17 +313,21 @@ function etichetteTurbine(p) {
     return { nome, x: (_proj.x * 0.5 + 0.5) * innerWidth, y: (-_proj.y * 0.5 + 0.5) * innerHeight, z: _proj.z };
   });
   const yRiga = Math.max(...ancore.map((q) => q.y)) + 4;
-  for (const q of ancore) {
+  // il limite in basso è il cartellino (sul telefono il bordo dello schermo); da sinistra a destra, una targhetta
+  // che finirebbe sopra la precedente resta spenta: sugli schermi piccoli, o da lontano, non si accavallano mai
+  const limite = dentro ? (s ? innerHeight - 60 : cartellinoIdro.getBoundingClientRect().top - 10) : 0;
+  let bordoDestro = -Infinity;
+  for (const q of ancore.sort((u, v) => u.x - v.x)) {
     const { nome, x, z } = q;
     const y = s ? q.y + 4 : yRiga;
     const el = etichette[nome]; if (!el) continue;
     const i = nome === 'pelton' ? 0 : nome === 'francis' ? 1 : 2;
     const visibile = dentro && a > i * 0.3 + 0.3;
     if (!visibile) { el.classList.remove('visibile'); continue; }
-    _proj.z = z;
     const mezza = el.offsetWidth / 2 + 12;
-    const dentroSchermo = _proj.z < 1 && x > mezza && x < innerWidth - mezza && y > (s ? innerHeight * 0.5 : innerHeight * 0.4) && y < innerHeight - (s ? 60 : 150);
+    const dentroSchermo = z < 1 && x - mezza > Math.max(0, bordoDestro) && x < innerWidth - mezza && y > (s ? innerHeight * 0.5 : innerHeight * 0.4) && y + el.offsetHeight < limite;
     el.classList.toggle('visibile', dentroSchermo);
+    if (dentroSchermo) bordoDestro = x + mezza;
     el.style.transform = `translate(${x.toFixed(0)}px, ${y.toFixed(0)}px) translate(-50%, 0)`;
   }
 }
@@ -310,7 +337,9 @@ function ridimensiona() {
   renderer.setPixelRatio(Math.min(devicePixelRatio || 1, LIVELLI[stato.qualita].dpr));
   renderer.setSize(w, h, false);
   camera.aspect = w / h;
-  camera.fov = stretto() ? 50 : 32;
+  // su desktop il campo ORIZZONTALE è costante (quello approvato a 1600×906, fov verticale 32°): su una finestra più bassa
+  // la fila non si allarga fino a finire sotto la colonna dell'iter, su una più alta non si rimpicciolisce
+  camera.fov = stretto() ? 50 : THREE.MathUtils.clamp(THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(16)) * 1.766 / camera.aspect)), 26, 40);
   camera.updateProjectionMatrix();
   ambiente.setQualita(stato.qualita, LIVELLI[stato.qualita]);
 }
@@ -428,3 +457,4 @@ stato.misura = (durataMs = 3000) => new Promise((ok) => {
 stato.qualitaImposta = (q) => applicaQualita(q);
 stato.vetro = vetroModulo();
 stato.setFaseVetro = (x) => { setFaseVetro(x); stato.faseVetroFissa = true; };
+stato.setTintaVetro = setTintaVetro;

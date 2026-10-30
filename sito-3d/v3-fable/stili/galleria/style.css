@@ -76,12 +76,9 @@ a { color: inherit; text-decoration: none; }
 .titolo-grande[data-m="0"] { top: auto; bottom: 37vh; width: min(900px, 56vw); }
 
 #scena { position: fixed; inset: 0; width: 100%; height: 100%; display: block; z-index: 2; pointer-events: none; }
-/* su desktop, nei momenti tecnologici, la scena sfuma nella luce della parete a destra: la colonna dell'iter ha la sua fascia libera */
+/* (su desktop, nei momenti fotovoltaico e BESS, la scena sfuma nella luce della parete a destra: la maschera della tela
+   è impostata da main.js, continua con lo scorrimento) */
 @media (min-width: 761px) and (orientation: landscape) {
-  body[data-momento="1"] #scena, body[data-momento="2"] #scena {
-    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 520px), rgba(0,0,0,0) calc(100% - 300px));
-    mask-image: linear-gradient(90deg, #000 calc(100% - 520px), rgba(0,0,0,0) calc(100% - 300px));
-  }
   /* momento idro: titolo una riga più in alto, cartellino più in basso, iter più basso e più stretto: la fila delle turbine è grande e libera */
   .titolo-grande[data-m="3"] { top: clamp(84px, 10vh, 108px); }
   .momento[data-m="3"] .cartellino { bottom: 34px; }
@@ -279,6 +276,15 @@ a { color: inherit; text-decoration: none; }
   /* contatti: la vetrata con le tre sculture sta in alto, il modulo sotto (la sezione scorre al suo interno) */
   .scheda { position: relative; right: auto; top: auto; transform: none; width: 100%; margin: 47vh 0 40px; padding: 0 var(--margine); background: transparent; }
   .modulo textarea { rows: 2; }
+}
+
+/* ---------- finestre desktop basse (portatili piccoli, finestre ridotte): l'apertura e la scheda dei contatti restano in pagina ---------- */
+@media (min-width: 761px) and (orientation: landscape) and (max-height: 640px) {
+  .titolo-grande[data-m="0"] { bottom: 50vh; font-size: clamp(44px, 8vw, 150px); }
+  .scheda { top: 76px; transform: none; max-height: calc(100vh - 90px); overflow-y: auto; }
+  .scheda .sotto { margin-top: 8px; }
+  .modulo { margin-top: 14px; gap: 10px; }
+  .recapiti { margin-top: 16px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

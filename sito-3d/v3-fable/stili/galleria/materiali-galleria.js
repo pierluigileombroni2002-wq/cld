@@ -40,15 +40,22 @@ function texturaCelleGalleria(colonne = 6, righe = 12) {
 
 // La striscia di luce della finestra sul vetro: una banda diagonale in coordinate di mondo che scorre con lo scorrimento.
 const faseVetro = { value: 0 };
+// La tinta del riflesso: il vetro riflette la sala avorio, che da sola lo farebbe grigio-bruno; qui la luce riflessa
+// si raffredda e si abbassa verso l'antracite blu della tavola (#1F2A33). La striscia (emissiva) non ne risente.
+const tintaVetro = { value: new THREE.Vector3(0.40, 0.54, 0.80) };
 export function setFaseVetro(x) { faseVetro.value = x; }
+export function setTintaVetro(r, g, b) { tintaVetro.value.set(r, g, b); }
 export function vetroModulo() { return MAT.vetroModulo; } // per le misure (strumenti)
 function striscia(sh) {
   sh.uniforms.uFaseVetro = faseVetro;
+  sh.uniforms.uTintaVetro = tintaVetro;
   sh.vertexShader = sh.vertexShader
     .replace('#include <common>', '#include <common>\nvarying vec3 vPosG;')
     .replace('#include <project_vertex>', '#include <project_vertex>\n{ vec4 wpg = vec4(transformed, 1.0);\n#ifdef USE_INSTANCING\nwpg = instanceMatrix * wpg;\n#endif\nwpg = modelMatrix * wpg; vPosG = wpg.xyz; }');
   sh.fragmentShader = sh.fragmentShader
-    .replace('#include <common>', '#include <common>\nvarying vec3 vPosG; uniform float uFaseVetro;')
+    .replace('#include <common>', '#include <common>\nvarying vec3 vPosG; uniform float uFaseVetro; uniform vec3 uTintaVetro;')
+    .replace('vec3 outgoingLight = totalDiffuse + totalSpecular + totalEmissiveRadiance;', 'vec3 outgoingLight = (totalDiffuse + totalSpecular) * uTintaVetro + totalEmissiveRadiance;')
+    .replace('( clearcoatSpecularDirect + clearcoatSpecularIndirect ) * material.clearcoat;', '( clearcoatSpecularDirect + clearcoatSpecularIndirect ) * material.clearcoat * uTintaVetro;')
     .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n{ float dg = vPosG.x * 0.8 + vPosG.z * 0.6 - uFaseVetro; float bg = exp(-dg * dg * 0.22); totalEmissiveRadiance += vec3(0.984, 0.976, 0.957) * bg * 0.62; }');
 }
 

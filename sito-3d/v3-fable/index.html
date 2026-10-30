@@ -2,121 +2,13 @@
 <html lang="it">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ERI · Energie Rinnovabili Italia</title>
-<meta name="description" content="ERI sviluppa, autorizza, costruisce e gestisce impianti fotovoltaici, agrivoltaici, di accumulo e idroelettrici.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Manrope:wght@200;300;400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
-<script type="importmap">
-{ "imports": {
-  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
-} }
-</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="refresh" content="0; url=stili/galleria/">
+<style>html,body{margin:0;background:#f1ede6;color:#1a1a1a;font-family:Inter,system-ui,sans-serif}p{padding:24px}a{color:#b5623a}</style>
 </head>
 <body>
-
-<canvas id="scena" aria-hidden="true"></canvas>
-<div id="scorrimento" aria-hidden="true"></div>
-
-<!-- Logo: grande al centro nell'apertura, poi viaggia in alto a sinistra -->
-<a id="logo" href="#" aria-label="ERI · Energie Rinnovabili Italia"></a>
-
-<header class="testata">
-  <nav class="nav" aria-label="Sezioni">
-    <a href="#" data-vai="0.22">Fotovoltaico</a>
-    <a href="#" data-vai="0.50">Accumulo</a>
-    <a href="#" data-vai="0.74">Idroelettrico</a>
-    <a href="#" data-vai="1" class="nav-contatti">Contatti</a>
-  </nav>
-</header>
-
-<main id="momenti">
-
-  <section class="momento momento-apertura" data-m="0">
-    <div class="blocco">
-      <h1 class="titolo">Dal progetto <em>alla rete.</em></h1>
-      <p class="sotto">Fotovoltaico, accumulo e idroelettrico. Di ogni impianto seguiamo tutto l'iter: dallo sviluppo alla gestione.</p>
-      <a href="#" class="bottone" data-vai="1">Parliamo del progetto <span class="freccia">→</span></a>
-    </div>
-    <p class="invito">Scorri</p>
-  </section>
-
-  <section class="momento momento-tech" data-m="1">
-    <div class="blocco">
-      <p class="rubrica"><span class="numero">01</span> Fotovoltaico e agrivoltaico</p>
-      <h2 class="titolo">Il sole, a terra <em>e sopra i campi.</em></h2>
-      <p class="sotto">Tracker che seguono il sole e impianti agrivoltaici rialzati sopra le colture.</p>
-      <ol class="iter" aria-label="L'iter che seguiamo">
-        <li><b>Sviluppo</b><span>Terreno, studio e progetto</span></li>
-        <li><b>Autorizzazioni</b><span>Permessi e connessione alla rete</span></li>
-        <li><b>Ready to Build</b><span>Pronto per il cantiere</span></li>
-        <li><b>Costruzione</b><span>Cantiere e collaudo</span></li>
-        <li><b>Gestione</b><span>Esercizio e manutenzione</span></li>
-      </ol>
-    </div>
-  </section>
-
-  <section class="momento momento-tech" data-m="2">
-    <div class="blocco">
-      <p class="rubrica"><span class="numero">02</span> Accumulo BESS</p>
-      <h2 class="titolo">L'energia che aspetta <em>il momento giusto.</em></h2>
-      <p class="sotto">Batterie che conservano l'energia e la restituiscono alla rete quando serve.</p>
-      <ol class="iter" aria-label="L'iter che seguiamo">
-        <li><b>Sviluppo</b><span>Terreno, studio e progetto</span></li>
-        <li><b>Autorizzazioni</b><span>Permessi e connessione alla rete</span></li>
-        <li><b>Ready to Build</b><span>Pronto per il cantiere</span></li>
-        <li><b>Costruzione</b><span>Cantiere e collaudo</span></li>
-        <li><b>Gestione</b><span>Esercizio e manutenzione</span></li>
-      </ol>
-    </div>
-  </section>
-
-  <section class="momento momento-tech" data-m="3">
-    <div class="blocco">
-      <p class="rubrica"><span class="numero">03</span> Idroelettrico</p>
-      <h2 class="titolo">L'acqua, con la <em>turbina giusta.</em></h2>
-      <p class="sotto">Pelton per i salti alti, Francis per quelli medi, Kaplan per i salti bassi.</p>
-      <ol class="iter" aria-label="L'iter che seguiamo">
-        <li><b>Sviluppo</b><span>Terreno, studio e progetto</span></li>
-        <li><b>Autorizzazioni</b><span>Permessi e connessione alla rete</span></li>
-        <li><b>Ready to Build</b><span>Pronto per il cantiere</span></li>
-        <li><b>Costruzione</b><span>Cantiere e collaudo</span></li>
-        <li><b>Gestione</b><span>Esercizio e manutenzione</span></li>
-      </ol>
-    </div>
-    <div class="etichette" aria-hidden="true">
-      <div class="etichetta" data-turbina="pelton"><b>Pelton</b><span>Salto alto</span></div>
-      <div class="etichetta" data-turbina="francis"><b>Francis</b><span>Salto medio</span></div>
-      <div class="etichetta" data-turbina="kaplan"><b>Kaplan</b><span>Salto basso</span></div>
-    </div>
-  </section>
-
-  <section class="momento momento-contatti" data-m="4">
-    <div class="blocco scheda">
-      <p class="rubrica"><span class="numero">04</span> Contatti</p>
-      <h2 class="titolo">Parliamo <em>del progetto.</em></h2>
-      <p class="sotto">Un terreno, un'idea, un impianto da far crescere: raccontaci da dove parti.</p>
-      <form class="modulo" novalidate>
-        <label><span>Nome</span><input type="text" name="nome" autocomplete="name" required></label>
-        <label><span>Email</span><input type="email" name="email" autocomplete="email" required></label>
-        <label><span>Messaggio</span><textarea name="messaggio" rows="3" required></textarea></label>
-        <div class="riga-invio">
-          <button type="submit" class="bottone">Invia <span class="freccia">→</span></button>
-          <small>Pagina di prova: il modulo non invia dati.</small>
-        </div>
-        <p class="conferma" hidden>Grazie. Ti rispondiamo entro due giorni lavorativi.</p>
-      </form>
-      <p class="recapiti"><a href="mailto:info@eri-esempio.it">info@eri-esempio.it</a><span>·</span><a href="tel:+39000000000">+39 000 000 0000</a></p>
-    </div>
-  </section>
-
-</main>
-
-<div id="caricamento"><span></span></div>
-
-<script type="module" src="main.js"></script>
+<p>Stile scelto: <a href="stili/galleria/">Galleria Bianca</a> · versione iniziale: <a href="crepuscolo.html">crepuscolo</a> · bozzetto: <a href="stili/linea/">Linea di Luce</a></p>
+<script>location.replace('stili/galleria/');</script>
 </body>
 </html>

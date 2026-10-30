@@ -71,3 +71,18 @@ come unico accento, logo nei colori originali. Le macchine condivise sono riusat
 (`bess-galleria.js`, `turbine-galleria.js`), i contatti mostrano le tre macchine in piccolo (`collezione.js`).
 Misure (headless, alta): idro 31,6k triangoli / 94 chiamate, BESS 126 chiamate; nessun errore ai tre livelli, desktop e telefono.
 `stili/linea/` (Linea di Luce) resta un bozzetto non rifinito.
+
+### Finitura (2026-10-30)
+
+- `index.html` ora apre `stili/galleria/` (Galleria Bianca); la versione iniziale "crepuscolo" resta in `crepuscolo.html`.
+- Chiusi: fila fotovoltaica intera sul telefono (posa di tre quarti dal capo della fila); vetro dei moduli antracite blu
+  anche fuori dalla striscia di luce; maschera della tela continua con lo scorrimento; collezione dei contatti, disegni a
+  terra e ombre che affiorano invece di comparire di colpo; targhette delle turbine che non si accavallano; campo
+  orizzontale costante su desktop; CSS per finestre basse.
+- Prova di scorrimento intero a 26 passi, desktop e telefono: camera continua, nessun salto, testi mai sopra la macchina
+  sul telefono, iter che si accende in ordine. Misure (Chrome headless, dpr 1): vista più pesante idro 31,6k triangoli /
+  94 chiamate (bassa 27,6k / 83); BESS 11k / 125; fotogramma ~5 ms (limite del rAF senza vsync), render 0,7-1,5 ms;
+  nessun errore ai tre livelli.
+- Aperto: conferma dal vivo su portatile con grafica integrata e telefono (dpr 1,5 / 1,25); su desktop sotto i 1100 px
+  la Kaplan passa sotto la colonna dell'iter; sul telefono la camera del fotovoltaico è alta (~6 m) per far stare la fila;
+  togliere `__eri.*` e i meta social prima di pubblicare.
