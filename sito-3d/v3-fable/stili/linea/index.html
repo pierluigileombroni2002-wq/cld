@@ -31,16 +31,18 @@
 <div id="chiaro" aria-hidden="true"></div>
 <div id="scorrimento" aria-hidden="true"></div>
 
-<!-- la riga di luce: a un terzo dal basso, è la linea su cui si disegnano le macchine e che diventa iter -->
+<!-- la riga di luce: a un terzo dal basso, è la linea su cui si disegnano le macchine e che diventa iter;
+     #luce è la sua parte accesa, che cresce con lo scorrimento -->
 <div id="riga" aria-hidden="true"></div>
+<div id="luce" aria-hidden="true"></div>
 
 <a id="logo" href="#" aria-label="ERI · Energie Rinnovabili Italia"></a>
 
 <header class="testata">
   <nav class="nav mono" aria-label="Sezioni">
-    <a href="#" data-vai="0.23" data-m="1">Fotovoltaico</a>
-    <a href="#" data-vai="0.50" data-m="2">Accumulo</a>
-    <a href="#" data-vai="0.74" data-m="3">Idroelettrico</a>
+    <a href="#" data-vai="0.30" data-m="1">Fotovoltaico</a>
+    <a href="#" data-vai="0.55" data-m="2">Accumulo</a>
+    <a href="#" data-vai="0.79" data-m="3">Idroelettrico</a>
     <a href="#" data-vai="1" data-m="4">Contatti</a>
   </nav>
   <div class="momento-num mono" aria-hidden="true"><em>01</em> / 05 &nbsp;·&nbsp; <span>Apertura</span></div>
@@ -61,51 +63,38 @@
       <div><b>01 &nbsp;Tracker monoassiale</b><br>pali · tavola · bulloni</div>
       <div><b>02 &nbsp;Agrivoltaico rialzato</b><br>h 4,50 m · campo sotto</div>
     </div>
-    <p class="frase">Tracker a un asse e strutture agrivoltaiche rialzate. Dal disegno alla rete, seguiamo tutto l'iter.</p>
-    <ol class="iter" aria-label="L'iter che seguiamo">
-      <li data-sigla="SVI"><b>Sviluppo</b><span>Terreno e progetto</span></li>
-      <li data-sigla="AUT"><b>Autorizzazioni</b><span>Permessi e rete</span></li>
-      <li data-sigla="RTB"><b>Ready to Build</b><span>Pronto al cantiere</span></li>
-      <li data-sigla="COS"><b>Costruzione</b><span>Materia e metallo</span></li>
-      <li data-sigla="GES"><b>Gestione</b><span>In esercizio</span></li>
-    </ol>
+    <p class="frase frase-alto">Tracker a un asse e strutture agrivoltaiche rialzate. Dal disegno alla rete, seguiamo tutto l'iter.</p>
   </section>
 
   <section class="momento momento-tech" data-m="2">
-    <div class="note mono">
-      <div><b>01 &nbsp;Container batterie</b><br>rack · porte · led</div>
-      <div><b>02 &nbsp;PCS e trasformatore</b><br>inverter · alette · isolatori</div>
+    <div class="fascia">
+      <div class="note mono">
+        <div><b>01 &nbsp;Container batterie</b><br>rack · porte · led</div>
+        <div><b>02 &nbsp;PCS e trasformatore</b><br>inverter · alette · isolatori</div>
+      </div>
+      <p class="frase">Batterie che conservano l'energia e la restituiscono alla rete quando serve.</p>
     </div>
-    <p class="frase">Batterie che conservano l'energia e la restituiscono alla rete quando serve.</p>
-    <ol class="iter" aria-label="L'iter che seguiamo">
-      <li data-sigla="SVI"><b>Sviluppo</b><span>Terreno e progetto</span></li>
-      <li data-sigla="AUT"><b>Autorizzazioni</b><span>Permessi e rete</span></li>
-      <li data-sigla="RTB"><b>Ready to Build</b><span>Pronto al cantiere</span></li>
-      <li data-sigla="COS"><b>Costruzione</b><span>Materia e metallo</span></li>
-      <li data-sigla="GES"><b>Gestione</b><span>In esercizio</span></li>
-    </ol>
   </section>
 
   <section class="momento momento-tech" data-m="3">
-    <div class="note mono">
-      <div><b>01 &nbsp;Pelton</b><br>salto alto · ugello</div>
-      <div><b>02 &nbsp;Francis</b><br>salto medio · spirale</div>
-      <div><b>03 &nbsp;Kaplan</b><br>salto basso · elica</div>
+    <div class="fascia fascia-bassa">
+      <p class="frase">Pelton per i salti alti, Francis per quelli medi, Kaplan per i salti bassi.</p>
     </div>
-    <p class="frase">Pelton per i salti alti, Francis per quelli medi, Kaplan per i salti bassi.</p>
-    <ol class="iter" aria-label="L'iter che seguiamo">
-      <li data-sigla="SVI"><b>Sviluppo</b><span>Terreno e progetto</span></li>
-      <li data-sigla="AUT"><b>Autorizzazioni</b><span>Permessi e rete</span></li>
-      <li data-sigla="RTB"><b>Ready to Build</b><span>Pronto al cantiere</span></li>
-      <li data-sigla="COS"><b>Costruzione</b><span>Materia e metallo</span></li>
-      <li data-sigla="GES"><b>Gestione</b><span>In esercizio</span></li>
-    </ol>
     <div class="etichette" aria-hidden="true">
       <div class="etichetta mono" data-turbina="pelton"><b>Pelton</b><span>salto alto</span></div>
       <div class="etichetta mono" data-turbina="francis"><b>Francis</b><span>salto medio</span></div>
       <div class="etichetta mono" data-turbina="kaplan"><b>Kaplan</b><span>salto basso</span></div>
     </div>
   </section>
+
+  <!-- l'iter: una sola riga per le tre macchine, sulla riga di luce -->
+  <ol class="iter" id="iter" aria-label="L'iter che seguiamo">
+    <li data-sigla="SVI"><b>Sviluppo</b><span>Terreno e progetto</span></li>
+    <li data-sigla="AUT"><b>Autorizzazioni</b><span>Permessi e rete</span></li>
+    <li data-sigla="RTB"><b>Ready to Build</b><span>Pronto al cantiere</span></li>
+    <li data-sigla="COS"><b>Costruzione</b><span>Materia e metallo</span></li>
+    <li data-sigla="GES"><b>Gestione</b><span>In esercizio</span></li>
+  </ol>
 
   <section class="momento momento-contatti" data-m="4">
     <h1 class="parola parola-contatti">Parliamo</h1>
@@ -119,7 +108,7 @@
           <button type="submit" class="bottone">Invia</button>
           <small class="mono">Pagina di prova: il modulo non invia dati.</small>
         </div>
-        <p class="conferma" hidden>Grazie, ti scriviamo presto.</p>
+        <p class="conferma" hidden><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M3.5 12.5 L9.5 18.5 L20.5 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" pathLength="1"/></svg><span>Grazie, ti scriviamo presto.</span></p>
       </form>
       <p class="recapiti mono"><a href="mailto:info@eri-esempio.it">info@eri-esempio.it</a><span>·</span><a href="tel:+39000000000">+39 000 000 0000</a></p>
     </div>

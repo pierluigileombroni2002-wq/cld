@@ -51,10 +51,13 @@ export function creaAmbiente(renderer, scena) {
   }
 
   // --- luci: tutte fredde e bianche ---
-  const chiave = new THREE.DirectionalLight('#ffffff', 1.3); chiave.position.set(-35, 60, 45);
-  const taglio = new THREE.DirectionalLight('#dfe8f0', 0.75); taglio.position.set(60, 22, -35);
-  const emisfero = new THREE.HemisphereLight('#3a3e44', '#0a0a0b', 0.55);
-  gruppo.add(chiave, taglio, emisfero);
+  const chiave = new THREE.DirectionalLight('#ffffff', 1.45); chiave.position.set(-35, 60, 45);
+  const taglio = new THREE.DirectionalLight('#dfe8f0', 1.15); taglio.position.set(60, 24, -30);   // il filo chiaro sui bordi
+  const emisfero = new THREE.HemisphereLight('#3a3e44', '#0a0a0b', 0.6);
+  // la torcia: una luce vicina, in alto a sinistra davanti alla macchina, che segue il punto di mira
+  // e dà un vero gradiente alle pareti verticali (container, PCS, casse)
+  const torcia = new THREE.PointLight('#ffffff', 900, 90, 2);
+  gruppo.add(chiave, taglio, emisfero, torcia);
 
   // --- mappa d'ambiente da studio: softbox bianchi su nero, come in un servizio fotografico di orologi ---
   const pmrem = new THREE.PMREMGenerator(renderer);
@@ -64,8 +67,10 @@ export function creaAmbiente(renderer, scena) {
     m.position.set(...pos); m.lookAt(0, 0, 0); scenaEnv.add(m);
   };
   softbox(120, 70, '#ffffff', [-45, 75, 30]);      // grande softbox in alto a sinistra: il volume
-  softbox(12, 80, '#e6edf2', [80, 20, -10]);        // striscia stretta e lunga a destra: il filo chiaro sui bordi
-  softbox(70, 30, '#50565c', [0, 18, 90]);          // tenue, dietro la camera: i metalli non sono mai neri del tutto
+  softbox(16, 90, '#ffffff', [80, 22, -10]);        // striscia stretta e lunga a destra: il filo chiaro sui bordi
+  softbox(90, 40, '#8f959b', [0, 20, 90]);          // dietro la camera: le facce frontali non sono mai nere del tutto
+  softbox(60, 16, '#c9ced3', [10, 6, 70]);          // una lama bassa frontale: gradiente sulle pareti verticali
+  softbox(110, 110, '#aeb4ba', [0, 95, 5]);         // cielo da studio sopra: una velatura sui piani orizzontali e sulle giranti
   const pavEnv = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), new THREE.MeshBasicMaterial({ color: '#141516' }));
   pavEnv.rotation.x = -Math.PI / 2; pavEnv.position.y = -1; scenaEnv.add(pavEnv);
   const env = pmrem.fromScene(scenaEnv, 0.05).texture;
@@ -76,6 +81,6 @@ export function creaAmbiente(renderer, scena) {
 
   return {
     gruppo, env, ombra,
-    aggiorna(centro) { matPav.uniforms.centro.value.copy(centro); },
+    aggiorna(centro) { matPav.uniforms.centro.value.copy(centro); torcia.position.set(centro.x - 13, 11, centro.z + 15); },
   };
 }

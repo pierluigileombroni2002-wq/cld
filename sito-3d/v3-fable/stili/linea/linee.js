@@ -12,11 +12,12 @@ export const RIVELAZIONE = {
   uSogliaL: { value: -1e4 },
   uBanda: { value: 0.8 },
   uDettagli: { value: 0 },
+  uResiduo: { value: 0 },   // quanto della linea resta sugli spigoli quando la macchina è solida (il filo chiaro)
 };
 
 const GLSL_COMUNE = /* glsl */`
   varying vec3 vLineaW;
-  uniform float uSogliaS, uSogliaL, uBanda, uDettagli;
+  uniform float uSogliaS, uSogliaL, uBanda, uDettagli, uResiduo;
   float lineaBayer2(vec2 a) { a = floor(a); return fract(a.x / 2.0 + a.y * a.y * 0.75); }
   float lineaBayer4(vec2 a) { return lineaBayer2(0.5 * a) * 0.25 + lineaBayer2(a); }
 `;
@@ -52,7 +53,7 @@ const GLSL_LINEA = /* glsl */`
   {
     float dopoMateria = smoothstep(uSogliaS - uBanda * 0.6, uSogliaS + uBanda * 0.6, vLineaW.x);
     float primaPunta = 1.0 - smoothstep(uSogliaL - 0.5, uSogliaL + 0.5, vLineaW.x);
-    diffuseColor.a *= dopoMateria * primaPunta;
+    diffuseColor.a *= mix(uResiduo, 1.0, dopoMateria) * primaPunta;
   }
 `;
 
@@ -77,6 +78,7 @@ export function iniettaRivelazione(mat, modo = 'solido') {
     shader.uniforms.uSogliaL = RIVELAZIONE.uSogliaL;
     shader.uniforms.uBanda = RIVELAZIONE.uBanda;
     shader.uniforms.uDettagli = RIVELAZIONE.uDettagli;
+    shader.uniforms.uResiduo = RIVELAZIONE.uResiduo;
     shader.vertexShader = shader.vertexShader
       .replace('#include <common>', '#include <common>\nvarying vec3 vLineaW;')
       .replace('#include <project_vertex>', GLSL_VERTICE);

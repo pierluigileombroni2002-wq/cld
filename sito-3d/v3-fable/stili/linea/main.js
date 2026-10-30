@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { creaAmbiente } from './ambiente.js';
 import { creaMacchine } from './macchine.js';
 import { creaLogo } from './logo.js';
-import { creaTesti, MOMENTI, assemblaggioDi } from '../../ui/testi.js';
+import { creaTesti, MOMENTI, assemblaggioDi } from './testi.js';
 
 const param = new URLSearchParams(location.search);
 const tela = document.getElementById('scena');
@@ -28,7 +28,7 @@ const qualitaForzata = ORDINE.includes(param.get('q'));
 const renderer = new THREE.WebGLRenderer({ canvas: tela, antialias: true, alpha: true, powerPreference: 'high-performance', stencil: false });
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.0;
+renderer.toneMappingExposure = 1.1;
 renderer.shadowMap.enabled = false;
 renderer.setClearColor(0x000000, 0);
 
@@ -41,10 +41,9 @@ const macchine = creaMacchine(scena, ambiente.env);
 for (const z of [4, 11, -6, -13]) ambiente.ombra(0, z, 19, 4.2);                        // le quattro file di tracker
 ambiente.ombra(70 - 4.3, -2.5, 7.2, 3.6); ambiente.ombra(70 + 4.3, -2.5, 7.2, 3.6);   // i container
 ambiente.ombra(64, 3.0, 3.2, 2.2); ambiente.ombra(75.5, 3.2, 3.4, 2.6);               // PCS e trasformatore
-for (const x of [128, 140, 152]) ambiente.ombra(x, 0, 6.0, 4.4);                        // le tre turbine
+for (const x of [140 - 8, 140, 140 + 8]) ambiente.ombra(x, 0, 6.0, 4.4);               // le tre turbine
 
 // ---------- scorrimento morbido ----------
-const scorrimento = document.getElementById('scorrimento');
 function leggiScroll() {
   const max = Math.max(1, document.documentElement.scrollHeight - innerHeight);
   stato.pMira = Math.min(1, Math.max(0, scrollY / max));
@@ -59,7 +58,7 @@ for (const a of document.querySelectorAll('[data-vai]')) {
 }
 document.getElementById('logo').addEventListener('click', (e) => { e.preventDefault(); scrollTo({ top: 0, behavior: 'smooth' }); });
 
-// modulo contatti: invio finto con conferma
+// modulo contatti: invio finto con conferma (la linea si chiude in un segno di spunta)
 const modulo = document.querySelector('.modulo');
 modulo.addEventListener('submit', (e) => {
   e.preventDefault();
@@ -69,16 +68,17 @@ modulo.addEventListener('submit', (e) => {
 });
 
 // ---------- regia della camera: bassa, quasi ferma; un carrello laterale per momento ----------
+// tel: sul telefono la camera arretra di questo fattore (la macchina deve stare intera nella banda bassa)
 const CHIAVI = [
-  { p: 0.00, pos: [-27, 3.2, 47], mira: [-4, 1.2, -3] },
-  { p: 0.13, pos: [-17, 2.7, 40], mira: [0, 1.2, -2] },
-  { p: 0.36, pos: [-6, 2.5, 39], mira: [1, 1.2, -2] },
-  { p: 0.43, pos: [59, 2.6, 27], mira: [69, 1.4, 0] },
-  { p: 0.60, pos: [65, 2.6, 27], mira: [70, 1.4, 0] },
-  { p: 0.67, pos: [128, 2.6, 31], mira: [134, 1.4, 0] },
-  { p: 0.84, pos: [150, 2.6, 31], mira: [146, 1.4, 0] },
-  { p: 1.00, pos: [152, 2.6, 31], mira: [148, 1.4, 0] },
-].map((k) => ({ p: k.p, pos: new THREE.Vector3(...k.pos), mira: new THREE.Vector3(...k.mira) }));
+  { p: 0.00, pos: [-27, 3.2, 47], mira: [-4, 1.2, -3], tel: 1.25 },
+  { p: 0.13, pos: [-17, 2.7, 40], mira: [0, 1.2, -2], tel: 1.25 },
+  { p: 0.36, pos: [-6, 2.5, 39], mira: [1, 1.2, -2], tel: 1.25, attesa: 0.01 },   // attesa: la camera resta ferma un attimo mentre i testi sfumano
+  { p: 0.40, pos: [64.5, 2.1, 24.5], mira: [69.6, 1.2, 2.5], tel: 1.8 },
+  { p: 0.60, pos: [67.5, 2.1, 24], mira: [70.2, 1.2, 2.5], tel: 1.8, attesa: 0.01 },
+  { p: 0.64, pos: [138.9, 2.2, 25], mira: [139.9, 1.25, 0], tel: 1.85 },
+  { p: 0.84, pos: [141.1, 2.2, 25], mira: [140.1, 1.25, 0], tel: 1.85 },
+  { p: 1.00, pos: [141.3, 2.2, 25], mira: [140.1, 1.25, 0], tel: 1.85 },
+].map((k) => ({ p: k.p, pos: new THREE.Vector3(...k.pos), mira: new THREE.Vector3(...k.mira), tel: k.tel, attesa: k.attesa || 0 }));
 
 const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _dir = new THREE.Vector3(), _dx = new THREE.Vector3(), _dy = new THREE.Vector3();
 const miraCorrente = new THREE.Vector3();
@@ -94,19 +94,19 @@ function posaCamera(p) {
   let i = 0;
   while (i < CHIAVI.length - 2 && p > CHIAVI[i + 1].p) i++;
   const k0 = CHIAVI[Math.max(0, i - 1)], k1 = CHIAVI[i], k2 = CHIAVI[i + 1], k3 = CHIAVI[Math.min(CHIAVI.length - 1, i + 2)];
-  const s = Math.min(1, Math.max(0, (p - k1.p) / (k2.p - k1.p)));
+  const s = Math.min(1, Math.max(0, (p - k1.p - k1.attesa) / (k2.p - k1.p - k1.attesa)));
   const e = s * s * (3 - 2 * s);
   catmull(_a, k0.pos, k1.pos, k2.pos, k3.pos, e);
   catmull(_b, k0.mira, k1.mira, k2.mira, k3.mira, e);
   _a.y += Math.sin(stato.tempo * 0.3) * 0.03; // respiro impercettibile
   miraCorrente.copy(_b);
-  inquadra(_a, _b);
+  inquadra(_a, _b, k1.tel + (k2.tel - k1.tel) * e);
 }
 // Sul telefono la macchina sta nella banda bassa (60%) e la camera arretra: si sposta il binario, non l'obiettivo.
-function inquadra(pos, mira) {
+function inquadra(pos, mira, tel) {
   const s = stretto();
-  if (s) { _dir.subVectors(pos, mira); pos.copy(mira).addScaledVector(_dir, 1.25); }
-  const sx = s ? -0.1 : 0, sy = s ? -0.42 : -0.14; // la macchina appoggia sulla riga: un po' sotto il centro
+  if (s) { _dir.subVectors(pos, mira); pos.copy(mira).addScaledVector(_dir, tel); }
+  const sx = s ? -0.18 : 0, sy = s ? -0.42 : -0.14; // la macchina appoggia sulla riga: un po' sotto il centro; sul telefono a destra dell'iter
   _dir.subVectors(mira, pos); const dist = _dir.length(); _dir.normalize();
   const mezzaH = Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2) * dist;
   const mezzaW = mezzaH * camera.aspect;
@@ -122,11 +122,34 @@ function inquadra(pos, mira) {
 const testi = creaTesti();
 const NOMI = ['Apertura', 'Fotovoltaico e agrivoltaico', 'Accumulo BESS', 'Idroelettrico', 'Contatti'];
 const parole = [...document.querySelectorAll('.parola[data-m]')];
+const tutteLeParole = [...document.querySelectorAll('.parola:not(.filigrana)')];
 const navVoci = [...document.querySelectorAll('.nav a[data-m]')];
 const numeroEl = document.querySelector('.momento-num em'), nomeEl = document.querySelector('.momento-num span');
 const chiaroEl = document.getElementById('chiaro');
 const radice = document.documentElement;
 let momentoMostrato = -2, wdthMostrata = -1, chiaroMostrato = -1;
+
+// Ogni parola sta in una riga tra i margini: si misura alla larghezza massima dell'asse wdth (110)
+// e si calcola una dimensione per parola, mai sopra quella del foglio di stile (18 vw / 24 vw).
+const dimensioneParola = new Map();
+function adattaParole() {
+  const s = stretto();
+  const margine = s ? 16 : innerWidth * 0.06;
+  const disponibile = innerWidth - margine * 2;
+  for (const el of tutteLeParole) {
+    el.style.fontSize = '';
+    const massima = parseFloat(getComputedStyle(el).fontSize);
+    el.style.fontSize = '100px';
+    el.style.fontVariationSettings = "'wdth' 110, 'wght' 800";
+    const intervallo = document.createRange(); intervallo.selectNodeContents(el);
+    const l100 = intervallo.getBoundingClientRect().width; // la larghezza del testo, non della scatola
+    el.style.fontVariationSettings = '';
+    const px = Math.min(massima, 100 * disponibile / Math.max(1, l100));
+    el.style.fontSize = px.toFixed(1) + 'px';
+    dimensioneParola.set(el, px);
+  }
+}
+
 function aggiornaTesti(p) {
   testi.aggiorna(p);
   const idx = testi.momentoAttivo();
@@ -135,39 +158,45 @@ function aggiornaTesti(p) {
     for (const el of parole) el.classList.toggle('attiva', +el.dataset.m === idx);
     for (const el of navVoci) el.classList.toggle('on', +el.dataset.m === idx);
     if (idx >= 0) { numeroEl.textContent = String(idx + 1).padStart(2, '0'); nomeEl.textContent = NOMI[idx]; }
+    const parola = parole.find((el) => +el.dataset.m === idx);
+    if (parola && dimensioneParola.has(parola)) radice.style.setProperty('--parola-px', dimensioneParola.get(parola).toFixed(0) + 'px');
   }
   // la parola respira: si allarga piano lungo il momento
   let wdth = 92;
   if (idx >= 1 && idx <= 3) { const m = MOMENTI[idx]; wdth = 86 + 24 * Math.min(1, Math.max(0, (p - m.da) / (m.a - m.da))); }
   if (Math.abs(wdth - wdthMostrata) > 0.4) { wdthMostrata = wdth; radice.style.setProperty('--wdth', wdth.toFixed(1)); }
-  // il finale: il grafite si schiarisce in osso
-  const k = Math.min(1, Math.max(0, (p - 0.855) / 0.075));
+  // il finale: il grafite si schiarisce in osso, in quasi uno schermo di scorrimento
+  const k = Math.min(1, Math.max(0, (p - 0.845) / 0.09));
   const kk = k * k * (3 - 2 * k);
   if (Math.abs(kk - chiaroMostrato) > 0.004) { chiaroMostrato = kk; chiaroEl.style.opacity = kk.toFixed(3); document.body.classList.toggle('chiaro', kk > 0.5); }
 }
 
-// etichette delle turbine: sulla riga, sotto ciascuna
+// etichette delle turbine: sulla riga, sotto ciascuna (sotto l'iter); sul telefono sotto la base, nascoste se si urtano
 let logo = null;
 const etichette = {};
 for (const el of document.querySelectorAll('.etichetta')) etichette[el.dataset.turbina] = el;
+const posEtichetta = {};
 const _proj = new THREE.Vector3();
 function etichetteTurbine(p) {
   const m = MOMENTI[3];
   const dentro = p > m.da && p < m.a + 0.02;
-  const a = assemblaggioDi(p, m);
+  const t = assemblaggioDi(p, m);
   const s = stretto();
+  let xPrecedente = -1e9;
   for (const { nome, pos } of macchine.ancoreTurbine()) {
     const el = etichette[nome]; if (!el) continue;
     const i = nome === 'pelton' ? 0 : nome === 'francis' ? 1 : 2;
-    const visibile = dentro && a > 0.3 + i * 0.1;
-    if (!visibile) { el.classList.remove('visibile'); continue; }
+    const visibile = dentro && t > 0.40 + i * 0.03;
+    if (!visibile) { if (el.classList.contains('visibile')) el.classList.remove('visibile'); continue; }
     _proj.set(pos.x, 0, pos.z).project(camera);
-    const x = (_proj.x * 0.5 + 0.5) * innerWidth;
+    const x = Math.round((_proj.x * 0.5 + 0.5) * innerWidth);
     const yBase = (-_proj.y * 0.5 + 0.5) * innerHeight;
-    const y = s ? yBase + 18 : innerHeight * 0.67 + 70;
-    const dentroSchermo = _proj.z < 1 && x > (s ? 60 : 80) && x < innerWidth - 80 && y < innerHeight - 70;
+    const y = Math.round(s ? yBase + 14 : innerHeight * 0.67 + 86);
+    const dentroSchermo = _proj.z < 1 && x > (s ? 112 : 80) && x < innerWidth - (s ? 50 : 80) && y < innerHeight - 60 && x - xPrecedente > (s ? 96 : 150);
     el.classList.toggle('visibile', dentroSchermo);
-    el.style.transform = `translate(${x.toFixed(0)}px, ${y.toFixed(0)}px) translate(-50%, 0)`;
+    if (dentroSchermo) xPrecedente = x;
+    const chiave = x + ',' + y;
+    if (posEtichetta[nome] !== chiave) { posEtichetta[nome] = chiave; el.style.transform = `translate(${x}px, ${y}px) translate(-50%, 0)`; }
   }
 }
 
@@ -178,6 +207,8 @@ function ridimensiona() {
   camera.aspect = w / h;
   camera.fov = h > w ? 58 : 36;
   camera.updateProjectionMatrix();
+  adattaParole();
+  testi.misura();
 }
 addEventListener('resize', ridimensiona);
 
@@ -277,7 +308,7 @@ stato.misura = (durataMs = 3000) => new Promise((ok) => {
     if (n > 2) { fotogrammi.push(dt); peggio = Math.max(peggio, dt); lavoro += stato.ms; }
     n++;
     if (ora - t0 < durataMs) requestAnimationFrame(f);
-    else ok({ qualita: stato.qualita, dpr: renderer.getPixelRatio(), msFotogrammaMedio: +(fotogrammi.reduce((a, b) => a + b, 0) / fotogrammi.length).toFixed(1), msFotogrammaPeggiore: +peggio.toFixed(1), msRenderMedio: +(lavoro / fotogrammi.length).toFixed(2), triangoli: renderer.info.render.triangles, chiamate: renderer.info.render.calls, p: +stato.p.toFixed(3) });
+    else ok({ qualita: stato.qualita, dpr: renderer.getPixelRatio(), msFotogrammaMedio: +(fotogrammi.reduce((a, b) => a + b, 0) / fotogrammi.length).toFixed(1), msFotogrammaPeggiore: +peggio.toFixed(1), msRenderMedio: +(lavoro / fotogrammi.length).toFixed(2), triangoli: renderer.info.render.triangles, chiamate: renderer.info.render.calls, linee: renderer.info.render.lines, p: +stato.p.toFixed(3) });
   })();
 });
 stato.qualitaImposta = (q) => applicaQualita(q);
