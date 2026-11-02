@@ -1,0 +1,171 @@
+/* ERI · Alba di Vetro · aria e leggerezza: titoli enormi e leggeri in minuscolo, centrati; iter come cinque punti su una linea */
+
+:root {
+  --bianco: #FBFBFD;
+  --azzurro: #DCE8F3;
+  --cipria: #F4DACD;
+  --pesca: #F7E3C8;
+  --notte: #1B2A41;
+  --corallo: #E8907A;
+  --corallo2: #C9684F;
+  --outfit: 'Outfit', system-ui, sans-serif;
+  --nunito: 'Nunito Sans', system-ui, sans-serif;
+  --mono: 'Roboto Mono', ui-monospace, monospace;
+  --schermi: 4.6;
+  --margine: clamp(20px, 6vw, 96px);
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: auto; }
+body {
+  margin: 0;
+  background: linear-gradient(180deg, #FBFBFD 0%, #DCE8F3 45%, #F4DACD 68%, #EEF2F6 100%);
+  color: var(--notte);
+  font-family: var(--nunito);
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+#scorrimento { height: calc(var(--schermi) * 100vh); height: calc(var(--schermi) * 100svh); }
+a { color: inherit; text-decoration: none; }
+
+#scena { position: fixed; inset: 0; width: 100%; height: 100%; display: block; z-index: 1; pointer-events: none; }
+
+/* ---------- caricamento ---------- */
+#caricamento {
+  position: fixed; inset: 0; z-index: 50;
+  background: linear-gradient(180deg, #FBFBFD 0%, #DCE8F3 45%, #F4DACD 68%, #EEF2F6 100%);
+  display: grid; place-items: center;
+  transition: opacity 0.9s ease;
+}
+#caricamento span { width: 120px; height: 1px; background: rgba(27,42,65,0.12); position: relative; overflow: hidden; display: block; }
+#caricamento span::after {
+  content: ''; position: absolute; inset: 0; background: var(--corallo); transform-origin: left;
+  animation: carica 1.6s ease-in-out infinite;
+}
+@keyframes carica { 0% { transform: scaleX(0); } 60% { transform: scaleX(1); transform-origin: left; } 100% { transform: scaleX(0); transform-origin: right; } }
+#caricamento.via { opacity: 0; pointer-events: none; }
+
+/* ---------- logo (colori originali) ---------- */
+#logo {
+  position: fixed; z-index: 20; left: 0; top: 0;
+  width: min(300px, 50vw);
+  transform-origin: 0 0;
+  will-change: transform, width;
+  pointer-events: none;
+  opacity: 0; transition: opacity 1.2s ease;
+}
+#logo.visibile { opacity: 1; }
+#logo svg { width: 100%; height: auto; display: block; overflow: visible; }
+#logo.in-testata { pointer-events: auto; }
+
+/* ---------- testata ---------- */
+.testata {
+  position: fixed; inset: 0 0 auto 0; z-index: 15;
+  display: flex; justify-content: flex-end; align-items: center;
+  padding: 30px var(--margine);
+  pointer-events: none;
+}
+.menu { display: flex; gap: clamp(18px, 2.2vw, 34px); align-items: center; pointer-events: auto; font-family: var(--mono); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; }
+.menu a { color: var(--notte); opacity: 0.62; padding-bottom: 4px; border-bottom: 1px solid transparent; transition: opacity 0.3s, border-color 0.3s; }
+.menu a:hover, .menu a.on { opacity: 1; border-bottom-color: var(--corallo); }
+.menu .cta {
+  opacity: 1; background: var(--corallo); color: #FFFDFB; padding: 10px 20px; border-radius: 999px; margin-left: 10px; border: 0;
+  font-family: var(--nunito); font-size: 13.5px; font-weight: 600; letter-spacing: 0.02em; text-transform: none;
+  transition: background 0.3s;
+}
+.menu .cta:hover { background: var(--corallo2); border: 0; }
+
+/* ---------- momenti (sopra la tela) ---------- */
+#momenti { position: fixed; inset: 0; z-index: 10; pointer-events: none; }
+.momento {
+  position: absolute; inset: 0;
+  opacity: 0; visibility: hidden;
+  transition: opacity 0.6s ease, visibility 0s linear 0.6s;
+}
+.momento.attivo { opacity: 1; visibility: visible; transition: opacity 0.8s ease 0.1s, visibility 0s; }
+
+.titolo {
+  position: absolute; left: 0; right: 0; margin: 0; text-align: center;
+  font-family: var(--outfit); font-weight: 200; line-height: 1; letter-spacing: -0.015em; color: var(--notte);
+  transform: translateY(14px); transition: transform 1s cubic-bezier(.2,.7,.2,1);
+}
+.momento.attivo .titolo { transform: none; }
+.frase {
+  position: absolute; left: 50%; transform: translate(-50%, 10px); margin: 0; width: min(760px, 86vw); text-align: center;
+  font-size: 21px; line-height: 33px; color: var(--notte); opacity: 0.76;
+  transition: transform 1.1s cubic-bezier(.2,.7,.2,1) 0.05s;
+}
+.momento.attivo .frase { transform: translate(-50%, 0); }
+
+/* apertura: logo in alto, titolo enorme sotto, frase, invito a scorrere */
+.momento-apertura .titolo { top: 40vh; font-size: clamp(56px, 7.6vw, 124px); }
+.momento-apertura .frase { top: calc(40vh + clamp(56px, 7.6vw, 124px) + 30px); }
+.invito {
+  position: absolute; left: 50%; bottom: 34px; margin: 0; transform: translateX(-50%);
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--notte); opacity: 0.6;
+}
+.invito::after {
+  content: ''; display: block; width: 1px; height: 34px; margin: 10px auto 0;
+  background: var(--notte); opacity: 0.5; animation: invito 2.4s ease-in-out infinite;
+}
+@keyframes invito { 0%, 100% { transform: scaleY(0.4); transform-origin: top; opacity: 0.2; } 50% { transform: scaleY(1); opacity: 0.6; } }
+
+/* fotovoltaico: titolo in alto, frase di due righe, iter in basso sull'acqua */
+.momento-fv .titolo { top: 7vh; font-size: clamp(44px, 6vw, 96px); }
+.momento-fv .frase { top: calc(7vh + clamp(44px, 6vw, 96px) + 22px); }
+
+.iter {
+  position: absolute; left: var(--margine); right: var(--margine); bottom: 48px; height: 52px;
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--notte);
+  pointer-events: auto;
+}
+.iter .linea { position: absolute; left: 0; right: 0; top: 0; height: 1px; background: rgba(27,42,65,0.28); }
+.iter .linea i { position: absolute; left: 0; top: -0.5px; height: 2px; width: 0; background: var(--corallo); }
+.iter ol { list-style: none; margin: 0; padding: 0; }
+.iter li { position: absolute; top: 0; left: calc(var(--k) * 25%); width: 0; }
+.iter li b {
+  position: absolute; left: -3.5px; top: -3.5px; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--notte); opacity: 0.6; transition: background 0.3s, box-shadow 0.3s, opacity 0.3s;
+}
+.iter li.acceso b { background: var(--corallo); opacity: 1; }
+.iter li.corrente b { box-shadow: 0 0 0 6px rgba(232,144,122,0.28); }
+.iter li span { position: absolute; top: 18px; left: 0; white-space: nowrap; transform: translateX(-50%); opacity: 0.62; transition: color 0.3s, opacity 0.3s; }
+.iter li:first-child span { transform: none; }
+.iter li:last-child span { transform: translateX(-100%); }
+.iter li.corrente span { opacity: 1; color: var(--corallo2); font-weight: 500; }
+.iter .fase-attuale { display: none; }
+.nota {
+  position: absolute; left: var(--margine); bottom: 16px;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--notte); opacity: 0.45;
+}
+
+/* ---------- telefono e schermi stretti: testi in alto, scena nella metà bassa, iter compatto ---------- */
+@media (max-width: 760px), (orientation: portrait) {
+  :root { --margine: 20px; }
+  .testata { padding: 16px var(--margine); }
+  .menu a:not(.cta) { display: none; }
+  .menu .cta { padding: 9px 14px; font-size: 12px; margin-left: 0; }
+
+  .frase { width: calc(100vw - 40px); font-size: 15.5px; line-height: 24px; }
+  .momento-apertura .titolo { top: calc(68px + min(200px, 50vw, 22vh) * 0.87 + 22px); font-size: clamp(38px, 11vw, 46px); line-height: 1.02; padding: 0 16px; }
+  .momento-apertura .frase { top: calc(68px + min(200px, 50vw, 22vh) * 0.87 + 22px + 2 * clamp(38px, 11vw, 46px) * 1.02 + 18px); }
+  .invito { bottom: 20px; }
+  .invito::after { height: 22px; }
+
+  .momento-fv .titolo { top: 84px; font-size: clamp(36px, 10.5vw, 44px); line-height: 1.02; padding: 0 16px; }
+  .momento-fv .frase { top: calc(84px + 2 * clamp(36px, 10.5vw, 44px) * 1.02 + 16px); }
+
+  .iter { bottom: 36px; height: 40px; }
+  .iter li span { display: none; }
+  .iter .fase-attuale {
+    display: block; position: absolute; left: 0; right: 0; top: 16px; text-align: center;
+    color: var(--corallo2); font-weight: 500; white-space: nowrap;
+  }
+  .nota { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .invito::after { animation: none; }
+}

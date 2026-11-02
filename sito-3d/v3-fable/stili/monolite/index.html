@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ERI · Monolite · bozzetto</title>
+<meta name="description" content="ERI sviluppa, autorizza, costruisce e gestisce impianti fotovoltaici, agrivoltaici, di accumulo e idroelettrici.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@0,400;1,400&family=Jost:wght@300;400&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+
+<!-- La sala: la tela 3D è opaca (pavimento, nebbia e fondo nella scena); sopra, il cono di luce e la penombra dipinti -->
+<canvas id="scena" aria-hidden="true"></canvas>
+<div class="cono" aria-hidden="true"></div>
+<div class="penombra" aria-hidden="true"></div>
+<div id="scorrimento" aria-hidden="true"></div>
+
+<!-- Logo: grande a centro-destra nell'apertura, poi viaggia in alto a sinistra -->
+<a id="logo" href="#" aria-label="ERI · Energie Rinnovabili Italia"></a>
+
+<header class="testa">
+  <nav class="menu" aria-label="Sezioni">
+    <a href="#" class="on" data-vai="0.45">Fotovoltaico</a>
+    <a href="#">Accumulo</a>
+    <a href="#">Idroelettrico</a>
+    <a href="#">Contatti</a>
+  </nav>
+</header>
+
+<main id="momenti">
+
+  <section class="momento momento-apertura attivo" data-m="0">
+    <div class="titolo">
+      <div class="filetto"></div>
+      <div class="occhiello">ERI · Energie Rinnovabili Italia</div>
+      <h1>La luce,<br><i>fino alla rete.</i></h1>
+      <p>Fotovoltaico, accumulo, idroelettrico. Di ogni impianto seguiamo tutto l'iter.</p>
+    </div>
+    <p class="invito"><span>Scorri</span><i></i></p>
+  </section>
+
+  <section class="momento momento-fv" data-m="1">
+    <div class="titolo">
+      <div class="filetto"></div>
+      <div class="occhiello">01 · Fotovoltaico e agrivoltaico</div>
+      <h1>Rivolti alla <i>luce.</i></h1>
+      <p>Tracker che seguono il sole, file agrivoltaiche alte sopra i campi.<br>Ogni passo, fino alla rete.</p>
+    </div>
+
+    <div class="targhe">
+      <div class="targa"><div class="n">N. 01</div><div class="t">Tracker monoassiale</div><div class="s">Tavola 2P su palo singolo</div></div>
+      <div class="targa targa-2"><div class="n">N. 02</div><div class="t">Agrivoltaico rialzato</div><div class="s">Moduli a 4,50 m, campo sotto</div></div>
+    </div>
+
+    <aside class="iter" aria-label="L'iter che seguiamo">
+      <p class="cap">L'iter, per ogni impianto</p>
+      <ol>
+        <i class="riga" aria-hidden="true"></i>
+        <li><span class="n">I</span>Sviluppo</li>
+        <li><span class="n">II</span>Autorizzazioni</li>
+        <li><span class="n">III</span>Ready to Build</li>
+        <li><span class="n">IV</span>Costruzione</li>
+        <li><span class="n">V</span>Gestione</li>
+      </ol>
+      <p class="nota"></p>
+    </aside>
+
+    <!-- telefono: iter compatto, una riga d'ottone con cinque punti -->
+    <div class="iter-tel" aria-hidden="true">
+      <div class="linea"><i class="riga"></i><b></b><b></b><b></b><b></b><b></b></div>
+      <div class="parola"></div>
+    </div>
+  </section>
+
+</main>
+
+<div id="caricamento"><span></span></div>
+
+<script type="module" src="main.js"></script>
+</body>
+</html>

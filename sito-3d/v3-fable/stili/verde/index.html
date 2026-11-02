@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ERI · Energie Rinnovabili Italia · Verde Profondo</title>
+<meta name="description" content="ERI sviluppa, autorizza, costruisce e gestisce impianti fotovoltaici, agrivoltaici, di accumulo e idroelettrici.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Figtree:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300;1,9..144,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body data-momento="0">
+
+<!-- La sala: velluto verde bosco, una sola luce calda da destra, bassa -->
+<div class="parete" aria-hidden="true"></div>
+<div class="luce" aria-hidden="true"></div>
+
+<canvas id="scena" aria-hidden="true"></canvas>
+<div id="scorrimento" aria-hidden="true"></div>
+
+<!-- Logo: grande nell'apertura, poi viaggia in testata -->
+<a id="logo" href="#" aria-label="ERI · Energie Rinnovabili Italia"></a>
+
+<header class="testa">
+  <nav class="menu" aria-label="Sezioni">
+    <a href="#" data-vai="0.55" class="on">Fotovoltaico</a>
+    <a href="#" data-vai="1">Accumulo</a>
+    <a href="#" data-vai="1">Idroelettrico</a>
+    <a href="#" data-vai="1">Contatti</a>
+  </nav>
+</header>
+
+<main id="momenti">
+
+  <section class="momento momento-apertura attivo" data-m="0">
+    <div class="frase">
+      <p>Fotovoltaico, accumulo, idroelettrico. <br>Di ogni impianto seguiamo tutto l'iter.</p>
+      <a class="cta" href="#" data-vai="1">Parliamo del progetto</a>
+    </div>
+    <div class="blocco-titolo">
+      <div class="kicker"><b>ERI</b>Energie Rinnovabili Italia</div>
+      <h1 class="titolo">Dal disegno<br><i>alla rete.</i></h1>
+    </div>
+    <p class="invito">Scorri</p>
+  </section>
+
+  <section class="momento momento-fv" data-m="1">
+    <div class="frase">
+      <p>Tracker che si inclinano con il sole, filari alti sopra le colture. <br>Dallo studio alla rete, un solo interlocutore.</p>
+    </div>
+    <div class="blocco-titolo">
+      <div class="kicker"><b>01</b>Fotovoltaico e agrivoltaico</div>
+      <h2 class="titolo">Rivolti<br><i>al sole.</i></h2>
+    </div>
+    <!-- L'iter: una linea d'orizzonte dorata, a tutta larghezza; la parte accesa cresce con lo scorrimento -->
+    <div class="iter" aria-label="L'iter che seguiamo">
+      <div class="iter-linea"><i class="iter-accesa"></i><i class="iter-punto"></i></div>
+      <span class="passo" data-i="0">Sviluppo</span>
+      <span class="passo" data-i="1">Autorizzazioni</span>
+      <span class="passo" data-i="2">Ready to Build</span>
+      <span class="passo" data-i="3">Costruzione</span>
+      <span class="passo" data-i="4">Gestione</span>
+      <div class="iter-corrente"><b>01</b><span>Sviluppo</span></div>
+    </div>
+  </section>
+
+</main>
+
+<div id="caricamento" aria-hidden="true"><span></span></div>
+
+<script type="module" src="main.js"></script>
+</body>
+</html>

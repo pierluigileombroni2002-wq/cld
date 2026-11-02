@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ERI · Energie Rinnovabili Italia · Alba di Vetro</title>
+<meta name="description" content="ERI sviluppa, autorizza, costruisce e gestisce impianti fotovoltaici, agrivoltaici, di accumulo e idroelettrici.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400&family=Nunito+Sans:wght@400;600&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+
+<canvas id="scena" aria-hidden="true"></canvas>
+<div id="scorrimento" aria-hidden="true"></div>
+
+<!-- Logo: grande in alto al centro nell'apertura, poi viaggia in testata -->
+<a id="logo" href="#" aria-label="ERI · Energie Rinnovabili Italia"></a>
+
+<header class="testata">
+  <nav class="menu" aria-label="Sezioni">
+    <a href="#" data-vai="0.5">Fotovoltaico</a>
+    <a href="#" data-vai="1">Accumulo</a>
+    <a href="#" data-vai="1">Idroelettrico</a>
+    <a href="#" data-vai="1">Contatti</a>
+    <a href="#" data-vai="1" class="cta">Parliamo del progetto</a>
+  </nav>
+</header>
+
+<main id="momenti">
+
+  <section class="momento momento-apertura attivo" data-m="0">
+    <h1 class="titolo">dal disegno alla rete</h1>
+    <p class="frase">Fotovoltaico, accumulo, idroelettrico.<br>Di ogni impianto seguiamo tutto l'iter.</p>
+    <p class="invito">scorri</p>
+  </section>
+
+  <section class="momento momento-fv" data-m="1">
+    <h2 class="titolo">il vetro segue il sole</h2>
+    <p class="frase">Tracker che inclinano il vetro verso la luce e filari agrivoltaici alti sopra le colture.<br>ERI li porta dal primo studio alla rete, e li gestisce ogni giorno.</p>
+    <nav class="iter" aria-label="L'iter che seguiamo">
+      <div class="linea"><i></i></div>
+      <ol>
+        <li style="--k:0"><b></b><span>Sviluppo</span></li>
+        <li style="--k:1"><b></b><span>Autorizzazioni</span></li>
+        <li style="--k:2"><b></b><span>Ready to Build</span></li>
+        <li style="--k:3"><b></b><span>Costruzione</span></li>
+        <li style="--k:4"><b></b><span>Gestione</span></li>
+      </ol>
+      <div class="fase-attuale" aria-hidden="true"></div>
+    </nav>
+    <div class="nota">01 / 05 · fotovoltaico e agrivoltaico</div>
+  </section>
+
+</main>
+
+<div id="caricamento"><span></span></div>
+
+<script type="module" src="main.js"></script>
+</body>
+</html>

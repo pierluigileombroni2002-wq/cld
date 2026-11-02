@@ -1,0 +1,188 @@
+/* ERI · Monolite · una notte al museo: impaginazione da catalogo sopra la scena 3D */
+
+:root {
+  --sala: #1E1B19;
+  --pietra-scura: #171513;
+  --avorio: #EFE6D6;
+  --pietra: #8C847A;
+  --ottone: #B98E4A;
+  --spot: #FFE9C8;
+  --didone: 'Bodoni Moda', Didot, 'Bodoni 72', serif;
+  --jost: Jost, 'Futura', system-ui, sans-serif;
+  --mono: 'DM Mono', ui-monospace, monospace;
+  --schermi: 5;
+  --margine: clamp(20px, 6vw, 96px);
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: auto; }
+body {
+  margin: 0;
+  background: var(--sala);
+  color: var(--avorio);
+  font-family: var(--jost);
+  font-weight: 300;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+#scorrimento { height: calc(var(--schermi) * 100vh); height: calc(var(--schermi) * 100svh); }
+a { color: inherit; text-decoration: none; }
+
+/* ---------- la tela e la luce dipinta sopra ---------- */
+#scena { position: fixed; inset: 0; width: 100%; height: 100%; display: block; z-index: 1; pointer-events: none; }
+/* il cono della lampada: una lama di luce calda che scende dal soffitto, al centro */
+.cono {
+  position: fixed; inset: 0; z-index: 2; pointer-events: none;
+  background:
+    radial-gradient(60% 55% at 56% -8%, rgba(255,233,200,0.085) 0%, rgba(255,233,200,0.035) 45%, rgba(255,233,200,0) 70%);
+}
+/* la penombra: la sala muore nel buio ai bordi (mai nero puro) */
+.penombra {
+  position: fixed; inset: 0; z-index: 2; pointer-events: none;
+  background: radial-gradient(75% 70% at 52% 52%, rgba(20,18,16,0) 42%, rgba(20,18,16,0.3) 75%, rgba(20,18,16,0.66) 100%);
+}
+
+/* ---------- caricamento ---------- */
+#caricamento {
+  position: fixed; inset: 0; z-index: 50; background: var(--sala);
+  display: grid; place-items: center;
+  transition: opacity 0.9s ease;
+}
+#caricamento span { width: 120px; height: 1px; background: rgba(239,230,214,0.08); position: relative; overflow: hidden; display: block; }
+#caricamento span::after {
+  content: ''; position: absolute; inset: 0; background: var(--ottone); transform-origin: left;
+  animation: carica 1.6s ease-in-out infinite;
+}
+@keyframes carica { 0% { transform: scaleX(0); } 60% { transform: scaleX(1); transform-origin: left; } 100% { transform: scaleX(0); transform-origin: right; } }
+#caricamento.via { opacity: 0; pointer-events: none; }
+
+/* ---------- logo ---------- */
+#logo {
+  position: fixed; z-index: 20; left: 0; top: 0;
+  width: min(400px, 60vw);
+  transform-origin: 0 0;
+  will-change: transform, width;
+  pointer-events: none;
+  opacity: 0; transition: opacity 1.2s ease;
+}
+#logo.visibile { opacity: 1; }
+#logo svg { width: 100%; height: auto; display: block; overflow: visible; }
+#logo.in-testata { pointer-events: auto; }
+
+/* ---------- testata ---------- */
+.testa {
+  position: fixed; inset: 0 0 auto 0; z-index: 15;
+  display: flex; justify-content: flex-end; align-items: baseline;
+  padding: 44px var(--margine) 0;
+  pointer-events: none;
+}
+.menu { display: flex; gap: clamp(22px, 2.9vw, 46px); align-items: baseline; pointer-events: auto; font-family: var(--jost); font-weight: 400; font-size: 11px; letter-spacing: 0.24em; text-transform: uppercase; }
+.menu a { color: var(--pietra); padding-bottom: 7px; transition: color 0.3s; }
+.menu a:hover { color: var(--avorio); }
+.menu a.on { color: var(--avorio); border-bottom: 1px solid var(--ottone); }
+
+/* ---------- momenti ---------- */
+#momenti { position: fixed; inset: 0; z-index: 10; pointer-events: none; }
+.momento {
+  position: absolute; inset: 0;
+  opacity: 0; visibility: hidden;
+  transition: opacity 0.6s ease, visibility 0s linear 0.6s;
+}
+.momento.attivo { opacity: 1; visibility: visible; transition: opacity 0.8s ease 0.1s, visibility 0s; }
+
+/* titolo medio ed elegante, in alto a sinistra, con il filetto d'ottone */
+.titolo { position: absolute; left: var(--margine); top: clamp(120px, 16vh, 168px); width: min(560px, 40vw); pointer-events: auto; }
+.filetto { width: 44px; height: 1px; background: var(--ottone); margin-bottom: 24px; transform-origin: left; transform: scaleX(0); transition: transform 1.2s cubic-bezier(.2,.7,.2,1) 0.2s; }
+.momento.attivo .filetto { transform: scaleX(1); }
+.occhiello { font-family: var(--mono); font-size: 10px; letter-spacing: 0.26em; text-transform: uppercase; color: var(--pietra); margin-bottom: 18px; }
+.titolo h1 { margin: 0; font-family: var(--didone); font-weight: 400; font-size: clamp(40px, 3.6vw, 58px); line-height: 1.06; letter-spacing: 0.01em; color: var(--avorio); }
+.titolo h1 i { font-style: italic; font-weight: 400; }
+.titolo p { margin: 22px 0 0; max-width: 440px; font-family: var(--jost); font-weight: 300; font-size: 16px; line-height: 26px; color: var(--pietra); }
+/* il titolo entra dal basso, riga per riga */
+.titolo h1, .titolo p, .occhiello { transform: translateY(14px); opacity: 0; transition: transform 1s cubic-bezier(.2,.7,.2,1), opacity 0.8s ease; }
+.momento.attivo .occhiello { transform: none; opacity: 1; transition-delay: 0.1s; }
+.momento.attivo .titolo h1 { transform: none; opacity: 1; transition-delay: 0.2s; }
+.momento.attivo .titolo p { transform: none; opacity: 1; transition-delay: 0.35s; }
+
+/* apertura: il titolo è un poco più grande; l'invito a scorrere in basso a sinistra */
+.momento-apertura .titolo { top: clamp(140px, 22vh, 220px); width: min(620px, 42vw); }
+.momento-apertura .titolo h1 { font-size: clamp(44px, 4.2vw, 68px); }
+.invito {
+  position: absolute; left: var(--margine); bottom: 44px; margin: 0; display: flex; align-items: center; gap: 14px;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--pietra);
+}
+.invito i { display: block; width: 44px; height: 1px; background: var(--ottone); transform-origin: left; animation: invito 2.6s ease-in-out infinite; }
+@keyframes invito { 0%, 100% { transform: scaleX(0.3); opacity: 0.4; } 50% { transform: scaleX(1); opacity: 1; } }
+
+/* targhette da museo, in basso a sinistra */
+.targhe { position: absolute; left: var(--margine); bottom: clamp(44px, 8vh, 86px); display: flex; gap: 18px; pointer-events: auto; }
+.targa { width: 208px; padding: 13px 16px 14px; border: 1px solid rgba(239,230,214,0.11); background: rgba(30,27,25,0.55); backdrop-filter: blur(2px); }
+.targa .n { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.22em; color: var(--pietra); }
+.targa .t { margin-top: 9px; font-family: var(--jost); font-weight: 400; font-size: 12.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--avorio); }
+.targa .s { margin-top: 4px; font-family: var(--jost); font-weight: 300; font-size: 12.5px; letter-spacing: 0.02em; color: var(--pietra); }
+.targa { transform: translateY(12px); opacity: 0; transition: transform 1s cubic-bezier(.2,.7,.2,1) 0.4s, opacity 0.8s ease 0.4s; }
+.targa-2 { transition-delay: 0.55s; }
+.momento.attivo .targa { transform: none; opacity: 1; }
+
+/* iter: cinque targhette sottili in verticale a destra, unite da una riga d'ottone che si accende con lo scorrimento */
+.iter { position: absolute; right: var(--margine); top: clamp(200px, 29vh, 286px); width: 214px; pointer-events: auto; }
+.iter .cap { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.26em; text-transform: uppercase; color: var(--pietra); margin: 0 0 18px 2px; }
+.iter ol { position: relative; list-style: none; margin: 0; padding: 0; }
+.iter ol::before { content: ""; position: absolute; left: -28px; top: -26px; bottom: -26px; width: 1px; background: var(--ottone); opacity: 0.28; }
+.iter .riga { position: absolute; left: -28px; top: -26px; width: 1px; height: 0; background: var(--ottone); z-index: 1; }
+.iter li { position: relative; margin-top: 12px; padding: 11px 16px 11px 18px; border: 1px solid rgba(239,230,214,0.10); font-family: var(--jost); font-weight: 400; font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--pietra); display: flex; align-items: baseline; gap: 12px; transition: border-color 0.5s, color 0.5s, background 0.5s; }
+.iter li:first-child { margin-top: 0; }
+.iter li .n { font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; color: var(--pietra); transition: color 0.5s; }
+.iter li::before { content: ""; position: absolute; left: -31px; top: 50%; width: 5px; height: 5px; margin-top: -3px; border-radius: 50%; background: var(--sala); border: 1px solid var(--ottone); z-index: 2; transition: background 0.4s; }
+.iter li.passato::before, .iter li.on::before { background: var(--ottone); }
+.iter li.passato { color: var(--avorio); }
+.iter li.on { border-color: var(--ottone); color: var(--ottone); background: rgba(185,142,74,0.07); }
+.iter li.on .n { color: var(--ottone); }
+.iter li.on::after { content: ""; position: absolute; right: -1px; top: -1px; bottom: -1px; width: 2px; background: var(--ottone); }
+.iter .nota { margin: 16px 0 0 2px; font-family: var(--jost); font-weight: 300; font-size: 13px; line-height: 19px; color: var(--pietra); min-height: 38px; }
+.iter .nota b { font-weight: 400; color: var(--avorio); }
+
+.iter-tel { display: none; }
+
+/* ---------- telefono e schermi stretti: testi in alto, scena nella metà bassa, mai sovrapposti ---------- */
+@media (max-width: 760px), (orientation: portrait) {
+  :root { --margine: 20px; }
+  .testa { padding: 18px var(--margine) 0; }
+  .menu a:not(.on) { display: none; }
+  .menu { font-size: 10px; }
+  .cono { background: radial-gradient(90% 40% at 50% -5%, rgba(255,233,200,0.08) 0%, rgba(255,233,200,0) 70%); }
+  .penombra { background: radial-gradient(90% 60% at 50% 62%, rgba(20,18,16,0) 40%, rgba(20,18,16,0.5) 80%, rgba(20,18,16,0.8) 100%); }
+
+  .titolo { top: 104px; width: calc(100vw - 40px); }
+  .filetto { margin-bottom: 14px; }
+  .occhiello { margin-bottom: 10px; }
+  .titolo h1 { font-size: clamp(34px, 9.6vw, 42px); }
+  .titolo p { margin-top: 12px; font-size: 14px; line-height: 21px; max-width: 100%; }
+  .titolo p br { display: none; }
+
+  .momento-apertura .titolo { top: auto; bottom: 120px; width: calc(100vw - 40px); }
+  .momento-apertura .titolo h1 { font-size: clamp(38px, 10.5vw, 46px); }
+  .invito { bottom: 28px; }
+
+  .targhe { bottom: 24px; gap: 10px; }
+  .targa { width: auto; flex: 1; padding: 9px 11px 10px; }
+  .targa .t { font-size: 10.5px; letter-spacing: 0.1em; margin-top: 6px; }
+  .targa .s { font-size: 11px; margin-top: 2px; }
+  .targa .n { font-size: 8.5px; }
+
+  .iter { display: none; }
+  .iter-tel { display: block; position: absolute; left: var(--margine); right: var(--margine); top: 318px; }
+  .iter-tel .linea { position: relative; height: 1px; background: rgba(185,142,74,0.3); }
+  .iter-tel .riga { position: absolute; left: 0; top: 0; height: 1px; width: 0; background: var(--ottone); }
+  .iter-tel b { position: absolute; top: -2px; width: 5px; height: 5px; margin-left: -2px; border-radius: 50%; background: var(--sala); border: 1px solid var(--ottone); transition: background 0.4s; }
+  .iter-tel b:nth-child(2) { left: 0; } .iter-tel b:nth-child(3) { left: 25%; } .iter-tel b:nth-child(4) { left: 50%; } .iter-tel b:nth-child(5) { left: 75%; } .iter-tel b:nth-child(6) { left: 100%; margin-left: -4px; }
+  .iter-tel b.passato, .iter-tel b.on { background: var(--ottone); }
+  .iter-tel .parola { margin-top: 12px; font-family: var(--jost); font-weight: 400; font-size: 10.5px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--pietra); white-space: nowrap; }
+  .iter-tel .parola b { color: var(--ottone); font-weight: 400; }
+  .iter-tel .parola span { font-family: var(--mono); font-size: 9px; color: var(--ottone); margin-right: 8px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .invito i { animation: none; }
+}
