@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Monolite · ERI</title>
+<meta name="viewport" content="width=1600">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@0,400;1,400&family=Jost:wght@300;400&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sala:#1E1B19;--pietra-scura:#171513;--avorio:#EFE6D6;--pietra:#8C847A;--ottone:#B98E4A;--spot:#FFE9C8;
+  --acciaio:#A89C8C;--vetro:#15171A;
+  --didone:'Bodoni Moda',Didot,'Bodoni 72',serif;
+  --jost:Jost,'Futura',system-ui,sans-serif;
+  --mono:'DM Mono',ui-monospace,monospace;
+}
+html,body{margin:0;padding:0;width:1600px;height:900px;overflow:hidden;background:#1E1B19}
+body{position:relative;font-family:var(--jost);font-weight:300;color:var(--avorio);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+
+.scena{position:absolute;inset:0;width:1600px;height:900px;display:block}
+
+/* Testa */
+.testa{position:absolute;left:96px;right:96px;top:46px;display:flex;justify-content:space-between;align-items:baseline}
+.marchio{display:flex;align-items:baseline;text-decoration:none}
+.marchio b{font-family:var(--didone);font-weight:400;font-size:25px;letter-spacing:.16em;color:var(--avorio)}
+.marchio span{font-family:var(--jost);font-weight:300;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--pietra);margin-left:16px}
+.menu{display:flex;gap:46px;align-items:baseline;font-family:var(--jost);font-weight:400;font-size:11px;letter-spacing:.24em;text-transform:uppercase}
+.menu a{color:var(--pietra);text-decoration:none;padding-bottom:7px}
+.menu a.on{color:var(--avorio);border-bottom:1px solid var(--ottone)}
+
+/* Titolo con filetto d'ottone */
+.titolo{position:absolute;left:96px;top:168px;width:560px}
+.filetto{width:44px;height:1px;background:var(--ottone);margin-bottom:26px}
+.occhiello{font-family:var(--mono);font-size:10px;letter-spacing:.26em;text-transform:uppercase;color:var(--pietra);margin-bottom:20px}
+.titolo h1{margin:0;font-family:var(--didone);font-weight:400;font-size:70px;line-height:1.04;letter-spacing:.01em;color:var(--avorio)}
+.titolo h1 i{font-style:italic;font-weight:400}
+.titolo p{margin:24px 0 0;max-width:430px;font-family:var(--jost);font-weight:300;font-size:17px;line-height:27px;color:var(--pietra)}
+
+/* Targhette da museo */
+.targhe{position:absolute;left:96px;bottom:86px;display:flex;gap:18px}
+.targa{width:208px;padding:13px 16px 14px;border:1px solid rgba(239,230,214,.11);background:rgba(239,230,214,.025)}
+.targa .n{font-family:var(--mono);font-size:9.5px;letter-spacing:.22em;color:var(--pietra)}
+.targa .t{margin-top:9px;font-family:var(--jost);font-weight:400;font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--avorio)}
+.targa .s{margin-top:4px;font-family:var(--jost);font-weight:300;font-size:12.5px;letter-spacing:.02em;color:var(--pietra)}
+
+/* Iter: cinque targhette sottili in verticale, unite da una riga d'ottone */
+.iter{position:absolute;right:96px;top:286px;width:214px}
+.iter .cap{font-family:var(--mono);font-size:9.5px;letter-spacing:.26em;text-transform:uppercase;color:var(--pietra);margin:0 0 18px 2px}
+.iter ol{position:relative;list-style:none;margin:0;padding:0}
+.iter ol::before{content:"";position:absolute;left:-28px;top:-26px;bottom:-26px;width:1px;background:var(--ottone);opacity:.6}
+.iter li{position:relative;margin-top:12px;padding:11px 16px 11px 18px;border:1px solid rgba(239,230,214,.10);font-family:var(--jost);font-weight:400;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--pietra);display:flex;align-items:baseline;gap:12px}
+.iter li:first-child{margin-top:0}
+.iter li .n{font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:var(--pietra)}
+.iter li::before{content:"";position:absolute;left:-31px;top:50%;width:5px;height:5px;margin-top:-3px;border-radius:50%;background:#1E1B19;border:1px solid var(--ottone)}
+.iter li.on{border-color:var(--ottone);color:var(--avorio);background:rgba(185,142,74,.07)}
+.iter li.on .n{color:var(--ottone)}
+.iter li.on::before{background:var(--ottone)}
+.iter li.on::after{content:"";position:absolute;right:-1px;top:-1px;bottom:-1px;width:2px;background:var(--ottone)}
+.iter .nota{margin:16px 0 0 2px;font-family:var(--jost);font-weight:300;font-size:13px;line-height:19px;color:var(--pietra)}
+.iter .nota b{font-weight:400;color:var(--avorio)}
+
+/* Palette, piccola, nell'angolo */
+.palette{position:absolute;right:96px;bottom:44px;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.palette .nome{font-family:var(--mono);font-size:9px;letter-spacing:.26em;text-transform:uppercase;color:var(--pietra)}
+.sw{display:flex;gap:4px}
+.sw i{display:block;width:34px;font-style:normal;font-family:var(--mono);font-size:7.5px;color:#6E675E;text-align:center;letter-spacing:0}
+.sw i::before{content:"";display:block;height:10px;margin-bottom:5px;background:var(--c);box-shadow:inset 0 0 0 1px rgba(239,230,214,.09)}
+</style>
+</head>
+<body>
+
+<svg class="scena" viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+<defs>
+  <!-- sala: parete in grigio caldo che muore nel buio -->
+  <linearGradient id="parete" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#1A1816"/><stop offset=".55" stop-color="#1E1B19"/><stop offset="1" stop-color="#211E1B"/>
+  </linearGradient>
+  <linearGradient id="pav" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#232019"/><stop offset=".5" stop-color="#1B1917"/><stop offset="1" stop-color="#131211"/>
+  </linearGradient>
+  <!-- cono di luce e pozza sul pavimento -->
+  <linearGradient id="cono" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#FFE9C8" stop-opacity=".055"/><stop offset=".7" stop-color="#FFE9C8" stop-opacity=".035"/><stop offset="1" stop-color="#FFE9C8" stop-opacity="0"/>
+  </linearGradient>
+  <radialGradient id="pozza">
+    <stop offset="0" stop-color="#FFE9C8" stop-opacity=".17"/><stop offset=".45" stop-color="#FFE9C8" stop-opacity=".07"/><stop offset="1" stop-color="#FFE9C8" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="rimbalzo">
+    <stop offset="0" stop-color="#FFE9C8" stop-opacity=".075"/><stop offset=".6" stop-color="#FFE9C8" stop-opacity=".025"/><stop offset="1" stop-color="#FFE9C8" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="vignetta">
+    <stop offset="0" stop-color="#141210" stop-opacity="0"/><stop offset=".5" stop-color="#141210" stop-opacity="0"/><stop offset="1" stop-color="#141210" stop-opacity=".8"/>
+  </radialGradient>
+  <filter id="sfuma" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="26"/></filter>
+
+  <!-- acciaio satinato: bordo chiaro solo dove la luce lo tocca -->
+  <linearGradient id="acciaio" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#2A2724"/><stop offset=".38" stop-color="#A89C8C"/><stop offset=".6" stop-color="#5E564E"/><stop offset="1" stop-color="#231F1C"/>
+  </linearGradient>
+  <linearGradient id="acciaio2" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#262321"/><stop offset=".4" stop-color="#6B6259"/><stop offset=".65" stop-color="#3F3A35"/><stop offset="1" stop-color="#1F1C1A"/>
+  </linearGradient>
+  <!-- vetro scuro: riflette la lampada solo in alto -->
+  <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#6A5D4D"/><stop offset=".1" stop-color="#36322E"/><stop offset=".38" stop-color="#191B1E"/><stop offset="1" stop-color="#0E1012"/>
+  </linearGradient>
+  <linearGradient id="g2" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#4E463D"/><stop offset=".12" stop-color="#2C2A28"/><stop offset=".4" stop-color="#17191C"/><stop offset="1" stop-color="#0E1012"/>
+  </linearGradient>
+  <linearGradient id="g3" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#3A352F"/><stop offset=".14" stop-color="#262523"/><stop offset=".42" stop-color="#15171A"/><stop offset="1" stop-color="#0E1012"/>
+  </linearGradient>
+  <linearGradient id="gagri" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#403A33"/><stop offset=".22" stop-color="#242220"/><stop offset="1" stop-color="#141618"/>
+  </linearGradient>
+  <!-- l'agrivoltaico dietro vive solo dove arriva la luce -->
+  <linearGradient id="lagri" gradientUnits="userSpaceOnUse" x1="400" y1="0" x2="1200" y2="0">
+    <stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".2" stop-color="#fff" stop-opacity=".4"/><stop offset=".42" stop-color="#fff" stop-opacity=".95"/><stop offset=".6" stop-color="#fff" stop-opacity=".85"/><stop offset=".85" stop-color="#fff" stop-opacity=".3"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
+  </linearGradient>
+  <mask id="magri"><rect width="1600" height="900" fill="url(#lagri)"/></mask>
+  <!-- pavimento appena riflettente -->
+  <linearGradient id="lrif" gradientUnits="userSpaceOnUse" x1="0" y1="620" x2="0" y2="830">
+    <stop offset="0" stop-color="#fff" stop-opacity=".13"/><stop offset=".5" stop-color="#fff" stop-opacity=".04"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
+  </linearGradient>
+  <mask id="mrif"><rect width="1600" height="900" fill="url(#lrif)"/></mask>
+
+  <!-- Tracker monoassiale: piastra, palo, cuscinetto, tavola 2P -->
+  <g id="trk">
+    <ellipse cx="0" cy="1" rx="26" ry="5" fill="#0F0E0D" opacity=".6"/>
+    <path d="M-16,-8h32v8h-32z" fill="#2B2825"/>
+    <path d="M-16,-8l6,-3h32l-6,3z" fill="#3D3833"/>
+    <rect x="-7" y="-146" width="14" height="146" fill="url(#acciaio)"/>
+    <rect x="-11" y="-156" width="22" height="14" rx="1" fill="#3B3632"/>
+    <path d="M-230,-70L190,-100L190,-94L-230,-64Z" fill="#3A3531"/>
+    <polygon points="-230,-70 190,-100 250,-215 -170,-185" style="fill:var(--g,url(#g2))"/>
+    <path d="M-188,-73L-128,-188M-146,-76L-86,-191M-104,-79L-44,-194M-62,-82L-2,-197M-20,-85L40,-200M22,-88L82,-203M64,-91L124,-206M106,-94L166,-209M148,-97L208,-212" stroke="#7A7F86" stroke-opacity=".22" stroke-width="1" fill="none"/>
+    <path d="M-200,-127.5L220,-157.5" stroke="#7A7F86" stroke-opacity=".3" stroke-width="1" fill="none"/>
+    <path d="M-230,-70L190,-100" stroke="#6B635A" stroke-width="1" fill="none"/>
+    <path d="M-230,-70L-170,-185" stroke="#8A8076" stroke-opacity=".7" stroke-width="1" fill="none"/>
+    <path d="M190,-100L250,-215" stroke="#6E665D" stroke-opacity=".8" stroke-width="1" fill="none"/>
+    <path d="M-170,-185L250,-215" stroke="#DCCDB3" stroke-opacity=".92" stroke-width="1.6" fill="none"/>
+  </g>
+  <!-- palo alto agrivoltaico, 4,5 m -->
+  <g id="ap">
+    <ellipse cx="0" cy="1" rx="12" ry="3" fill="#0F0E0D" opacity=".5"/>
+    <rect x="-3.5" y="-190" width="7" height="190" fill="url(#acciaio2)"/>
+    <rect x="-6" y="-196" width="12" height="8" fill="#33302C"/>
+  </g>
+</defs>
+
+<!-- sala -->
+<rect width="1600" height="560" fill="url(#parete)"/>
+<rect y="560" width="1600" height="340" fill="url(#pav)"/>
+<ellipse cx="740" cy="480" rx="520" ry="300" fill="url(#rimbalzo)"/>
+<polygon points="722,-30 770,-30 1190,730 290,730" fill="url(#cono)" filter="url(#sfuma)"/>
+<ellipse cx="735" cy="712" rx="450" ry="115" fill="url(#pozza)"/>
+
+<!-- fila agrivoltaica rialzata, lontana, in penombra -->
+<g mask="url(#magri)">
+<g transform="translate(50,196) scale(.66)">
+  <g opacity=".7">
+    <use href="#ap" transform="translate(650,521.4)"/><use href="#ap" transform="translate(830,513.7)"/><use href="#ap" transform="translate(1010,506)"/><use href="#ap" transform="translate(1190,498.3)"/><use href="#ap" transform="translate(1370,490.6)"/><use href="#ap" transform="translate(1550,482.9)"/><use href="#ap" transform="translate(1730,475.2)"/>
+  </g>
+  <use href="#ap" transform="translate(620,579.4)"/><use href="#ap" transform="translate(800,571.7)"/><use href="#ap" transform="translate(980,564)"/><use href="#ap" transform="translate(1160,556.3)"/><use href="#ap" transform="translate(1340,548.6)"/><use href="#ap" transform="translate(1520,540.9)"/><use href="#ap" transform="translate(1700,533.1)"/>
+  <path d="M560,392L1680,344L1680,348L560,396Z" fill="#2E2A26"/>
+  <polygon points="560,392 1680,344 1710,286 590,334" fill="url(#gagri)"/>
+  <path d="M630,389L660,331M700,386L730,328M770,383L800,325M840,380L870,322M910,377L940,319M980,374L1010,316M1050,371L1080,313M1120,368L1150,310M1190,365L1220,307M1260,362L1290,304M1330,359L1360,301M1400,356L1430,298M1470,353L1500,295M1540,350L1570,292M1610,347L1640,289" stroke="#7A7F86" stroke-opacity=".2" stroke-width="1.3" fill="none"/>
+  <path d="M575,363L1695,315" stroke="#7A7F86" stroke-opacity=".26" stroke-width="1.3" fill="none"/>
+  <path d="M560,392L1680,344" stroke="#5E564E" stroke-width="1.3" fill="none"/>
+  <path d="M590,334L1710,286" stroke="#CDBCA1" stroke-opacity=".6" stroke-width="1.6" fill="none"/>
+</g>
+</g>
+
+<!-- riflesso sul pavimento di pietra -->
+<g mask="url(#mrif)">
+  <use href="#trk" transform="translate(1080,634) scale(.6,-.6)" style="--g:url(#g3)"/>
+  <use href="#trk" transform="translate(935,664) scale(.8,-.8)" style="--g:url(#g2)"/>
+  <use href="#trk" transform="translate(700,705) scale(1,-1)" style="--g:url(#g1)"/>
+</g>
+
+<!-- fila di tracker: la macchina illuminata -->
+<use href="#trk" transform="translate(1080,634) scale(.6)" style="--g:url(#g3)"/>
+<use href="#trk" transform="translate(935,664) scale(.8)" style="--g:url(#g2)"/>
+<use href="#trk" transform="translate(700,705)" style="--g:url(#g1)"/>
+
+<!-- penombra -->
+<ellipse cx="760" cy="520" rx="1080" ry="650" fill="url(#vignetta)"/>
+</svg>
+
+<header class="testa">
+  <a class="marchio" href="#"><b>ERI</b><span>· Energie Rinnovabili Italia</span></a>
+  <nav class="menu"><a class="on" href="#">Fotovoltaico</a><a href="#">Accumulo</a><a href="#">Idroelettrico</a><a href="#">Contatti</a></nav>
+</header>
+
+<section class="titolo">
+  <div class="filetto"></div>
+  <div class="occhiello">02 · Fotovoltaico e agrivoltaico</div>
+  <h1>Rivolti al <i>sole.</i></h1>
+  <p>Tracker che seguono la luce, file agrivoltaiche alte sopra i campi. Ogni passo, fino alla rete.</p>
+</section>
+
+<div class="targhe">
+  <div class="targa"><div class="n">N. 01</div><div class="t">Tracker monoassiale</div><div class="s">Tavola 2P su palo singolo</div></div>
+  <div class="targa"><div class="n">N. 02</div><div class="t">Agrivoltaico rialzato</div><div class="s">Moduli a 4,50 m, campo sotto</div></div>
+</div>
+
+<aside class="iter">
+  <p class="cap">L'iter, per ogni impianto</p>
+  <ol>
+    <li><span class="n">I</span>Sviluppo</li>
+    <li><span class="n">II</span>Autorizzazioni</li>
+    <li><span class="n">III</span>Ready to Build</li>
+    <li class="on"><span class="n">IV</span>Costruzione</li>
+    <li><span class="n">V</span>Gestione</li>
+  </ol>
+  <p class="nota"><b>Costruzione</b> · cantiere, montaggio e collaudo, fino alla connessione.</p>
+</aside>
+
+<div class="palette">
+  <div class="nome">Monolite · palette</div>
+  <div class="sw">
+    <i style="--c:#1E1B19">1E1B19</i><i style="--c:#171513">171513</i><i style="--c:#FFE9C8">FFE9C8</i><i style="--c:#EFE6D6">EFE6D6</i><i style="--c:#8C847A">8C847A</i><i style="--c:#B98E4A">B98E4A</i><i style="--c:#A89C8C">A89C8C</i><i style="--c:#15171A">15171A</i>
+  </div>
+</div>
+
+<script>document.fonts.ready.then(function(){window.__eri={pronto:true}});</script>
+</body>
+</html>

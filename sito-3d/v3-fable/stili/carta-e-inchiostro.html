@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Carta e Inchiostro · ERI</title>
+<meta name="viewport" content="width=1600">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Literata:wght@400&family=Courier+Prime:wght@400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --carta:#F2EDE3;--inch:#1B1A17;--grigio:#6B655C;--grigio2:#A69F93;--timbro:#B3261E;
+  --serif:'Newsreader',Georgia,'Times New Roman',serif;
+  --testo:'Literata',Georgia,serif;
+  --mono:'Courier Prime','Courier New',monospace;
+}
+html,body{margin:0;padding:0;width:1600px;height:900px;overflow:hidden;background:#F2EDE3}
+body{position:relative;font-family:var(--testo);color:var(--inch);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+.grana{position:absolute;inset:0;width:1600px;height:900px;opacity:.035;mix-blend-mode:multiply;pointer-events:none}
+
+/* Testata da rivista */
+.testata{position:absolute;left:80px;right:80px;top:46px;height:30px;display:flex;align-items:baseline;justify-content:space-between}
+.marchio{font-family:var(--serif);font-size:20px;letter-spacing:.02em;color:var(--inch);white-space:nowrap}
+.marchio b{font-weight:500;letter-spacing:.14em}
+.marchio i{font-style:normal;color:var(--grigio);padding:0 6px}
+.numero{font-family:var(--mono);font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--grigio);white-space:nowrap}
+.menu{display:flex;gap:34px;font-family:var(--mono);font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;white-space:nowrap}
+.menu span{color:var(--grigio)}
+.menu span.on{color:var(--inch);border-bottom:1px solid var(--inch);padding-bottom:3px}
+.doppio{position:absolute;left:80px;right:80px;top:88px;height:5px;border-top:1.6px solid var(--inch);border-bottom:.6px solid var(--inch)}
+
+/* Griglia: colonna sinistra, filetto verticale, disegno a destra */
+.colonna{position:absolute;left:560px;top:122px;width:0;height:650px;border-left:.6px solid var(--inch)}
+.occhiello{position:absolute;left:80px;top:124px;font-family:var(--mono);font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--grigio)}
+.occhiello:after{content:"";display:block;width:56px;height:.6px;background:var(--inch);margin-top:14px}
+.titolo{position:absolute;left:76px;top:172px;margin:0;font-family:var(--serif);font-weight:400;font-size:112px;line-height:.96;letter-spacing:-.015em;color:var(--inch);font-variation-settings:'opsz' 72}
+.titolo em{font-style:italic;font-weight:400}
+.frase{position:absolute;left:80px;top:528px;width:400px;margin:0;font-family:var(--testo);font-size:17.5px;line-height:27px;color:var(--inch)}
+.citazione{position:absolute;left:80px;top:626px;width:380px;margin:0;font-family:var(--serif);font-style:italic;font-size:21px;line-height:30px;color:var(--grigio);font-variation-settings:'opsz' 24}
+.citazione small{display:block;margin-top:10px;font-family:var(--mono);font-style:normal;font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--grigio2)}
+
+.scena{position:absolute;inset:0;width:1600px;height:900px;display:block}
+.didascalia{position:absolute;left:600px;top:748px;width:900px;margin:0;font-family:var(--serif);font-style:italic;font-size:15.5px;line-height:22px;color:var(--grigio);font-variation-settings:'opsz' 16}
+.didascalia b{font-style:normal;font-weight:500;color:var(--inch)}
+.scala{position:absolute;left:600px;top:700px;width:160px;height:14px;font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;color:var(--grigio)}
+.scala i{position:absolute;left:0;top:0;width:160px;height:4px;border:.6px solid var(--inch);border-top:0;box-sizing:border-box;background:linear-gradient(90deg,var(--inch) 0 50%,transparent 50%);background-size:160px 1.6px;background-repeat:no-repeat}
+.scala i:after{content:"";position:absolute;left:80px;top:-1px;width:.6px;height:5px;background:var(--inch)}
+.scala span{position:absolute;top:9px;transform:translateX(-50%);white-space:nowrap}
+.scala span:nth-child(2){left:0;transform:none}.scala span:nth-child(3){left:80px}.scala span:nth-child(4){left:160px;transform:translateX(-60%)}
+
+/* Sommario dell'iter in basso, 01-05 con filetti */
+.iter{position:absolute;left:80px;right:80px;top:792px;display:grid;grid-template-columns:repeat(5,1fr);border-top:.6px solid var(--inch);border-bottom:.6px solid var(--inch)}
+.iter div{position:relative;padding:14px 0 14px 18px;border-left:.6px solid var(--inch);display:flex;align-items:baseline;gap:14px}
+.iter div:first-child{border-left:0;padding-left:0}
+.iter i{font-family:var(--mono);font-style:normal;font-size:11.5px;letter-spacing:.1em;color:var(--grigio)}
+.iter span{font-family:var(--serif);font-size:19px;letter-spacing:.01em;color:var(--inch);font-variation-settings:'opsz' 20}
+.iter div.on i,.iter div.on span{color:var(--timbro)}
+.iter div.on span{font-weight:500}
+.timbro{margin-left:18px;align-self:center;flex:none;font-weight:400;width:34px;height:34px;border:1.4px solid var(--timbro);border-radius:3px;box-sizing:border-box;transform:rotate(-9deg);opacity:.8;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--timbro)}
+
+/* Piede di pagina: numero, palette */
+.piede{position:absolute;left:80px;right:80px;top:862px;display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--grigio2)}
+.pagina{font-family:var(--serif);font-size:14px;letter-spacing:.1em;color:var(--grigio);text-transform:none}
+.palette{display:flex;align-items:center;gap:12px}
+.palette b{font-family:var(--serif);font-weight:400;font-size:13px;letter-spacing:.04em;text-transform:none;color:var(--grigio)}
+.palette u{display:flex;gap:4px;text-decoration:none}
+.palette u s{display:block;width:30px;height:12px;text-decoration:none;border:.6px solid rgba(27,26,23,.35);box-sizing:border-box}
+.palette em{font-style:normal;letter-spacing:.08em;font-size:9.5px}
+
+/* Macchine: incisione a sinistra, resa piena a destra */
+.tavola{fill:var(--tav);stroke:var(--tavTr);stroke-width:var(--tavSw)}
+.giunti{fill:none;stroke:var(--giu);stroke-width:var(--giuSw)}
+.celle{fill:none;stroke:var(--cel);stroke-width:.3;opacity:var(--celOp)}
+.palo{fill:var(--pal);stroke:var(--palTr);stroke-width:var(--palSw)}
+.tubo{fill:var(--tub);stroke:var(--tubTr);stroke-width:.5}
+.agri.tavola{fill:var(--tavA)}
+.inchiostro{--tav:url(#tratto1);--tavA:url(#tratto3);--tavTr:#1B1A17;--tavSw:.8;--giu:#1B1A17;--giuSw:.55;--cel:#1B1A17;--celOp:.55;--pal:url(#tratto2);--palTr:#1B1A17;--palSw:.7;--tub:#F2EDE3;--tubTr:#1B1A17}
+.pieno{--tav:url(#gTavola);--tavA:url(#gTavola2);--tavTr:#2B2925;--tavSw:.6;--giu:#8E877A;--giuSw:.6;--cel:#6E685E;--celOp:1;--pal:url(#gPalo);--palTr:#4B4740;--palSw:.3;--tub:#857E72;--tubTr:#5A554D}
+</style>
+</head>
+<body>
+
+<svg class="scena" viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <pattern id="tratto1" width="3.4" height="3.4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="3.4" stroke="#1B1A17" stroke-width=".7"/>
+    </pattern>
+    <pattern id="tratto3" width="4.2" height="4.2" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="4.2" stroke="#1B1A17" stroke-width=".6"/>
+    </pattern>
+    <pattern id="tratto2" width="2.4" height="2.4" patternUnits="userSpaceOnUse">
+      <line x1="1.2" y1="0" x2="1.2" y2="2.4" stroke="#1B1A17" stroke-width=".45"/>
+    </pattern>
+    <linearGradient id="gTavola" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5C564E"/><stop offset=".55" stop-color="#3E3A35"/><stop offset="1" stop-color="#2F2C28"/>
+    </linearGradient>
+    <linearGradient id="gTavola2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6F685E"/><stop offset="1" stop-color="#4A4540"/>
+    </linearGradient>
+    <linearGradient id="gPalo" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#9A9386"/><stop offset=".5" stop-color="#C9C2B4"/><stop offset="1" stop-color="#726C62"/>
+    </linearGradient>
+    <linearGradient id="gVelo" gradientUnits="userSpaceOnUse" x1="860" y1="0" x2="1280" y2="0">
+      <stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/>
+    </linearGradient>
+    <mask id="velo"><rect x="0" y="0" width="1600" height="900" fill="url(#gVelo)"/></mask>
+    <linearGradient id="gVelo2" gradientUnits="userSpaceOnUse" x1="860" y1="0" x2="1280" y2="0">
+      <stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#000"/>
+    </linearGradient>
+    <mask id="velo2"><rect x="0" y="0" width="1600" height="900" fill="url(#gVelo2)"/></mask>
+    <linearGradient id="gSfuma" gradientUnits="userSpaceOnUse" x1="575" y1="0" x2="760" y2="0">
+      <stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/>
+    </linearGradient>
+    <mask id="sfuma"><rect x="0" y="0" width="1600" height="900" fill="url(#gSfuma)"/></mask>
+    <symbol id="macchine" overflow="visible">
+<polygon class="palo agri" points="914.8,286.5 916.6,286.4 916.4,255.3 914.6,255.3"/>
+<polygon class="palo agri" points="861.6,289.1 863.5,289 862.4,256.4 860.5,256.5"/>
+<polygon class="palo agri" points="938.6,290.2 940.4,290.1 940.5,256.9 938.7,256.9"/>
+<polygon class="palo agri" points="882.8,293.1 884.7,293 884,258.2 882,258.2"/>
+<polygon class="tubo agri" points="1017,262.7 910,255.5 909.9,254.4 1017.1,261.3"/>
+<polygon class="tavola agri" points="1027.8,249.7 918.5,245.6 901.3,264.4 1006.2,274.3"/>
+<path class="giunti agri" d="M1016.2,249.3L995.1,273.3M1005.2,248.9L984.5,272.3M994.7,248.5L974.4,271.3M984.7,248.1L964.8,270.4M975.1,247.7L955.6,269.5M966,247.4L946.8,268.7M957.2,247.1L938.4,267.9M948.8,246.8L930.3,267.1M940.8,246.4L922.6,266.4M933.1,246.2L915.2,265.7M925.7,245.9L908.1,265M1017.1,262L909.9,255"/>
+<polygon class="palo agri" points="965.7,294.3 967.6,294.2 968.2,258.7 966.3,258.7"/>
+<polygon class="tubo agri" points="953,264.6 856.6,256.6 856.5,255.5 953.1,263.1"/>
+<polygon class="tavola agri" points="964.7,250.8 865.7,246.2 847.3,265.9 941.2,277"/>
+<path class="giunti agri" d="M954.1,250.4L931.1,275.8M944,249.9L921.5,274.7M934.5,249.4L912.4,273.6M925.3,249L903.8,272.6M916.7,248.6L895.5,271.6M908.4,248.2L887.7,270.7M900.5,247.9L880.2,269.8M892.9,247.5L873,268.9M885.7,247.2L866.2,268.1M878.7,246.9L859.6,267.4M872.1,246.5L853.3,266.6M953,263.8L856.5,256"/>
+<polygon class="palo agri" points="907.1,297.7 909.2,297.6 908.9,260.2 906.7,260.2"/>
+<polygon class="palo fv" points="779.5,298 781,297.9 779.8,280.7 778.3,280.8"/>
+<polygon class="palo agri" points="997,299.1 998.9,299 1000.2,260.8 998.2,260.8"/>
+<polygon class="palo fv" points="721.9,301 723.5,300.9 721.8,283 720.1,283"/>
+<polygon class="palo fv" points="794,302.3 795.6,302.2 794.4,283.9 792.8,284"/>
+<polygon class="palo agri" points="935.5,303.1 937.7,302.9 937.8,262.5 935.6,262.6"/>
+<polygon class="palo fv" points="658.7,304.3 660.5,304.2 658.1,285.4 656.3,285.5"/>
+<polygon class="palo agri" points="1033.4,304.7 1035.5,304.5 1037.5,263.2 1035.5,263.3"/>
+<polygon class="tubo fv" points="840,295 772.5,279.9 772.4,278.6 839.9,293.4"/>
+<polygon class="tavola fv" points="851.7,277.5 781.6,266.6 763.3,292 828.1,311.1"/>
+<path class="giunti fv" d="M847.6,276.8L824.3,309.9M843.6,276.2L820.6,308.8M839.7,275.6L817,307.8M835.9,275L813.5,306.8M832.2,274.4L810,305.7M828.6,273.9L806.7,304.8M825,273.3L803.5,303.8M821.6,272.8L800.3,302.9M818.3,272.3L797.2,302M815,271.8L794.2,301.1M811.9,271.3L791.3,300.2M808.8,270.8L788.5,299.4M805.8,270.3L785.7,298.6M802.8,269.9L782.9,297.8M799.9,269.4L780.3,297M797.1,269L777.7,296.3M794.4,268.6L775.2,295.5M791.7,268.2L772.7,294.8M789.1,267.7L770.3,294.1M786.5,267.3L767.9,293.4M784,267L765.6,292.7M840,294.2L772.5,279.3"/>
+<path class="celle fv" d="M847.7,283.2L778.5,270.9M843.7,288.8L775.4,275.2M836.2,299.6L769.6,283.4M832.2,305.3L766.4,287.7"/>
+<polygon class="palo fv" points="733,305.7 734.8,305.6 733,286.5 731.3,286.6"/>
+<polygon class="palo fv" points="810.4,307.2 812.1,307.1 811,287.6 809.3,287.7"/>
+<polygon class="tubo fv" points="768.5,298.8 715.9,282 715.8,280.7 768.4,297"/>
+<polygon class="tavola fv" points="781.1,280.2 725.5,268.1 706.2,294.7 755.7,315.8"/>
+<path class="giunti fv" d="M777.8,279.4L752.7,314.5M774.6,278.8L749.8,313.3M771.4,278.1L747.1,312.1M768.4,277.4L744.3,311M765.4,276.8L741.7,309.8M762.6,276.2L739.2,308.7M759.8,275.5L736.7,307.7M757,275L734.3,306.7M754.4,274.4L731.9,305.7M751.8,273.8L729.6,304.7M749.3,273.3L727.4,303.7M746.9,272.8L725.2,302.8M744.5,272.2L723.1,301.9M742.2,271.7L721,301M739.9,271.2L719,300.2M737.7,270.8L717,299.3M735.5,270.3L715.1,298.5M733.4,269.8L713.2,297.7M731.4,269.4L711.4,296.9M729.4,269L709.6,296.2M727.4,268.5L707.9,295.4M768.4,297.9L715.9,281.4"/>
+<path class="celle fv" d="M776.8,286.2L722.2,272.6M772.5,292.2L718.9,277.1M764.3,303.6L712.8,285.6M760,309.7L709.5,290.2"/>
+<polygon class="palo agri" points="968.9,309.3 971.2,309.2 972,265.2 969.7,265.3"/>
+<polygon class="palo fv" points="665.9,309.5 667.8,309.4 665.3,289.3 663.4,289.4"/>
+<polygon class="palo fv" points="745.9,311.2 747.8,311 746,290.5 744.1,290.6"/>
+<polygon class="palo agri" points="1076.5,311.3 1078.7,311.1 1081.9,266.1 1079.7,266.2"/>
+<polygon class="palo fv" points="829.4,312.9 831.2,312.8 830.2,291.8 828.4,291.9"/>
+<polygon class="tubo fv" points="687.9,303 654,284.4 653.9,283 687.7,301.2"/>
+<polygon class="tavola fv" points="701.6,283.2 664.2,269.8 643.7,297.6 674,321.1"/>
+<path class="giunti fv" d="M699.3,282.4L672.2,319.7M697.1,281.6L670.4,318.3M695,280.8L668.7,316.9M692.9,280.1L667,315.7M690.9,279.4L665.4,314.4M689,278.7L663.8,313.2M687.1,278L662.3,312M685.2,277.4L660.8,310.8M683.5,276.7L659.3,309.7M681.7,276.1L657.9,308.6M680.1,275.5L656.6,307.6M678.4,274.9L655.2,306.6M676.8,274.3L653.9,305.6M675.3,273.8L652.7,304.6M673.8,273.2L651.5,303.6M672.3,272.7L650.3,302.7M670.8,272.2L649.1,301.8M669.4,271.7L648,300.9M668.1,271.2L646.9,300.1M666.7,270.7L645.8,299.3M665.4,270.3L644.7,298.4M687.8,302.1L654,283.7"/>
+<path class="celle fv" d="M696.9,289.6L660.7,274.5M692.2,296L657.2,279.2M683.4,308.1L650.7,288.1M678.7,314.6L647.2,292.9"/>
+<polygon class="palo fv" points="674.2,315.5 676.3,315.4 673.7,293.8 671.6,293.9"/>
+<polygon class="palo agri" points="1008.7,316.9 1011.2,316.7 1013,268.5 1010.5,268.6"/>
+<polygon class="palo fv" points="760.8,317.5 762.8,317.3 761,295.2 759,295.3"/>
+<polygon class="tubo agri" points="1237.9,277.5 1026.6,263.3 1026.6,261.9 1238.2,275.4"/>
+<polygon class="tavola agri" points="1252.5,258.3 1037.5,250.1 1015.6,275.2 1223.5,294.9"/>
+<path class="giunti agri" d="M1227.5,257.3L1199.2,292.6M1204.2,256.4L1176.6,290.4M1182.5,255.6L1155.6,288.4M1162.2,254.8L1135.9,286.6M1143.1,254.1L1117.5,284.8M1125.3,253.4L1100.3,283.2M1108.5,252.8L1084,281.7M1092.7,252.2L1068.7,280.2M1077.7,251.6L1054.3,278.9M1063.6,251.1L1040.7,277.6M1050.2,250.6L1027.8,276.4M1238.1,276.4L1026.6,262.6"/>
+<polygon class="palo agri" points="1128.3,319.2 1130.5,319 1135.2,269.6 1132.9,269.7"/>
+<polygon class="palo fv" points="858.9,321.7 860.9,321.6 860.1,298.4 858.1,298.5"/>
+<polygon class="palo fv" points="683.9,322.6 686.2,322.4 683.5,299 681.2,299.2"/>
+<polygon class="tubo agri" points="1161.2,281.8 961.7,265.3 961.8,263.8 1161.4,279.5"/>
+<polygon class="tavola agri" points="1177.6,260.7 973.7,251.3 949.7,278 1144.7,300.9"/>
+<path class="giunti agri" d="M1153.3,259.6L1121.4,298.2M1130.8,258.6L1099.8,295.6M1109.9,257.6L1079.8,293.3M1090.5,256.7L1061.2,291.1M1072.4,255.9L1043.9,289M1055.5,255.1L1027.8,287.1M1039.7,254.3L1012.7,285.4M1024.9,253.6L998.5,283.7M1010.9,253L985.2,282.1M997.8,252.4L972.7,280.7M985.4,251.8L960.9,279.3M1161.3,280.7L961.7,264.5"/>
+<polygon class="palo agri" points="1057.1,326 1059.7,325.8 1063,272.6 1060.4,272.7"/>
+<polygon class="palo fv" points="784.2,327.4 786.4,327.2 784.7,302.6 782.5,302.8"/>
+<polygon class="palo agri" points="1191.5,328.9 1193.8,328.6 1200.6,273.9 1198.3,274"/>
+<polygon class="palo fv" points="886.3,329.9 888.3,329.7 887.8,304.5 885.7,304.6"/>
+<polygon class="palo fv" points="699.4,333.8 701.9,333.6 699.1,307.4 696.6,307.6"/>
+<polygon class="tubo fv" points="984.9,327.5 847,296.6 846.9,294.9 984.9,325.1"/>
+<polygon class="tavola fv" points="1002.1,300.8 859,278.6 834.9,313 967.6,352"/>
+<path class="giunti fv" d="M992.7,299.4L958.8,349.4M983.7,298L950.4,347M975,296.6L942.4,344.6M966.7,295.3L934.7,342.3M958.8,294.1L927.3,340.2M951.1,292.9L920.2,338.1M943.7,291.8L913.3,336.1M936.6,290.7L906.7,334.1M929.8,289.6L900.4,332.3M923.2,288.6L894.3,330.5M916.8,287.6L888.4,328.7M910.6,286.6L882.6,327.1M904.7,285.7L877.1,325.4M898.9,284.8L871.8,323.9M893.4,283.9L866.7,322.4M888,283.1L861.7,320.9M882.8,282.3L856.9,319.5M877.7,281.5L852.2,318.1M872.8,280.7L847.6,316.8M868.1,280L843.3,315.5M863.5,279.3L839,314.2M984.9,326.3L847,295.8"/>
+<path class="celle fv" d="M996.3,309.5L854.9,284.4M990.4,318.1L850.8,290.3M979.4,334.5L843.1,301.3M973.5,343.2L839,307.1"/>
+<polygon class="palo fv" points="806.2,336.7 808.5,336.5 807,309.6 804.6,309.7"/>
+<polygon class="palo agri" points="1117.3,337.3 1120,337 1125.4,277.6 1122.6,277.7"/>
+<polygon class="palo fv" points="919.1,339.7 921.3,339.5 921.2,311.9 918.9,312"/>
+<polygon class="palo agri" points="1270.4,341 1272.8,340.7 1282.9,279.2 1280.5,279.4"/>
+<polygon class="tubo fv" points="886.5,336.4 774,300.6 773.9,298.8 886.5,333.7"/>
+<polygon class="tavola fv" points="905.8,307.2 787,281.4 760.9,318 867.1,363.2"/>
+<path class="giunti fv" d="M897.7,305.4L859.9,360.1M890.1,303.8L853,357.2M882.8,302.2L846.5,354.4M875.7,300.7L840.2,351.7M869,299.2L834.2,349.2M862.6,297.8L828.5,346.7M856.4,296.5L822.9,344.4M850.5,295.2L817.6,342.1M844.8,294L812.5,340M839.4,292.8L807.7,337.9M834.1,291.7L802.9,335.9M829,290.6L798.4,334M824.1,289.5L794,332.1M819.4,288.5L789.8,330.3M814.9,287.5L785.8,328.6M810.5,286.5L781.8,326.9M806.2,285.6L778.1,325.3M802.1,284.7L774.4,323.7M798.1,283.9L770.9,322.2M794.3,283L767.4,320.8M790.6,282.2L764.1,319.4M886.5,335L774,299.7"/>
+<path class="celle fv" d="M899.2,316.6L782.5,287.6M892.7,326.1L778.1,293.8M880.3,344L769.8,305.5M873.7,353.6L765.3,311.7"/>
+<polygon class="palo fv" points="714.2,344.4 716.9,344.2 713.9,315.4 711.2,315.6"/>
+<polygon class="palo fv" points="832.9,348 835.4,347.7 834.1,318.1 831.5,318.2"/>
+<polygon class="palo fv" points="959.2,351.7 961.6,351.4 962,320.9 959.6,321.1"/>
+<polygon class="palo agri" points="1193.9,351.8 1196.7,351.4 1205.4,284 1202.4,284.2"/>
+<polygon class="tubo fv" points="768.1,347.1 691.6,305 691.4,303.1 767.9,344.1"/>
+<polygon class="tavola fv" points="789.8,314.8 705.6,284.6 677.3,323.6 746,376.7"/>
+<path class="giunti fv" d="M783.9,312.7L741.2,373M778.3,310.7L736.6,369.4M773,308.8L732.3,366.1M768,307L728.1,362.9M763.1,305.3L724.2,359.8M758.5,303.6L720.4,356.9M754.1,302.1L716.8,354.2M749.9,300.5L713.4,351.5M745.9,299.1L710.1,349M742,297.7L706.9,346.5M738.3,296.4L703.9,344.2M734.7,295.1L701,341.9M731.3,293.9L698.2,339.8M728,292.7L695.5,337.7M724.8,291.5L692.9,335.7M721.8,290.5L690.5,333.8M718.8,289.4L688.1,331.9M716,288.4L685.7,330.1M713.3,287.4L683.5,328.4M710.6,286.4L681.4,326.8M708,285.5L679.3,325.1M768,345.6L691.5,304.1"/>
+<path class="celle fv" d="M782.4,325.3L700.8,291.2M775,335.7L696,297.8M761,355.5L686.9,310.3M753.5,366.1L682.1,316.9"/>
+<polygon class="palo agri" points="1371.9,356.5 1374.3,356.1 1389.2,286.2 1386.9,286.4"/>
+<polygon class="palo fv" points="732.3,357.6 735.3,357.3 732.3,325.3 729.3,325.5"/>
+<polygon class="palo fv" points="866,362 868.8,361.7 867.8,328.6 865,328.8"/>
+<polygon class="palo agri" points="1294.8,370.8 1297.7,370.3 1311.6,292.6 1308.6,292.8"/>
+<polygon class="palo fv" points="1027.5,372.1 1030.1,371.7 1031.8,336.2 1029.2,336.5"/>
+<polygon class="tubo agri" points="1869.9,319.8 1259,278.9 1259.4,276.8 1871.6,315.9"/>
+<polygon class="tavola agri" points="1890.3,282.4 1273.9,259.1 1244.3,296.8 1850.6,354.2"/>
+<path class="giunti agri" d="M1801.1,279L1762,345.8M1723.1,276.1L1684.7,338.5M1654.3,273.5L1616.7,332.1M1593.1,271.2L1556.5,326.4M1538.5,269.1L1502.7,321.3M1489.3,267.2L1454.5,316.7M1444.8,265.5L1410.9,312.6M1404.4,264L1371.4,308.9M1367.5,262.6L1335.4,305.5M1333.7,261.3L1302.5,302.3M1302.6,260.2L1272.2,299.5M1870.7,317.8L1259.2,277.8"/>
+<polygon class="palo fv" points="755.3,374.2 758.6,373.8 755.6,337.8 752.2,338.1"/>
+<polygon class="palo agri" points="1507.2,377.3 1509.3,376.7 1532.2,295.5 1530.1,295.8"/>
+<polygon class="palo fv" points="923.7,386.4 926.9,386 926.8,347.1 923.6,347.4"/>
+<polygon class="tubo agri" points="1834.8,337.5 1181.7,283.5 1182,281.2 1836.8,332.9"/>
+<polygon class="tavola agri" points="1859.8,292.4 1198.6,261.7 1164.9,303.3 1811,379.3"/>
+<path class="giunti agri" d="M1756.6,287.7L1708.8,367.3M1668.7,283.6L1622.1,357.1M1592.7,280L1547.5,348.3M1526.5,277L1482.7,340.7M1468.2,274.2L1425.9,334M1416.6,271.8L1375.6,328.1M1370.5,269.7L1330.9,322.8M1329.1,267.8L1290.8,318.1M1291.7,266L1254.7,313.8M1257.8,264.5L1221.9,310M1226.9,263L1192.1,306.5M1835.8,335.2L1181.9,282.3"/>
+<polygon class="palo fv" points="1097.7,393.1 1100.5,392.6 1103.9,352.1 1101.1,352.5"/>
+<polygon class="palo agri" points="1434,397.1 1436.8,396.3 1459.6,304.5 1456.8,304.8"/>
+<polygon class="palo fv" points="796.4,404 800.3,403.4 797.6,360.4 793.6,360.8"/>
+<polygon class="palo agri" points="1696.4,406.3 1698.1,405.4 1734.7,308.7 1733.1,309.1"/>
+<polygon class="tubo fv" points="1437.3,429 1001.1,331.2 1001.2,328.6 1438.5,424.1"/>
+<polygon class="tavola fv" points="1469.3,373.4 1018.9,303.4 983.2,356.6 1406,480.7"/>
+<path class="giunti fv" d="M1430.5,367.3L1369.3,469.9M1394.9,361.8L1335.7,460M1362.1,356.7L1304.7,450.9M1331.7,352L1276.1,442.5M1303.6,347.6L1249.6,434.8M1277.5,343.6L1225,427.6M1253.1,339.8L1202.1,420.8M1230.3,336.3L1180.8,414.6M1209,332.9L1160.7,408.7M1189,329.8L1142,403.2M1170.1,326.9L1124.4,398M1152.4,324.2L1107.8,393.1M1135.7,321.6L1092.1,388.5M1119.9,319.1L1077.3,384.2M1104.9,316.8L1063.4,380.1M1090.7,314.6L1050.1,376.2M1077.2,312.5L1037.5,372.5M1064.4,310.5L1025.6,369M1052.2,308.6L1014.2,365.7M1040.6,306.8L1003.4,362.5M1029.5,305.1L993.1,359.5M1437.9,426.5L1001.2,329.9"/>
+<path class="celle fv" d="M1458.7,391.3L1012.9,312.4M1448,409.4L1006.9,321.4M1427.8,443.8L995.5,338.4M1416.9,462.2L989.4,347.5"/>
+<polygon class="palo fv" points="985,412.3 988.4,411.7 989.7,366.7 986.2,367.2"/>
+<polygon class="palo fv" points="1192.7,421.5 1195.7,420.8 1201.9,373.7 1198.9,374.2"/>
+<polygon class="tubo fv" points="1308.5,470.8 900.3,340.8 900.2,338 1309.6,465"/>
+<polygon class="tavola fv" points="1348.4,403.1 920.2,310.3 880.1,368.7 1268.9,534.1"/>
+<path class="giunti fv" d="M1308,394.4L1231.9,518.4M1271.6,386.5L1198.5,504.2M1238.6,379.3L1168.3,491.3M1208.5,372.8L1140.9,479.6M1180.9,366.8L1115.7,469M1155.6,361.3L1092.7,459.2M1132.2,356.3L1071.5,450.1M1110.7,351.6L1051.9,441.8M1090.7,347.3L1033.8,434.1M1072,343.2L1016.9,426.9M1054.7,339.5L1001.2,420.2M1038.5,335.9L986.6,414M1023.3,332.6L972.8,408.2M1009,329.6L960,402.7M995.6,326.7L947.9,397.5M983,323.9L936.5,392.7M971,321.3L925.8,388.1M959.8,318.9L915.6,383.8M949.1,316.6L906,379.7M939,314.4L896.9,375.9M929.4,312.3L888.3,372.2M1309.1,467.9L900.3,339.4"/>
+<path class="celle fv" d="M1335.1,425L913.5,320.2M1321.7,447L906.7,330M1296.3,488.9L893.8,348.7M1282.7,511.4L887,358.7"/>
+<polygon class="palo agri" points="1637.9,435.6 1640.2,434.4 1680.1,322.2 1677.9,322.8"/>
+<polygon class="palo fv" points="841.7,436.7 846.1,435.9 844,385.3 839.4,385.9"/>
+<polygon class="palo fv" points="1070.9,448.6 1074.7,447.8 1078.6,394.5 1074.7,395.1"/>
+<polygon class="palo fv" points="1328.4,462.1 1331.4,461.1 1342.9,404.8 1339.8,405.5"/>
+<polygon class="tubo fv" points="1110.3,535.1 777.8,352.4 777.6,349.3 1111,528.1"/>
+<polygon class="tavola fv" points="1163.1,448.7 800.5,318.7 754.7,383.4 1056.8,616.8"/>
+<path class="giunti fv" d="M1124.5,434.9L1024.2,591.6M1090.5,422.7L995.6,569.5M1060.4,411.9L970.3,550M1033.6,402.3L947.7,532.6M1009.4,393.6L927.6,517M987.6,385.8L909.4,502.9M967.8,378.7L892.9,490.2M949.8,372.2L877.9,478.6M933.2,366.3L864.2,468M918.1,360.8L851.6,458.3M904.1,355.8L840,449.3M891.1,351.2L829.3,441.1M879.1,346.9L819.4,433.4M867.9,342.9L810.2,426.3M857.5,339.1L801.6,419.6M847.8,335.6L793.6,413.4M838.6,332.4L786,407.6M830.1,329.3L779,402.2M822,326.4L772.4,397.1M814.4,323.7L766.1,392.3M807.2,321.1L760.3,387.7M1110.6,531.6L777.7,350.9"/>
+<path class="celle fv" d="M1145.4,476.6L792.8,329.6M1127.6,504.8L785,340.5M1093.5,558.6L770.4,361.3M1075.2,587.6L762.6,372.3"/>
+<polygon class="palo fv" points="908.2,484.8 913.4,483.7 912.9,422.4 907.5,423.3"/>
+<polygon class="palo fv" points="1200.1,503.3 1204.2,502 1213.5,436.7 1209.3,437.7"/>
+<polygon class="palo fv" points="1015.7,562.6 1021.9,560.6 1025.7,483 1019.3,484.6"/>
+    </symbol>
+  </defs>
+  <g mask="url(#sfuma)"><use class="inchiostro" href="#macchine" mask="url(#velo2)"/></g>
+  <use class="pieno" href="#macchine" mask="url(#velo)"/>
+</svg>
+
+<header class="testata">
+  <div class="marchio"><b>ERI</b><i>·</i>Energie Rinnovabili Italia</div>
+  <div class="numero">Quaderno 02 &nbsp;·&nbsp; Autunno 2026 &nbsp;·&nbsp; Tavola XIV</div>
+  <nav class="menu"><span class="on">Fotovoltaico</span><span>Accumulo</span><span>Idroelettrico</span><span>Contatti</span></nav>
+</header>
+<div class="doppio"></div>
+
+<div class="colonna"></div>
+<div class="occhiello">02 &nbsp;·&nbsp; Fotovoltaico e agrivoltaico</div>
+<h1 class="titolo">Il campo<br><em>segue</em><br>il sole.</h1>
+<p class="frase">Tracker che inseguono il sole dall'alba al tramonto; dietro, le file agrivoltaiche rialzate lasciano respirare la terra.</p>
+<p class="citazione">« Disegnare un impianto è prima di tutto disegnare la luce. »<small>— Taccuino di cantiere, ERI</small></p>
+
+<div class="scala"><i></i><span>0</span><span>10</span><span>20 m</span></div>
+<p class="didascalia"><b>Fig. 2</b> — Tracker monoassiali in prima fila; dietro, la struttura agrivoltaica rialzata a 4,50 m. Incisione e resa in grigio caldo.</p>
+
+<div class="iter">
+  <div><i>01</i><span>Sviluppo</span></div>
+  <div><i>02</i><span>Autorizzazioni</span></div>
+  <div><i>03</i><span>Ready to Build</span></div>
+  <div class="on"><i>04</i><span>Costruzione</span><b class="timbro">ERI</b></div>
+  <div><i>05</i><span>Gestione</span></div>
+</div>
+
+<footer class="piede">
+  <div>ERI · Quaderno di stile · Autunno 2026</div>
+  <div class="pagina">— 14 —</div>
+  <div class="palette">
+    <b>Carta e Inchiostro</b>
+    <u><s style="background:#F2EDE3"></s><s style="background:#1B1A17"></s><s style="background:#6B655C"></s><s style="background:#A69F93"></s><s style="background:#B3261E"></s></u>
+    <em>F2EDE3 · 1B1A17 · 6B655C · A69F93 · B3261E</em>
+  </div>
+</footer>
+
+<svg class="grana" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <filter id="grana"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" seed="7"/><feColorMatrix type="saturate" values="0"/></filter>
+  <rect width="100%" height="100%" filter="url(#grana)"/>
+</svg>
+
+<script>document.fonts.ready.then(function(){window.__eri={pronto:true}});</script>
+</body>
+</html>

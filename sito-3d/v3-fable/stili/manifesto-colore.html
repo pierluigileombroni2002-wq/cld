@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Manifesto a Colori · ERI</title>
+<meta name="viewport" content="width=1600">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@800&family=Space+Grotesk:wght@400;500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --giallo:#F2C230;--ombra:#C99A1E;--nero:#161616;--bianco:#FFFFFF;
+  --cobalto:#1B3FBF;--acqua:#0E7C7B;
+  --syne:'Syne',system-ui,sans-serif;
+  --grot:'Space Grotesk',system-ui,sans-serif;
+  --mono:'Space Mono',ui-monospace,monospace;
+}
+html,body{margin:0;padding:0;width:1600px;height:900px;overflow:hidden;background:#F2C230}
+body{position:relative;font-family:var(--grot);color:var(--nero);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+
+/* Testa: timbro a sinistra, menu a destra, sulla linea dei margini di 80 px */
+.testa{position:absolute;left:80px;right:80px;top:72px;height:48px;display:flex;justify-content:space-between;align-items:center}
+.timbro{display:inline-block;padding:9px 14px 8px;border:2px solid var(--nero);box-shadow:inset 0 0 0 3px var(--giallo),inset 0 0 0 4px var(--nero);transform:rotate(-1.6deg);transform-origin:left center;font-family:var(--mono);font-weight:700;font-size:12px;letter-spacing:.16em;text-transform:uppercase;line-height:1;white-space:nowrap}
+.timbro i{font-style:normal;margin:0 8px}
+.menu{display:flex;gap:38px;font-family:var(--grot);font-weight:500;font-size:14px;letter-spacing:.14em;text-transform:uppercase}
+.menu a{color:var(--nero);text-decoration:none;padding-bottom:5px;border-bottom:2px solid transparent}
+.menu a.on{border-bottom-color:var(--nero)}
+
+/* Titolo enorme, a tutta larghezza, due righe */
+.titolo{position:absolute;left:72px;top:146px;width:1460px;margin:0;font-family:var(--syne);font-weight:800;font-size:170px;line-height:.9;letter-spacing:-.045em;color:var(--nero)}
+
+/* Macchina, centro-destra */
+.scena{position:absolute;left:0;top:0;width:1600px;height:900px;display:block}
+
+/* Frase, in basso a sinistra */
+.frase{position:absolute;left:80px;bottom:196px;width:700px}
+.frase .eti{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:14px}
+.frase p{margin:0;font-family:var(--grot);font-weight:400;font-size:24px;line-height:33px;color:var(--nero)}
+
+/* Iter: striscia nera, cinque celle numerate */
+.iter{position:absolute;left:80px;right:80px;bottom:80px;height:72px;display:flex;background:var(--nero);list-style:none;margin:0;padding:0}
+.iter li{flex:1;display:flex;align-items:center;gap:18px;padding:0 26px;border-left:1px solid rgba(242,194,48,.28);color:var(--bianco)}
+.iter li:first-child{border-left:0}
+.iter .n{font-family:var(--mono);font-size:12px;letter-spacing:.1em;opacity:.62}
+.iter .w{font-family:var(--grot);font-weight:500;font-size:15px;letter-spacing:.16em;text-transform:uppercase;white-space:nowrap}
+.iter .on{background:var(--giallo);color:var(--nero)}
+.iter .on .n{opacity:1;font-weight:700}
+.iter .on .w{font-weight:500}
+
+/* Note di margine: palette a sinistra, tessere dei momenti a destra */
+.nota{position:absolute;bottom:34px;display:flex;align-items:center;gap:14px;font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--nero)}
+.palette{left:80px}
+.sw{display:flex;gap:4px}
+.sw i{display:block;width:40px;font-style:normal;font-size:7.5px;letter-spacing:0;text-transform:none;text-align:center;color:#6E5A14}
+.sw i::before{content:"";display:block;height:10px;margin-bottom:3px;background:var(--c);box-shadow:inset 0 0 0 1px rgba(22,22,22,.18)}
+.tessere{right:80px;gap:22px}
+.tessere span{display:flex;align-items:center;gap:8px}
+.tessere b{display:block;width:16px;height:16px;background:var(--c);font-weight:400}
+</style>
+</head>
+<body>
+
+<header class="testa">
+  <div class="timbro">ERI<i>·</i>Energie Rinnovabili Italia</div>
+  <nav class="menu">
+    <a class="on" href="#">Fotovoltaico</a><a href="#">Accumulo</a><a href="#">Idroelettrico</a><a href="#">Contatti</a>
+  </nav>
+</header>
+
+<h1 class="titolo">Girasoli<br>di silicio.</h1>
+
+<svg class="scena" viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true">
+<defs>
+  <!-- Tracker 2P: tavola di 12 colonne × 2 moduli, palo, piede, ombra dura di un solo tono -->
+  <g id="tr">
+    <!-- ombra della tavola sul terreno -->
+    <polygon points="-54,166 266,153 288,207 -32,220" fill="#C99A1E"/>
+    <!-- ombra del palo -->
+    <polygon points="158,220 182,220 112,188 88,188" fill="#C99A1E"/>
+    <!-- palo e piede -->
+    <rect x="160" y="40" width="20" height="178" fill="#161616"/>
+    <rect x="146" y="212" width="48" height="9" fill="#161616"/>
+    <!-- tubo di torsione, estremi visibili -->
+    <polygon points="-14,36 4,35 4,44 -14,45" fill="#161616"/>
+    <polygon points="338,11 356,10 356,19 338,20" fill="#161616"/>
+    <!-- tavola: parallelogramma, celle accennate in giallo -->
+    <g transform="matrix(320 -24 22 98 0 0)">
+      <rect x="0" y="0" width="1" height="1" fill="#161616"/>
+      <g stroke="#F2C230" stroke-opacity=".42" stroke-width="1" vector-effect="non-scaling-stroke" fill="none">
+        <path d="M.0833 0V1M.1667 0V1M.25 0V1M.3333 0V1M.4167 0V1M.5 0V1M.5833 0V1M.6667 0V1M.75 0V1M.8333 0V1M.9167 0V1" vector-effect="non-scaling-stroke"/>
+        <path d="M0 .25H1M0 .75H1" vector-effect="non-scaling-stroke"/>
+      </g>
+      <path d="M0 .5H1" stroke="#F2C230" stroke-opacity=".9" stroke-width="2.5" vector-effect="non-scaling-stroke"/>
+      <path d="M0 0H1V1H0Z" fill="none" stroke="#161616" stroke-width="3" vector-effect="non-scaling-stroke"/>
+    </g>
+  </g>
+</defs>
+
+<!-- Fila agrivoltaica, dietro: moduli alti su pali da 4,5 m -->
+<g id="agri">
+  <!-- ombra dura sul terreno (in parte coperta dai tracker davanti) -->
+  <polygon points="1036,562 1416,533 1426,558 1046,587" fill="#C99A1E"/>
+  <!-- pali alti -->
+  <rect x="1132" y="392" width="10" height="190" fill="#161616"/>
+  <rect x="1252" y="383" width="10" height="190" fill="#161616"/>
+  <rect x="1372" y="374" width="10" height="190" fill="#161616"/>
+  <rect x="1492" y="365" width="10" height="190" fill="#161616"/>
+  <!-- trave -->
+  <polygon points="1112,392 1522,361 1522,369 1112,400" fill="#161616"/>
+  <!-- tavola alta: 16 colonne, moduli orizzontali -->
+  <g transform="matrix(400 -30 13 60 1104 338)">
+    <rect x="0" y="0" width="1" height="1" fill="#161616"/>
+    <g stroke="#F2C230" stroke-opacity=".38" fill="none">
+      <path d="M.0625 0V1M.125 0V1M.1875 0V1M.25 0V1M.3125 0V1M.375 0V1M.4375 0V1M.5 0V1M.5625 0V1M.625 0V1M.6875 0V1M.75 0V1M.8125 0V1M.875 0V1M.9375 0V1" vector-effect="non-scaling-stroke"/>
+      <path d="M0 .5H1" vector-effect="non-scaling-stroke"/>
+    </g>
+    <path d="M0 0H1V1H0Z" fill="none" stroke="#161616" stroke-width="3" vector-effect="non-scaling-stroke"/>
+  </g>
+</g>
+
+<!-- Fila di tracker, davanti: dal fondo al primo piano -->
+<use xlink:href="#tr" transform="translate(1366 424) scale(.54)"/>
+<use xlink:href="#tr" transform="translate(1146 452) scale(.7)"/>
+<use xlink:href="#tr" transform="translate(836 486) scale(.9)"/>
+</svg>
+
+<div class="frase">
+  <span class="eti">02 — Fotovoltaico e agrivoltaico</span>
+  <p>Tracker a terra e file agrivoltaiche rialzate: ERI le progetta, autorizza, costruisce e gestisce.</p>
+</div>
+
+<ol class="iter">
+  <li><span class="n">01</span><span class="w">Sviluppo</span></li>
+  <li><span class="n">02</span><span class="w">Autorizzazioni</span></li>
+  <li><span class="n">03</span><span class="w">Ready to Build</span></li>
+  <li class="on"><span class="n">04</span><span class="w">Costruzione</span></li>
+  <li><span class="n">05</span><span class="w">Gestione</span></li>
+</ol>
+
+<div class="nota palette">
+  <span>Manifesto a Colori</span>
+  <div class="sw">
+    <i style="--c:#F2C230">F2C230</i><i style="--c:#C99A1E">C99A1E</i><i style="--c:#161616">161616</i><i style="--c:#FFFFFF">FFFFFF</i><i style="--c:#1B3FBF">1B3FBF</i><i style="--c:#0E7C7B">0E7C7B</i>
+  </div>
+</div>
+<div class="nota tessere">
+  <span><b style="--c:#1B3FBF"></b>03 Accumulo · 1B3FBF</span>
+  <span><b style="--c:#0E7C7B"></b>04 Idroelettrico · 0E7C7B</span>
+</div>
+
+<script>document.fonts.ready.then(function(){window.__eri={pronto:true}});</script>
+</body>
+</html>

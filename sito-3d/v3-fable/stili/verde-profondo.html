@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Verde Profondo · ERI</title>
+<meta name="viewport" content="width=1600">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Figtree:wght@400&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300;1,9..144,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --v1:#0E2E25;--v2:#163F32;--pav:#0B241D;
+  --crema:#F3EBDD;--oro:#C9B497;--brun:#8A7B66;--ara:#E8742A;--giallo:#F2C230;
+  --serif:'Fraunces',Georgia,serif;--sans:'Figtree',system-ui,sans-serif;--mono:'DM Mono',ui-monospace,monospace;
+}
+html,body{margin:0;padding:0;width:1600px;height:900px;overflow:hidden;background:#0E2E25}
+body{position:relative;font-family:var(--sans);color:var(--crema);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+
+/* Ambiente: parete di velluto verde che scende nel pavimento levigato */
+.parete{position:absolute;inset:0;background:linear-gradient(180deg,#0E2E25 0%,#10332A 40%,#163F32 100%)}
+.pavimento{position:absolute;left:0;right:0;top:300px;bottom:0;
+  background:linear-gradient(180deg,rgba(9,33,26,0) 0,rgba(9,33,26,.85) 110px,#0B271F 32%,#10352A 70%,#163F32 100%)}
+/* Una sola luce calda, bassa, da destra */
+.luce{position:absolute;inset:0;background:
+  radial-gradient(900px 560px at 1640px 600px,rgba(232,116,42,.34) 0%,rgba(232,116,42,.14) 38%,rgba(232,116,42,0) 70%),
+  radial-gradient(1100px 260px at 1500px 330px,rgba(242,194,48,.10) 0%,rgba(242,194,48,0) 70%)}
+.riflesso-luce{position:absolute;left:0;right:0;top:300px;bottom:0;background:
+  radial-gradient(700px 300px at 1560px 720px,rgba(232,116,42,.16) 0%,rgba(232,116,42,0) 70%)}
+.vignetta{position:absolute;inset:0;background:
+  linear-gradient(90deg,rgba(6,22,17,.55) 0%,rgba(6,22,17,0) 38%),
+  linear-gradient(0deg,rgba(6,22,17,.35) 0%,rgba(6,22,17,0) 30%)}
+
+.scena{position:absolute;inset:0;width:1600px;height:900px;display:block}
+
+/* Testa */
+.testa{position:absolute;left:96px;right:96px;top:44px;display:flex;justify-content:space-between;align-items:baseline}
+.marchio{display:flex;align-items:baseline;gap:14px;text-decoration:none;color:var(--crema)}
+.marchio b{font-family:var(--serif);font-weight:400;font-size:27px;letter-spacing:.05em;line-height:1}
+.marchio span{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--oro)}
+.menu{display:flex;gap:46px;font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase}
+.menu a{color:var(--crema);opacity:.5;text-decoration:none}
+.menu a.on{opacity:1;border-bottom:1px solid var(--oro);padding-bottom:5px}
+
+/* Frase, in alto a destra */
+.frase{position:absolute;right:96px;top:150px;width:500px;text-align:right}
+.frase p{margin:0;font-size:18px;line-height:28px;color:var(--crema);opacity:.88}
+.cta{display:inline-block;margin-top:24px;background:var(--ara);color:#0E2E25;font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;text-decoration:none;padding:10px 16px 9px;border-radius:999px;font-size:10px}
+
+/* Titolo, enorme, in basso a sinistra */
+.kicker{position:absolute;left:98px;top:452px;font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--oro)}
+.kicker b{font-weight:500;color:var(--ara);margin-right:10px}
+.titolo{position:absolute;left:90px;top:476px;margin:0;font-family:var(--serif);font-weight:300;font-size:134px;line-height:.95;letter-spacing:-.012em;color:var(--crema);font-variation-settings:"opsz" 144}
+.titolo i{font-style:italic;font-weight:300}
+
+/* Iter: linea d'orizzonte dorata, a tutta larghezza */
+.iter{position:absolute;left:96px;right:96px;top:822px;height:1px;background:linear-gradient(90deg,rgba(201,180,151,.28),rgba(201,180,151,.55) 60%,rgba(232,116,42,.55))}
+.iter span{position:absolute;top:-32px;font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--crema);opacity:.62;white-space:nowrap}
+.iter span::after{content:"";position:absolute;left:50%;top:27px;width:1px;height:9px;background:var(--oro);opacity:.8}
+.iter span:nth-child(1){left:0;transform:none}.iter span:nth-child(1)::after{left:0}
+.iter span:nth-child(2){left:25%;transform:translateX(-50%)}
+.iter span:nth-child(3){left:50%;transform:translateX(-50%)}
+.iter span:nth-child(4){left:75%;transform:translateX(-50%)}
+.iter span:nth-child(5){right:0}.iter span:nth-child(5)::after{left:auto;right:0}
+.iter span.on{opacity:1;color:var(--ara);font-weight:500}
+.iter span.on::after{height:14px;top:24px;background:var(--ara);opacity:1}
+.iter span.on::before{content:"";position:absolute;left:50%;top:38px;width:7px;height:7px;margin-left:-3px;border-radius:50%;background:var(--ara)}
+
+/* Palette, piccola, nell'angolo */
+.palette{position:absolute;left:96px;bottom:16px;display:flex;flex-direction:column;gap:7px;align-items:flex-start}
+.palette .nome{font-family:var(--mono);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--oro);opacity:.75}
+.sw{display:flex;gap:3px}
+.sw i{display:block;width:40px;font-style:normal;font-family:var(--mono);font-size:7.5px;color:var(--oro);opacity:.7;text-align:center;letter-spacing:.02em}
+.sw i::before{content:"";display:block;height:10px;margin-bottom:4px;background:var(--c);box-shadow:inset 0 0 0 1px rgba(243,235,221,.12)}
+</style>
+</head>
+<body>
+
+<div class="parete"></div>
+<div class="luce"></div>
+<div class="pavimento"></div>
+<div class="riflesso-luce"></div>
+
+<svg class="scena" viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+<defs>
+  <!-- vetro dei moduli: penombra verde a sinistra, bordo caldo verso la luce -->
+  <linearGradient id="vetro" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#0C1B18"/><stop offset=".45" stop-color="#13231F"/><stop offset=".8" stop-color="#2A2D27"/><stop offset="1" stop-color="#5B4A36"/>
+  </linearGradient>
+  <linearGradient id="vetroA" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#0B1916"/><stop offset=".55" stop-color="#121F1C"/><stop offset=".85" stop-color="#232622"/><stop offset="1" stop-color="#483C2E"/>
+  </linearGradient>
+  <linearGradient id="sheen" x1="0" y1="1" x2="0" y2="0">
+    <stop offset="0" stop-color="#F3EBDD" stop-opacity="0"/><stop offset="1" stop-color="#F3EBDD" stop-opacity=".06"/>
+  </linearGradient>
+  <!-- alluminio caldo lungo la tavola -->
+  <linearGradient id="allu" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#4B4337"/><stop offset=".6" stop-color="#8A7B66"/><stop offset="1" stop-color="#C9B497"/>
+  </linearGradient>
+  <!-- acciaio brunito dei pali: ombra a sinistra, bordo caldo a destra -->
+  <linearGradient id="palo" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#231E19"/><stop offset=".5" stop-color="#3E372E"/><stop offset=".78" stop-color="#8A7B66"/><stop offset="1" stop-color="#C9B497"/>
+  </linearGradient>
+  <linearGradient id="tubo" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#2E2823"/><stop offset=".7" stop-color="#6E6252"/><stop offset="1" stop-color="#B9A585"/>
+  </linearGradient>
+  <!-- celle accennate -->
+  <pattern id="celle" patternUnits="userSpaceOnUse" width=".1917" height=".1917">
+    <path d="M.1917 0V.1917H0" fill="none" stroke="#C9B497" stroke-opacity=".10" stroke-width=".012"/>
+  </pattern>
+  <pattern id="celleA" patternUnits="userSpaceOnUse" width=".2" height=".2">
+    <path d="M.2 0V.2H0" fill="none" stroke="#C9B497" stroke-opacity=".08" stroke-width=".014"/>
+  </pattern>
+  <filter id="sfoca" x="-5%" y="-5%" width="110%" height="110%"><feGaussianBlur stdDeviation="2.2"/></filter>
+  <linearGradient id="fadeT1" gradientUnits="userSpaceOnUse" x1="0" y1="700" x2="0" y2="880">
+    <stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
+  </linearGradient>
+  <linearGradient id="fadeT2" gradientUnits="userSpaceOnUse" x1="0" y1="632" x2="0" y2="820">
+    <stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
+  </linearGradient>
+  <linearGradient id="fadeA" gradientUnits="userSpaceOnUse" x1="0" y1="480" x2="0" y2="640">
+    <stop offset="0" stop-color="#fff" stop-opacity=".8"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
+  </linearGradient>
+  <mask id="mT1"><rect x="0" y="700" width="1600" height="200" fill="url(#fadeT1)"/></mask>
+  <mask id="mT2"><rect x="0" y="632" width="1600" height="200" fill="url(#fadeT2)"/></mask>
+  <mask id="mA"><rect x="0" y="480" width="1600" height="200" fill="url(#fadeA)"/></mask>
+
+  <!-- Una tavola 1P di tracker: 10 moduli in verticale, 11,6 m, nel piano inclinato (unità: metri) -->
+  <g id="tavola">
+    <rect x="0" y="0" width="11.6" height="2.3" fill="url(#vetro)"/>
+    <rect x="0" y="0" width="11.6" height="2.3" fill="url(#celle)"/>
+    <rect x="0" y="0" width="11.6" height="2.3" fill="url(#sheen)"/>
+    <path d="M1.16 0V2.3M2.32 0V2.3M3.48 0V2.3M4.64 0V2.3M5.8 0V2.3M6.96 0V2.3M8.12 0V2.3M9.28 0V2.3M10.44 0V2.3" stroke="#3B3A33" stroke-width=".028" fill="none"/>
+    <rect x="0" y="0" width="11.6" height="2.3" fill="none" stroke="url(#allu)" stroke-width=".05"/>
+    <path d="M11.6 0V2.3" stroke="#C9B497" stroke-width=".09" fill="none"/>
+    <path d="M0 2.3H11.6" stroke="#C9B497" stroke-opacity=".55" stroke-width=".035" fill="none"/>
+  </g>
+
+  <!-- Tracker 1 (davanti): tubo, pali, tavola -->
+  <g id="trk1">
+    <path d="M837 612L1350 539" stroke="url(#tubo)" stroke-width="7" stroke-linecap="round" fill="none"/>
+    <ellipse cx="913" cy="713" rx="13" ry="3.5" fill="#1C1814"/><ellipse cx="1094" cy="687" rx="12" ry="3.2" fill="#1C1814"/><ellipse cx="1274" cy="661" rx="11" ry="3" fill="#1C1814"/>
+    <rect x="908.5" y="598" width="9" height="115" fill="url(#palo)"/>
+    <rect x="1089.5" y="572" width="9" height="115" fill="url(#palo)"/>
+    <rect x="1269.5" y="546" width="9" height="115" fill="url(#palo)"/>
+    <rect x="1083" y="630" width="22" height="13" rx="1" fill="#2B2620" stroke="#6E6252" stroke-width=".8"/>
+    <g transform="matrix(42 -6 -26 -54 880 672)"><use href="#tavola"/></g>
+  </g>
+  <!-- Tracker 2: continua fuori dall'inquadratura, verso la luce -->
+  <g id="trk2">
+    <path d="M1375 535L1900 460" stroke="url(#tubo)" stroke-width="7" stroke-linecap="round" fill="none"/>
+    <ellipse cx="1451" cy="636" rx="12" ry="3.2" fill="#1C1814"/>
+    <rect x="1446.5" y="521" width="9" height="115" fill="url(#palo)"/>
+    <g transform="matrix(42 -6 -26 -54 1418 595)"><use href="#tavola"/></g>
+  </g>
+
+  <!-- Fila agrivoltaica rialzata: portali da 4,5 m, tavola di 15 moduli, nessun campo sotto -->
+  <g id="agri">
+    <g stroke="#4A4237" stroke-width="5" stroke-linecap="round" fill="none">
+      <path d="M0 -252L-68 -366M238 -286L170 -400M476 -320L408 -434M714 -354L646 -468"/>
+      <path d="M-34 -250L-17 -280M-34 -250L-51 -309M204 -284L221 -314M204 -284L187 -343M442 -318L459 -348M442 -318L425 -377M680 -352L697 -382M680 -352L663 -411" stroke-width="3.5"/>
+    </g>
+    <g fill="url(#palo)">
+      <rect x="-38" y="-309" width="8" height="275"/><rect x="200" y="-343" width="8" height="275"/><rect x="438" y="-377" width="8" height="275"/><rect x="676" y="-411" width="8" height="275"/>
+    </g>
+    <g fill="#1C1814">
+      <ellipse cx="-34" cy="-34" rx="13" ry="3.6"/><ellipse cx="204" cy="-68" rx="13" ry="3.6"/><ellipse cx="442" cy="-102" rx="13" ry="3.6"/><ellipse cx="680" cy="-136" rx="13" ry="3.6"/>
+    </g>
+    <path d="M-21 -249L777 -363" stroke="#5B5043" stroke-width="4" fill="none"/>
+    <g transform="matrix(42 -6 -29.5 -49.5 -21 -249)">
+      <rect x="0" y="0" width="18" height="2.3" fill="url(#vetroA)"/>
+      <rect x="0" y="0" width="18" height="2.3" fill="url(#celleA)"/>
+      <rect x="0" y="0" width="18" height="2.3" fill="url(#sheen)"/>
+      <path d="M1.2 0V2.3M2.4 0V2.3M3.6 0V2.3M4.8 0V2.3M6 0V2.3M7.2 0V2.3M8.4 0V2.3M9.6 0V2.3M10.8 0V2.3M12 0V2.3M13.2 0V2.3M14.4 0V2.3M15.6 0V2.3M16.8 0V2.3" stroke="#35342E" stroke-width=".028" fill="none"/>
+      <rect x="0" y="0" width="18" height="2.3" fill="none" stroke="url(#allu)" stroke-width=".05"/>
+      <path d="M18 0V2.3" stroke="#C9B497" stroke-width=".09" fill="none"/>
+      <path d="M0 2.3H18" stroke="#C9B497" stroke-opacity=".45" stroke-width=".035" fill="none"/>
+    </g>
+  </g>
+</defs>
+
+<!-- Riflessi morbidi nel pavimento levigato -->
+<g mask="url(#mA)" opacity=".2" filter="url(#sfoca)"><use href="#agri" transform="matrix(.55 0 0 -.55 640 480)"/></g>
+<g mask="url(#mT2)" opacity=".2" filter="url(#sfoca)"><use href="#trk2" transform="matrix(1 0 0 -1 0 1264)"/></g>
+<g mask="url(#mT1)" opacity=".24" filter="url(#sfoca)"><use href="#trk1" transform="matrix(1 0 0 -1 0 1400)"/></g>
+
+<!-- Le macchine -->
+<g transform="translate(640 480) scale(.55)"><use href="#agri"/></g>
+<use href="#trk2"/>
+<use href="#trk1"/>
+</svg>
+
+<div class="vignetta"></div>
+
+<header class="testa">
+  <a class="marchio" href="#"><b>ERI</b><span>· Energie Rinnovabili Italia</span></a>
+  <nav class="menu">
+    <a class="on" href="#">Fotovoltaico</a><a href="#">Accumulo</a><a href="#">Idroelettrico</a><a href="#">Contatti</a>
+  </nav>
+</header>
+
+<div class="frase">
+  <p>Tracker che seguono il sole e filari alti sopra le colture.<br>Dal primo studio alla rete, un solo interlocutore.</p>
+  <a class="cta" href="#">Parliamo del progetto</a>
+</div>
+
+<div class="kicker"><b>02</b>Fotovoltaico e agrivoltaico</div>
+<h1 class="titolo">Raccogliere<br><i>il sole.</i></h1>
+
+<div class="iter">
+  <span>Sviluppo</span><span>Autorizzazioni</span><span>Ready to Build</span><span class="on">Costruzione</span><span>Gestione</span>
+</div>
+
+<div class="palette">
+  <div class="nome">Verde Profondo · palette</div>
+  <div class="sw">
+    <i style="--c:#0E2E25">0E2E25</i><i style="--c:#163F32">163F32</i><i style="--c:#0B241D">0B241D</i><i style="--c:#8A7B66">8A7B66</i><i style="--c:#C9B497">C9B497</i><i style="--c:#F3EBDD">F3EBDD</i><i style="--c:#E8742A">E8742A</i><i style="--c:#F2C230">F2C230</i>
+  </div>
+</div>
+
+<script>document.fonts.ready.then(function(){window.__eri={pronto:true}});</script>
+</body>
+</html>
