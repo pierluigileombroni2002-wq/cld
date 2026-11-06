@@ -4,6 +4,7 @@
 #   powershell -ExecutionPolicy Bypass -File sito-3d\strumenti\foto-v2.ps1 -Out <cartella> -T 1.8,3.4,6.5,9.6
 #   -Passi <file.json>   passi personalizzati: [{ "nome": "...", "js": "...", "shot": "nome.jpg", "attesa": 60000 }]
 #   -Swiftshader         rendering software (lento) se la GPU non va
+#   -Telefono            emula un telefono vero: viewport -Larghezza x -Altezza (anche sotto i 500 px), touch, DPR 2
 param(
   [string]$Url = 'http://localhost:8790/v2/?test=1&nointro=1',
   [string]$Out,
@@ -13,7 +14,8 @@ param(
   [int]$Altezza = 720,
   [int]$Porta = 9351,
   [int]$AttesaS = 120,
-  [switch]$Swiftshader
+  [switch]$Swiftshader,
+  [switch]$Telefono
 )
 $ErrorActionPreference = 'Stop'
 $chrome = 'C:\Program Files\Google\Chrome\Application\chrome.exe'
@@ -75,6 +77,11 @@ try {
     if ($r -match '"data":"([^"]+)"') { [IO.File]::WriteAllBytes((Join-Path $Out $nome), [Convert]::FromBase64String($Matches[1])); "foto $nome" }
   }
   [void](Chiama 'Runtime.enable' @{}); [void](Chiama 'Page.enable' @{})
+  if ($Telefono) {
+    [void](Chiama 'Emulation.setDeviceMetricsOverride' @{ width = $Larghezza; height = $Altezza; deviceScaleFactor = 2; mobile = $true })
+    [void](Chiama 'Emulation.setTouchEmulationEnabled' @{ enabled = $true; maxTouchPoints = 5 })
+    [void](Chiama 'Emulation.setUserAgentOverride' @{ userAgent = 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Mobile Safari/537.36' })
+  }
   [void](Chiama 'Page.navigate' @{ url = $Url })
   $t0 = Get-Date; $pronto = $false
   while (((Get-Date) - $t0).TotalSeconds -lt $AttesaS) {
