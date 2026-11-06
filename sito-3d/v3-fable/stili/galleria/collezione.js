@@ -85,7 +85,7 @@ export function creaCollezione(scena) {
     gruppo,
     // posa: [{ pos: [x,y,z], rot: gradi }] per tracker, container, Francis
     disponi(pose) { pezzi.forEach((p, i) => { p.g.position.set(...pose[i].pos); p.g.rotation.y = THREE.MathUtils.degToRad(pose[i].rot); }); },
-    // le tre sculture si compongono nella prima metà del finale (p 0.86 → 0.93), mentre la camera si gira verso la vetrata:
+    // le tre sculture si compongono nella prima metà del finale, mentre la camera si gira verso la vetrata:
     // niente macchine che compaiono di colpo in fondo alla sala
     aggiorna(finale, tempo) {
       gruppo.visible = finale > 0.01;

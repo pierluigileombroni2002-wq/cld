@@ -6,7 +6,9 @@ import { creaMacchine } from './macchine-galleria.js';
 import { POSA } from './bess-galleria.js';
 import { DIST } from './turbine-galleria.js';
 import { creaLogo } from './logo.js';
-import { MOMENTI, assemblaggioDi } from '../../ui/testi.js';
+import { MOMENTI, assemblaggioDi, momentoDeiTesti, macchinaInScena, finaleDi } from './momenti.js';
+import { creaRegia, inquadra, campioniMomento } from './regia.js';
+import { impronta, misuraZone, rettangoliSchermo, mascheraMacchine, testiDeiMomenti, pixelSotto } from './ingombri.js';
 import { rivestiMateriali, rivestiScena, setFaseVetro, setTintaVetro, vetroModulo } from './materiali-galleria.js';
 import { creaOmbre, creaDisegno } from './ombre.js';
 import { creaCollezione } from './collezione.js';
@@ -52,6 +54,21 @@ collezione.disponi([
 ]);
 rivestiScena(scena);
 
+// ---------- ingombri delle macchine (una volta sola): la regia li tiene lontani dai testi ----------
+// Per ogni punto in cui la regia controlla un momento, la macchina com'è lì: montata in parte, con i pezzi ancora in volo.
+const impronte = [null, null, null, null, null];
+const t0Impronte = performance.now();
+for (let i = 1; i <= 4; i++) {
+  const campioni = campioniMomento(i), punti = [];
+  for (const p of campioni) {
+    if (i <= 3) punti.push(impronta(macchine.monta(i, assemblaggioDi(p, MOMENTI[i]), camera)));
+    else { collezione.aggiorna(finaleDi(p), 0); punti.push(impronta(collezione.gruppo)); }
+  }
+  const montata = campioni.map((p) => (i <= 3 ? assemblaggioDi(p, MOMENTI[i]) >= 0.999 : finaleDi(p) >= 0.5));
+  impronte[i] = { campioni, punti, montata, buf: new Float32Array(Math.max(0, ...punti.map((q) => q.length)) / 6) };
+}
+stato.msImpronte = +(performance.now() - t0Impronte).toFixed(1);
+
 // ---------- ombre di contatto dipinte e disegno a terra ----------
 const L = 14 * 1.16;
 const ombreFv = creaOmbre([
@@ -82,17 +99,18 @@ scena.add(disegnoBess.gruppo); disegnoBess.gruppo.position.copy(macchine.gruppi.
 const disegnoIdro = creaDisegno([{ x: -DIST, z: 0, w: 4.8, d: 3.4 }, { x: 0, z: 0, w: 4.8, d: 3.4 }, { x: DIST, z: 0, w: 4.8, d: 3.4 }]);
 scena.add(disegnoIdro.gruppo); disegnoIdro.gruppo.position.copy(macchine.gruppi.idroelettrico.position);
 const terra = [
-  { m: MOMENTI[1], ombre: ombreFv, disegno: disegnoFv },
-  { m: MOMENTI[2], ombre: ombreBess, disegno: disegnoBess },
-  { m: MOMENTI[3], ombre: ombreIdro, disegno: disegnoIdro },
+  { i: 1, ombre: ombreFv, disegno: disegnoFv },
+  { i: 2, ombre: ombreBess, disegno: disegnoBess },
+  { i: 3, ombre: ombreIdro, disegno: disegnoIdro },
 ];
 function aggiornaTerra(p) {
   for (const t of terra) {
-    const vicino = p > t.m.da - 0.1 && p < t.m.a + 0.1;
-    if (!vicino) { t.ombre.set(0); t.disegno.set(0); continue; }
-    const a = assemblaggioDi(p, t.m);
-    const entra = Math.min(1, Math.max(0, (p - (t.m.da - 0.1)) / 0.04)); // prima del momento il disegno affiora piano
-    const sfuma = 1 - Math.min(1, Math.max(0, (p - t.m.a) / 0.06)); // dopo il momento il disegno svanisce
+    const m = MOMENTI[t.i];
+    const fine = MOMENTI[t.i + 1].da - 0.016; // quando la macchina esce di scena
+    if (p < m.da - 0.1 || p > fine) { t.ombre.set(0); t.disegno.set(0); continue; }
+    const a = assemblaggioDi(p, m);
+    const entra = Math.min(1, Math.max(0, (p - (m.da - 0.1)) / 0.04)); // prima del momento il disegno affiora piano
+    const sfuma = 1 - Math.min(1, Math.max(0, (p - m.a) / (fine - m.a))); // dopo il momento il disegno svanisce con la macchina
     t.ombre.set(Math.min(1, Math.max(0, (a - 0.25) / 0.5)) * sfuma * entra);
     t.disegno.set((1 - Math.min(1, Math.max(0, (a - 0.2) / 0.5))) * sfuma * entra);
   }
@@ -122,106 +140,39 @@ modulo.addEventListener('submit', (e) => {
   modulo.querySelector('.conferma').hidden = false;
 });
 
-// ---------- regia della camera: una persona che cammina in una galleria, all'altezza degli occhi ----------
-// Le tre sculture stanno in fila lungo x; tra una e l'altra la camera cammina di lato, dentro ogni momento gira piano.
-// Ogni chiave ha anche dove sta il soggetto sullo schermo (sx, sy: frazioni della mezza larghezza e della mezza altezza)
-// e, se serve, una posa diversa per il telefono (tel), dove la camera non arretra e segue la macchina da vicino.
-// (le chiavi ripetute subito dopo una posa servono a fermare la curva: senza, il punto successivo lontano la piega)
-const DESKTOP = [
-  { p: 0.00, pos: [-52, 2.6, 30], mira: [-44, 5.6, -30] },
-  { p: 0.10, pos: [-46, 2.6, 29], mira: [-30, 3.0, -22] },
-  // fotovoltaico (approvato, non si tocca): la fila davanti parte vicina a sinistra e si allontana verso destra, vista dal basso di tre quarti
-  { p: 0.16, pos: [-30, 2.0, 27], mira: [-4, 2.5, 4] },
-  { p: 0.36, pos: [-12, 1.9, 25], mira: [9, 2.5, 3] },
-  { p: 0.43, pos: [46, 2.3, 26], mira: [72, 1.6, 0] },
-  // BESS: la camera arriva da sinistra, si abbassa all'altezza degli occhi e si ferma di tre quarti davanti alle porte aperte, il blocco a centro-sinistra
-  { p: 0.47, pos: [60, 1.8, 27], mira: [69, 1.3, -1], sx: -0.2, sy: -0.14 },
-  { p: 0.60, pos: [80, 1.7, 21.5], mira: [69.5, 1.3, -1], sx: -0.26, sy: -0.14 },
-  { p: 0.62, pos: [80.5, 1.7, 21.3], mira: [69.5, 1.3, -1], sx: -0.26, sy: -0.14 },
-  // le tre turbine: la camera passa davanti alla fila, bassa, e si ferma vicina sulla Francis (la fila riempie la pagina,
-  // le basi restano sopra il blocco iter, che nel momento idro è più basso e più stretto)
-  { p: 0.66, pos: [118, 1.7, 29], mira: [137, 1.2, 0], sx: -0.14, sy: -0.14 },
-  { p: 0.84, pos: [135.6, 1.5, 19.7], mira: [140.3, 1.25, 0], sx: -0.08, sy: -0.24 },
-  { p: 0.86, pos: [136.1, 1.5, 19.6], mira: [140.3, 1.25, 0], sx: -0.08, sy: -0.24 },
-  { p: 0.90, pos: [166, 2.6, 8], mira: [176, 5.0, -40] },
-  { p: 1.00, pos: [176, 4.0, 0], mira: [187, 7.5, -60] },
-];
-// Telefono: apertura, fotovoltaico e contatti arretrano (la scultura sta nella fascia bassa); BESS e turbine si guardano da vicino,
-// una macchina alla volta, con la camera che cammina lungo la fila.
-const TELEFONO = [
-  { p: 0.00, pos: [-52, 2.6, 30], mira: [-44, 5.6, -30], arretra: 1.55 },
-  { p: 0.10, pos: [-46, 2.6, 29], mira: [-30, 3.0, -22], arretra: 1.55 },
-  // fotovoltaico: di tre quarti dal capo della fila davanti, più arretrata e più alta che su desktop: la fila (16 m) si allontana
-  // in diagonale verso destra e sta tutta in campo, il capo vicino compreso; le altre file restano dietro, a sinistra
-  // (le chiavi doppie fermano la curva: tra 0.20 e 0.32 la camera scivola appena, senza piegarsi verso l'apertura o il BESS)
-  { p: 0.16, pos: [-26.6, 6.1, 26.6], mira: [3.8, 1.4, 8.2], sx: 0, sy: -0.24 },
-  { p: 0.20, pos: [-26.6, 6.1, 26.6], mira: [3.8, 1.4, 8.2], sx: 0, sy: -0.24 },
-  { p: 0.32, pos: [-25.4, 5.9, 25.4], mira: [4.2, 1.4, 7.8], sx: 0, sy: -0.24 },
-  { p: 0.36, pos: [-25.4, 5.9, 25.4], mira: [4.2, 1.4, 7.8], sx: 0, sy: -0.24 },
-  // BESS: prima il container A con il PCS davanti, poi la camera cammina a destra e si ferma davanti al container B
-  // (tutto in campo: il trasformatore davanti alle porte chiuse, le porte aperte libere a destra; il container A resta fuori dal bordo)
-  { p: 0.43, pos: [58, 2.0, 24], mira: [65, 1.3, -1] },
-  { p: 0.49, pos: [66, 1.9, 20], mira: [67.5, 1.2, -1] },
-  { p: 0.55, pos: [75.15, 1.8, 21], mira: [75.4, 1.2, -1] },
-  { p: 0.60, pos: [75.25, 1.8, 21], mira: [75.4, 1.2, -1] },
-  // turbine: una alla volta, frontali e vicine (le vicine restano fuori dal bordo anche sugli schermi meno stretti)
-  { p: 0.64, pos: [126, 1.8, 20], mira: [140 - DIST, 1.1, 0] },
-  { p: 0.69, pos: [140.15 - DIST, 1.7, 11.8], mira: [140.15 - DIST, 1.1, 0] },
-  { p: 0.72, pos: [140.15 - DIST, 1.7, 11.8], mira: [140.15 - DIST, 1.1, 0] },
-  { p: 0.75, pos: [140, 1.7, 11.8], mira: [140, 1.1, 0] },
-  { p: 0.78, pos: [140, 1.7, 11.8], mira: [140, 1.1, 0] },
-  { p: 0.81, pos: [140 + DIST, 1.7, 11.8], mira: [140 + DIST, 1.1, 0] },
-  { p: 0.84, pos: [140 + DIST, 1.7, 11.8], mira: [140 + DIST, 1.1, 0] },
-  // contatti: la camera guarda un po' più in basso, così la collezione davanti alla vetrata sta nella fascia tra il titolo e il modulo
-  { p: 0.90, pos: [166, 2.6, 8], mira: [172, -2.5, -40], sx: 0.1, sy: 0 },
-  { p: 1.00, pos: [176, 4.0, 0], mira: [181, -4.5, -60], sx: 0.1, sy: 0 },
-];
-const chiave = (k, t) => ({ p: k.p, pos: new THREE.Vector3(...k.pos), mira: new THREE.Vector3(...k.mira),
-  sx: k.sx ?? (t ? 0 : 0.02), sy: k.sy ?? (t ? -0.22 : -0.18), arretra: k.arretra ?? 1 });
-const CHIAVI_DESK = DESKTOP.map((k) => chiave(k, false));
-const CHIAVI_TEL = TELEFONO.map((k) => chiave(k, true));
-
-const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _dir = new THREE.Vector3(), _dx = new THREE.Vector3(), _dy = new THREE.Vector3();
-function catmull(out, p0, p1, p2, p3, t) {
-  const t2 = t * t, t3 = t2 * t;
-  out.x = 0.5 * ((2 * p1.x) + (-p0.x + p2.x) * t + (2 * p0.x - 5 * p1.x + 4 * p2.x - p3.x) * t2 + (-p0.x + 3 * p1.x - 3 * p2.x + p3.x) * t3);
-  out.y = 0.5 * ((2 * p1.y) + (-p0.y + p2.y) * t + (2 * p0.y - 5 * p1.y + 4 * p2.y - p3.y) * t2 + (-p0.y + 3 * p1.y - 3 * p2.y + p3.y) * t3);
-  out.z = 0.5 * ((2 * p1.z) + (-p0.z + p2.z) * t + (2 * p0.z - 5 * p1.z + 4 * p2.z - p3.z) * t2 + (-p0.z + 3 * p1.z - 3 * p2.z + p3.z) * t3);
-  return out;
-}
+// ---------- regia della camera (regia.js): un percorso che va sempre avanti, e macchine sempre lontane dai testi ----------
+// stretto = impaginazione da telefono (testi in alto, macchina sotto): schermi verticali e schermi stretti non troppo bassi.
+// Un telefono girato (orizzontale e basso) usa invece l'impaginazione compatta da desktop (vedi style.css).
+function stretto() { return innerHeight > innerWidth || (innerWidth <= 760 && innerHeight > 480); }
+const regia = creaRegia(camera);
+let zone = [[], [], [], [], []];
 function posaCamera(p) {
   if (stato.prova) { // posa forzata, solo per le prove di inquadratura (strumenti)
-    const q = stato.prova; _a.set(...q.pos); _b.set(...q.mira);
-    inquadra(_a, _b, q.sx ?? 0, q.sy ?? -0.24, q.arretra ?? 1); return;
+    const q = stato.prova;
+    inquadra(camera, new THREE.Vector3(...q.pos), new THREE.Vector3(...q.mira), q.sx ?? 0, q.sy ?? -0.24, q.arretra ?? 1);
+    return;
   }
-  const CHIAVI = stretto() ? CHIAVI_TEL : CHIAVI_DESK;
-  let i = 0;
-  while (i < CHIAVI.length - 2 && p > CHIAVI[i + 1].p) i++;
-  const k0 = CHIAVI[Math.max(0, i - 1)], k1 = CHIAVI[i], k2 = CHIAVI[i + 1], k3 = CHIAVI[Math.min(CHIAVI.length - 1, i + 2)];
-  const s = Math.min(1, Math.max(0, (p - k1.p) / (k2.p - k1.p)));
-  const e = s * s * (3 - 2 * s);
-  catmull(_a, k0.pos, k1.pos, k2.pos, k3.pos, e);
-  catmull(_b, k0.mira, k1.mira, k2.mira, k3.mira, e);
-  _a.y += Math.sin(stato.tempo * 0.35) * 0.03; // respiro impercettibile
-  inquadra(_a, _b, k1.sx + (k2.sx - k1.sx) * e, k1.sy + (k2.sy - k1.sy) * e, k1.arretra + (k2.arretra - k1.arretra) * e);
+  regia.posa(p, stato.tempo, stretto(), innerWidth, innerHeight);
 }
-// Il soggetto sta a centro-destra su desktop (il titolo è dietro, in alto a sinistra), in basso sul telefono (i testi stanno in alto).
-function stretto() { return innerHeight > innerWidth || innerWidth <= 760; }
-function inquadra(pos, mira, sx, sy, arretra) {
-  // sul telefono la camera arretra (salvo le pose pensate per il telefono): la scultura deve stare tutta nella fascia bassa dello schermo
-  _dir.subVectors(mira, pos); let dist = _dir.length(); _dir.normalize();
-  if (arretra !== 1) { pos = _a.copy(pos).addScaledVector(_dir, -dist * (arretra - 1)); dist *= arretra; }
-  const mezzaH = Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2) * dist;
-  const mezzaW = mezzaH * camera.aspect;
-  _dx.crossVectors(_dir, camera.up).normalize();
-  _dy.crossVectors(_dx, _dir).normalize();
-  const spX = -sx * mezzaW, spY = -sy * mezzaH;
-  camera.position.copy(pos).addScaledVector(_dx, spX).addScaledVector(_dy, spY);
-  _b.copy(mira).addScaledVector(_dx, spX).addScaledVector(_dy, spY);
-  camera.lookAt(_b);
+// Le zone dei testi si leggono dalla pagina e la regia sceglie, momento per momento, dove comporre la macchina e quanto
+// arretrare la camera. Si rifà a ogni cambio di misura vero, non per la barra del browser del telefono che compare e scompare
+// mentre si scorre (cambia l'altezza di poco).
+const adattata = { w: 0, h: 0, stretto: null };
+function adattaRegia(forza = false) {
+  const w = innerWidth, h = innerHeight;
+  if (!forza && w === adattata.w && stretto() === adattata.stretto && Math.abs(h - adattata.h) < h * 0.2) return;
+  Object.assign(adattata, { w, h, stretto: stretto() });
+  zone = misuraZone({ logo: logo ? logo.rettangoloTestata(w, h) : null, margine: stretto() ? 12 : 20 });
+  misuraEtichette();
+  // su desktop, nei momenti fotovoltaico e BESS, la scena sfuma verso destra (aggiornaMaschera): lì non si compone
+  const sfumata = sfumaADestra() ? [{ nome: 'sfumatura', x0: w - 400, y0: 0, x1: w, y1: h }] : [];
+  const riservate = [[], sfumata, sfumata, [], []];
+  stato.regia = regia.adatta({ stretto: stretto(), zone, riservate, impronte, larghezza: w, altezza: h });
 }
+let attesaAdatta = 0;
+function programmaAdatta() { clearTimeout(attesaAdatta); attesaAdatta = setTimeout(() => adattaRegia(), 150); }
 
-// ---------- testi: titoli sotto la tela, cartellini e iter sopra ----------
+// ---------- testi: titoli, cartellini e iter sopra la tela; le macchine non li toccano mai (regia.js) ----------
 const NOMI_FASI = ['Sviluppo', 'Autorizzazioni', 'Ready to Build', 'Costruzione', 'Gestione'];
 const DESCR_FASI = ['Terreno, studio e progetto', 'Permessi e connessione alla rete', 'Pronto per il cantiere', 'Cantiere e collaudo', 'Esercizio e manutenzione'];
 const titoli = [...document.querySelectorAll('.titolo-grande')];
@@ -247,12 +198,11 @@ for (const t of titoli) {
 }
 let momentoAttivo = -1, faseAttiva = -1;
 function aggiornaTesti(p) {
-  let idx = -1;
-  MOMENTI.forEach((m, i) => { if (p >= m.da - 0.015 && p <= m.a + 0.015) idx = i; });
+  const idx = momentoDeiTesti(p);
   if (idx !== momentoAttivo) {
     sezioni.forEach((s) => s.classList.toggle('attivo', +s.dataset.m === idx));
     titoli.forEach((t) => t.classList.toggle('attivo', +t.dataset.m === idx));
-    document.body.dataset.momento = idx; // il CSS lascia libera la fascia dell'iter a destra nei momenti tecnologici
+    document.body.dataset.momento = idx;
     momentoAttivo = idx; faseAttiva = -1;
   }
   if (idx >= 1 && idx <= 3) {
@@ -280,55 +230,55 @@ function aggiornaTesti(p) {
   aggiornaMaschera(p);
   // la finestra gira piano nella sala con lo scorrimento; nel finale la parete diventa vetrata
   finestra.style.transform = `rotate(${28 - p * 10}deg) translateX(${p * 30}vw)`;
-  const finale = Math.min(1, Math.max(0, (p - 0.86) / 0.14));
-  vetrata.style.opacity = (finale * 0.9).toFixed(3);
+  vetrata.style.opacity = (finaleDi(p) * 0.9).toFixed(3);
 }
 
 // Su desktop, nei momenti fotovoltaico e BESS, la scena sfuma nella luce della parete a destra (la colonna dell'iter ha la sua
 // fascia libera). La maschera entra e esce con p, in modo continuo: niente scatti tra un momento e l'altro.
+// Solo dove c'è la colonna dell'iter: non sul telefono e non sugli schermi orizzontali bassi.
+function sfumaADestra() { return !stretto() && innerHeight > 480; }
 const liscia = (x) => { x = Math.min(1, Math.max(0, x)); return x * x * (3 - 2 * x); };
 let mascheraUltima = '';
 function aggiornaMaschera(p) {
-  const k = stretto() ? 0 : Math.min(liscia((p - 0.10) / 0.03), 1 - liscia((p - 0.60) / 0.04));
+  const entra = MOMENTI[1].da - 0.04, esce = MOMENTI[2].a;
+  const k = sfumaADestra() ? Math.min(liscia((p - entra) / 0.03), 1 - liscia((p - esce) / 0.04)) : 0;
   const chiave = k < 0.005 ? '' : `linear-gradient(90deg, #000 calc(100% - 520px), rgba(0,0,0,${(1 - k).toFixed(2)}) calc(100% - 300px))`;
   if (chiave === mascheraUltima) return;
   mascheraUltima = chiave;
   tela.style.webkitMaskImage = chiave; tela.style.maskImage = chiave;
 }
 
-// ---------- etichette delle turbine ----------
+// ---------- etichette delle turbine: targhette di sala appese al bordo anteriore dei basamenti ----------
 const etichette = {};
-for (const el of document.querySelectorAll('.etichetta')) etichette[el.dataset.turbina] = el;
-const cartellinoIdro = document.querySelector('.momento[data-m="3"] .cartellino');
+for (const el of document.querySelectorAll('.etichetta')) etichette[el.dataset.turbina] = { el, w: 0, h: 0 };
+function misuraEtichette() { for (const e of Object.values(etichette)) { e.w = e.el.offsetWidth; e.h = e.el.offsetHeight; } }
 const _proj = new THREE.Vector3();
 function etichetteTurbine(p) {
   const m = MOMENTI[3];
   const dentro = p > m.da && p < m.a + 0.02;
   const a = assemblaggioDi(p, m);
   const s = stretto();
-  // l'ancora sta al bordo anteriore del basamento: l'etichetta pende sotto, come una targhetta di sala;
-  // su desktop le tre targhette stanno su una sola riga, appesa alla piastra più bassa
   const ancore = macchine.ancoreTurbine().map(({ nome, pos }) => {
     _proj.copy(pos).project(camera);
     return { nome, x: (_proj.x * 0.5 + 0.5) * innerWidth, y: (-_proj.y * 0.5 + 0.5) * innerHeight, z: _proj.z };
   });
+  // su desktop le tre targhette stanno su una sola riga, appesa alla piastra più bassa
   const yRiga = Math.max(...ancore.map((q) => q.y)) + 4;
-  // il limite in basso è il cartellino (sul telefono il bordo dello schermo); da sinistra a destra, una targhetta
-  // che finirebbe sopra la precedente resta spenta: sugli schermi piccoli, o da lontano, non si accavallano mai
-  const limite = dentro ? (s ? innerHeight - 60 : cartellinoIdro.getBoundingClientRect().top - 10) : 0;
+  // da sinistra a destra: una targhetta che finirebbe su un testo, fuori schermo o sopra la precedente resta spenta
   let bordoDestro = -Infinity;
   for (const q of ancore.sort((u, v) => u.x - v.x)) {
-    const { nome, x, z } = q;
+    const e = etichette[q.nome]; if (!e) continue;
     const y = s ? q.y + 4 : yRiga;
-    const el = etichette[nome]; if (!el) continue;
-    const i = nome === 'pelton' ? 0 : nome === 'francis' ? 1 : 2;
+    const i = q.nome === 'pelton' ? 0 : q.nome === 'francis' ? 1 : 2;
     const visibile = dentro && a > i * 0.3 + 0.3;
-    if (!visibile) { el.classList.remove('visibile'); continue; }
-    const mezza = el.offsetWidth / 2 + 12;
-    const dentroSchermo = z < 1 && x - mezza > Math.max(0, bordoDestro) && x < innerWidth - mezza && y > (s ? innerHeight * 0.5 : innerHeight * 0.4) && y + el.offsetHeight < limite;
-    el.classList.toggle('visibile', dentroSchermo);
-    if (dentroSchermo) bordoDestro = x + mezza;
-    el.style.transform = `translate(${x.toFixed(0)}px, ${y.toFixed(0)}px) translate(-50%, 0)`;
+    if (!visibile) { e.el.classList.remove('visibile'); continue; }
+    const r = { x0: q.x - e.w / 2 - 12, x1: q.x + e.w / 2 + 12, y0: y, y1: y + e.h };
+    const libera = q.z < 1 && r.x0 > Math.max(0, bordoDestro) && r.x1 < innerWidth && r.y1 < innerHeight - 8
+      && y > innerHeight * (s ? 0.5 : 0.4)
+      && !zone[3].some((z) => z.nome !== 'fase' && r.x0 < z.x1 && r.x1 > z.x0 && r.y0 < z.y1 && r.y1 > z.y0);
+    e.el.classList.toggle('visibile', libera);
+    if (libera) bordoDestro = r.x1;
+    e.el.style.transform = `translate(${q.x.toFixed(0)}px, ${y.toFixed(0)}px) translate(-50%, 0)`;
   }
 }
 
@@ -343,7 +293,7 @@ function ridimensiona() {
   camera.updateProjectionMatrix();
   ambiente.setQualita(stato.qualita, LIVELLI[stato.qualita]);
 }
-addEventListener('resize', ridimensiona);
+addEventListener('resize', () => { ridimensiona(); programmaAdatta(); });
 
 function applicaQualita(q) {
   stato.qualita = q;
@@ -367,12 +317,12 @@ function fotogramma() {
   const p = stato.p;
 
   posaCamera(p);
-  const finale = Math.min(1, Math.max(0, (p - 0.86) / 0.14));
+  const finale = finaleDi(p);
   ambiente.aggiorna(stato.tempo, camera, finale, p);
   macchine.aggiorna(p, stato.tempo, camera);
   collezione.aggiorna(finale, stato.tempo);
   // la striscia della finestra sul vetro dei moduli attraversa la fila con lo scorrimento del momento fotovoltaico
-  if (!stato.faseVetroFissa) setFaseVetro(-18 + (p - 0.13) / 0.23 * 36);
+  if (!stato.faseVetroFissa) setFaseVetro(-18 + (p - MOMENTI[1].da) / (MOMENTI[1].a - MOMENTI[1].da) * 36);
   aggiornaTerra(p);
   aggiornaTesti(p);
   etichetteTurbine(p);
@@ -414,6 +364,7 @@ function animaApertura() {
   } catch (e) { stato.errori.push('logo: ' + e.message); }
   if (document.fonts && document.fonts.ready) { try { await document.fonts.ready; } catch (_) {} }
   applicaQualita(stato.qualita);
+  adattaRegia(true);
   leggiScroll();
   stato.p = stato.pMira;
   await macchine.pronto;
@@ -427,6 +378,7 @@ function animaApertura() {
 })();
 
 // ---------- strumenti per le foto e le misure (strumenti/foto-v2.ps1) ----------
+const dueFotogrammi = () => new Promise((ok) => requestAnimationFrame(() => requestAnimationFrame(ok)));
 stato.moduli = () => ({ scena: 'ok' });
 stato.vai = (p) => new Promise((ok) => {
   const max = document.documentElement.scrollHeight - innerHeight;
@@ -440,10 +392,10 @@ stato.info = () => ({
   triangoli: renderer.info.render.triangles, chiamate: renderer.info.render.calls,
   qualita: stato.qualita, dpr: renderer.getPixelRatio(), p: +stato.p.toFixed(3),
   cam: camera.position.toArray().map((v) => +v.toFixed(2)), fov: camera.fov, aspect: +camera.aspect.toFixed(3), stretto: stretto(),
+  fattori: regia.fattori, spostamenti: regia.spostamenti,
 });
 stato.azzeraMisure = () => { stato.msPeggio = 0; campioni = []; };
 stato.proietta = (x, y, z) => { const v = new THREE.Vector3(x, y, z).project(camera); return [+((v.x * 0.5 + 0.5) * innerWidth).toFixed(0), +((-v.y * 0.5 + 0.5) * innerHeight).toFixed(0), +v.z.toFixed(3)]; };
-stato.posizioni = () => { const out = {}; for (const [n, g] of Object.entries(macchine.gruppi)) { g.traverse((o) => { if (o.isMesh && o.geometry.type === 'LatheGeometry') { const w = new THREE.Vector3(); o.getWorldPosition(w); out[n + '-isolatori'] = w.toArray().map((v) => +v.toFixed(2)); } }); } return out; };
 stato.misura = (durataMs = 3000) => new Promise((ok) => {
   const t0 = performance.now(); const fotogrammi = []; let peggio = 0, lavoro = 0, n = 0, prima = t0;
   (function f() {
@@ -458,3 +410,68 @@ stato.qualitaImposta = (q) => applicaQualita(q);
 stato.vetro = vetroModulo();
 stato.setFaseVetro = (x) => { setFaseVetro(x); stato.faseVetroFissa = true; };
 stato.setTintaVetro = setTintaVetro;
+// il percorso della camera senza disegnare nulla: [p, x, y, z, dx, dy, dz] ogni `passo`
+stato.percorso = (passo = 0.002) => {
+  regia.preparaProva();
+  const out = [];
+  for (let p = 0; p <= 1 + 1e-9; p += passo) { const c = regia.campiona(Math.min(1, p), stretto(), innerWidth, innerHeight); out.push([+p.toFixed(4), ...c.pos.map((v) => +v.toFixed(3)), ...c.dir.map((v) => +v.toFixed(4))]); }
+  return out;
+};
+// Controllo vero delle sovrapposizioni: la GPU disegna le macchine e si contano i pixel sotto le righe di testo.
+// `ritardo` allunga la vita dei testi di un momento (le dissolvenze CSS durano qualche decimo di secondo).
+const radiciMacchine = [...Object.values(macchine.gruppi), collezione.gruppo];
+function controllaOra(p, ritardo, scala) {
+  const maschera = mascheraMacchine(renderer, scena, camera, radiciMacchine, scala);
+  const indici = MOMENTI.map((m, i) => (p >= m.da - 0.015 - ritardo && p <= m.a + 0.015 + ritardo ? i : -1)).filter((i) => i >= 0);
+  const out = [];
+  for (const r of testiDeiMomenti(indici)) { const n = pixelSotto(maschera, r); if (n > 0) out.push({ testo: r.nome, pixel: n, rett: [r.x0, r.y0, r.x1, r.y1].map(Math.round) }); }
+  return out;
+}
+stato.controlla = (ritardo = 0, scala = 0.5) => controllaOra(stato.p, ritardo, scala);
+stato.spazza = async ({ da = 0, a = 1, passo = 0.0025, ritardo = 0.006, scala = 0.5 } = {}) => {
+  const ferma = document.createElement('style');
+  ferma.textContent = '*, *::before, *::after { transition: none !important; animation: none !important; }';
+  document.head.appendChild(ferma);
+  apertura.k = 1;
+  const problemi = [];
+  for (let p = da; p <= a + 1e-9; p += passo) {
+    stato.pMira = stato.p = Math.min(1, p);
+    await dueFotogrammi();
+    for (const x of controllaOra(stato.p, ritardo, scala)) problemi.push({ p: +stato.p.toFixed(4), ...x });
+  }
+  ferma.remove();
+  return problemi;
+};
+// diagnosi della regia a p: le zone dei testi del momento e, per ognuna, quante scatolette della macchina la toccano
+stato.diagnosi = async (p) => {
+  stato.pMira = stato.p = p;
+  await dueFotogrammi();
+  camera.updateMatrixWorld();
+  const i = momentoDeiTesti(p), imp = impronte[i];
+  if (!imp) return { momento: i, zone: zone[i] };
+  let kv = 0; imp.campioni.forEach((q, k) => { if (Math.abs(q - p) < Math.abs(imp.campioni[kv] - p)) kv = k; });
+  const n = rettangoliSchermo(imp.punti[kv], camera, innerWidth, innerHeight, imp.buf);
+  const b = imp.buf, tutto = [Infinity, Infinity, -Infinity, -Infinity];
+  for (let k = 0; k < n; k++) { tutto[0] = Math.min(tutto[0], b[k * 4]); tutto[1] = Math.min(tutto[1], b[k * 4 + 1]); tutto[2] = Math.max(tutto[2], b[k * 4 + 2]); tutto[3] = Math.max(tutto[3], b[k * 4 + 3]); }
+  return {
+    momento: i, scatolette: n, ingombro: tutto.map(Math.round), fattori: regia.fattori, spostamenti: regia.spostamenti,
+    zone: zone[i].map((z) => {
+      let tocchi = 0; const u = [Infinity, Infinity, -Infinity, -Infinity];
+      for (let k = 0; k < n; k++) if (b[k * 4] < z.x1 && b[k * 4 + 2] > z.x0 && b[k * 4 + 1] < z.y1 && b[k * 4 + 3] > z.y0) { tocchi++; u[0] = Math.min(u[0], b[k * 4]); u[1] = Math.min(u[1], b[k * 4 + 1]); u[2] = Math.max(u[2], b[k * 4 + 2]); u[3] = Math.max(u[3], b[k * 4 + 3]); }
+      return { nome: z.nome, rett: [z.x0, z.y0, z.x1, z.y1].map(Math.round), tocchi, dove: tocchi ? u.map(Math.round) : null };
+    }),
+  };
+};
+// quanto si vede ancora di ogni macchina quando esce di scena (deve essere 0: esce già fuori dall'inquadratura)
+stato.uscite = async () => {
+  const out = [];
+  for (let i = 1; i <= 3; i++) {
+    const fine = MOMENTI[i + 1].da - 0.0165;
+    stato.pMira = stato.p = fine;
+    await dueFotogrammi();
+    const maschera = mascheraMacchine(renderer, scena, camera, [Object.values(macchine.gruppi)[i - 1]], 0.25);
+    let n = 0; for (let k = 3; k < maschera.dati.length; k += 4) if (maschera.dati[k] > 8) n++;
+    out.push({ macchina: MOMENTI[i].nome, p: +fine.toFixed(4), pixelAschermo: n, inScena: macchinaInScena(i, fine) });
+  }
+  return out;
+};

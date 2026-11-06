@@ -54,23 +54,37 @@ export async function creaLogo(contenitore, urlSvg) {
   return {
     svg,
     componi,
+    // (il logo in testata: largo w, in alto a sinistra in x, y; più piccolo sul telefono e sugli schermi orizzontali bassi)
     // p di scorrimento: fino a 0.07 è grande al centro; da 0.07 a 0.13 viaggia in testata
     // Desktop: composizione da rivista, il logo grande sta a centro-destra, il titolo a sinistra. Telefono: in alto al centro.
     posiziona(p, larghezza, altezza) {
-      const stretto = larghezza < 760 || altezza > larghezza;
-      const grande = stretto ? Math.min(210, larghezza * 0.54, altezza * 0.28) : Math.min(470, larghezza * 0.3, altezza * 0.52);
-      const piccolo = stretto ? 74 : 92;
+      const t = testata(larghezza, altezza);
+      const grande = t.stretto ? Math.min(210, larghezza * 0.54, altezza * 0.28) : Math.min(470, larghezza * 0.3, altezza * 0.52);
       const v = Math.min(1, Math.max(0, (p - 0.07) / 0.06));
       const e = v < 0.5 ? 2 * v * v : 1 - Math.pow(-2 * v + 2, 2) / 2;
-      const w = grande + (piccolo - grande) * e;
-      const margine = stretto ? 20 : Math.min(96, Math.max(20, larghezza * 0.06));
-      const x0 = stretto ? larghezza / 2 - grande / 2 : larghezza * 0.71 - grande / 2;
-      const y0 = stretto ? altezza * 0.22 - grande * 0.43 : altezza * 0.47 - grande * 0.867 / 2;
-      const x1 = margine, y1 = stretto ? 12 : 16;
-      const x = x0 + (x1 - x0) * e, y = y0 + (y1 - y0) * e;
+      const w = grande + (t.w - grande) * e;
+      const x0 = t.stretto ? larghezza / 2 - grande / 2 : larghezza * 0.71 - grande / 2;
+      const y0 = t.stretto ? altezza * 0.22 - grande * 0.43 : altezza * 0.47 - grande * 0.867 / 2;
+      const x = x0 + (t.x - x0) * e, y = y0 + (t.y - y0) * e;
       contenitore.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
       contenitore.style.width = `${w.toFixed(1)}px`;
       contenitore.classList.toggle('in-testata', v >= 1);
     },
+    // dove sta il logo quando è in testata (px CSS): la regia tiene le macchine lontane anche da lì
+    rettangoloTestata(larghezza, altezza) {
+      const t = testata(larghezza, altezza);
+      return { x0: t.x, y0: t.y, x1: t.x + t.w, y1: t.y + t.w * 0.867 };
+    },
+  };
+}
+
+function testata(larghezza, altezza) {
+  const stretto = altezza > larghezza || (larghezza <= 760 && altezza > 480); // come stretto() in main.js
+  const basso = !stretto && altezza <= 480;
+  return {
+    stretto,
+    w: stretto ? 74 : basso ? 56 : 92,
+    x: stretto ? 20 : Math.min(96, Math.max(20, larghezza * 0.06)),
+    y: stretto ? 12 : basso ? 8 : 16,
   };
 }

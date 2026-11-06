@@ -55,7 +55,8 @@ a { color: inherit; text-decoration: none; }
   background: linear-gradient(90deg, #FFFDF8 0%, #FFFDF8 40%, rgba(255,253,248,0) 78%);
 }
 
-#titoli { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
+/* i titoli stanno sopra la tela 3D: la regia tiene sempre le macchine lontane da loro (regia.js) */
+#titoli { position: fixed; inset: 0; z-index: 3; pointer-events: none; }
 .titolo-grande {
   position: absolute; left: var(--margine); top: clamp(96px, 13vh, 140px); margin: 0;
   width: min(1200px, 74vw);
@@ -66,19 +67,23 @@ a { color: inherit; text-decoration: none; }
   transition: opacity 0.5s ease, visibility 0s linear 0.5s;
 }
 .titolo-grande.attivo { opacity: 1; visibility: visible; transition: opacity 0.3s ease, visibility 0s; }
+/* le lettere entrano salendo appena, una dopo l'altra; escono solo sfumando, senza scendere verso la macchina */
 .titolo-grande .l {
   display: inline-block; white-space: pre;
-  transform: translateY(0.45em); opacity: 0;
-  transition: transform 0.8s cubic-bezier(.2,.7,.2,1) calc(var(--i) * 20ms), opacity 0.5s ease calc(var(--i) * 20ms);
+  opacity: 0;
+  transition: opacity 0.5s ease calc(var(--i) * 20ms);
 }
-.titolo-grande.attivo .l { transform: none; opacity: 1; }
+.titolo-grande.attivo .l { opacity: 1; animation: lettera 0.8s cubic-bezier(.2,.7,.2,1) calc(var(--i) * 20ms) both; }
+@keyframes lettera { from { transform: translateY(0.25em); } to { transform: none; } }
 /* apertura: titolo a sinistra, a metà altezza; il logo grande sta a centro-destra (vedi logo.js) */
 .titolo-grande[data-m="0"] { top: auto; bottom: 37vh; width: min(900px, 56vw); }
 
 #scena { position: fixed; inset: 0; width: 100%; height: 100%; display: block; z-index: 2; pointer-events: none; }
 /* (su desktop, nei momenti fotovoltaico e BESS, la scena sfuma nella luce della parete a destra: la maschera della tela
    è impostata da main.js, continua con lo scorrimento) */
-@media (min-width: 761px) and (orientation: landscape) {
+@media (orientation: landscape) and (min-width: 761px), (orientation: landscape) and (max-height: 480px) {
+  /* nei momenti delle macchine e nei contatti il titolo è più compatto: la macchina ha una fascia larga tutta per sé */
+  .titolo-grande:not([data-m="0"]) { font-size: clamp(44px, 5.6vw, 96px); }
   /* momento idro: titolo una riga più in alto, cartellino più in basso, iter più basso e più stretto: la fila delle turbine è grande e libera */
   .titolo-grande[data-m="3"] { top: clamp(84px, 10vh, 108px); }
   .momento[data-m="3"] .cartellino { bottom: 34px; }
@@ -165,8 +170,13 @@ a { color: inherit; text-decoration: none; }
 .iter li.corrente .d { display: block; animation: dissolvi 0.3s ease; }
 @keyframes dissolvi { from { opacity: 0; } to { opacity: 1; } }
 
-/* barra a cinque segmenti: solo sul telefono */
-.barra { display: none; }
+/* barra a cinque segmenti: solo sul telefono e sugli schermi orizzontali molto bassi (lì prende il posto della colonna) */
+.barra { display: none; position: absolute; height: 2px; gap: 4px; }
+.barra i { flex: 1; height: 2px; background: var(--linea); transition: background 0.4s; }
+.barra i.acceso { background: #9C958A; }
+.barra i.corrente { background: var(--rame); }
+.barra-testo { position: absolute; left: 0; top: 12px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--nero); white-space: nowrap; }
+.barra-testo b { color: var(--rame); font-weight: 500; }
 
 /* nome della fase sotto la macchina */
 .fase {
@@ -238,7 +248,7 @@ a { color: inherit; text-decoration: none; }
 .recapiti a:hover { color: var(--rame); }
 
 /* ---------- telefono e schermi stretti: testi in alto, macchina sotto, mai sovrapposti ---------- */
-@media (max-width: 760px), (orientation: portrait) {
+@media (orientation: portrait), (max-width: 760px) and (min-height: 481px) {
   :root { --margine: 20px; }
   #logo { width: min(210px, 54vw); }
   .testata { padding: 16px var(--margine); }
@@ -254,15 +264,7 @@ a { color: inherit; text-decoration: none; }
   .cartellino p { display: none; }
   .cartellino .mono { font-size: 11px; }
   .iter { display: none; }
-  .barra {
-    display: block; position: absolute; left: var(--margine); right: var(--margine); top: 242px; height: 2px;
-    display: flex; gap: 4px;
-  }
-  .barra i { flex: 1; height: 2px; background: var(--linea); transition: background 0.4s; }
-  .barra i.acceso { background: #9C958A; }
-  .barra i.corrente { background: var(--rame); }
-  .barra-testo { position: absolute; left: 0; top: 12px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--nero); white-space: nowrap; }
-  .barra-testo b { color: var(--rame); font-weight: 500; }
+  .barra { display: flex; left: var(--margine); right: var(--margine); top: 242px; }
   .fase { display: none; }
 
   .momento-apertura .blocco { bottom: 90px; width: calc(100vw - 40px); }
@@ -279,7 +281,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 /* ---------- finestre desktop basse (portatili piccoli, finestre ridotte): l'apertura e la scheda dei contatti restano in pagina ---------- */
-@media (min-width: 761px) and (orientation: landscape) and (max-height: 640px) {
+@media (orientation: landscape) and (min-width: 761px) and (max-height: 640px), (orientation: landscape) and (max-height: 480px) {
   .titolo-grande[data-m="0"] { bottom: 50vh; font-size: clamp(44px, 8vw, 150px); }
   .scheda { top: 76px; transform: none; max-height: calc(100vh - 90px); overflow-y: auto; }
   .scheda .sotto { margin-top: 8px; }
@@ -287,7 +289,20 @@ a { color: inherit; text-decoration: none; }
   .recapiti { margin-top: 16px; }
 }
 
+/* ---------- schermi orizzontali molto bassi (un telefono girato): testi compatti in alto e in basso, la macchina in mezzo ---------- */
+@media (orientation: landscape) and (max-height: 480px) {
+  .testata { padding: 12px var(--margine); }
+  .nav .nav-contatti { padding: 8px 12px; }
+  .titolo-grande:not([data-m="0"]) { top: 64px; font-size: clamp(26px, 4vw, 36px); line-height: 1.0; }
+  .cartellino, .momento[data-m="3"] .cartellino { bottom: 14px; width: min(420px, 40vw); }
+  .cartellino p { display: none; }
+  .iter { display: none; }
+  .barra { display: flex; left: auto; right: var(--margine); bottom: 40px; width: min(360px, 40vw); }
+  .barra-testo { top: 10px; font-size: 10px; }
+  .fase { display: none; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .invito::after { animation: none; }
-  .titolo-grande .l { transition: none; }
+  .titolo-grande .l, .titolo-grande.attivo .l { transition: none; animation: none; }
 }
