@@ -13,7 +13,7 @@
   --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   --tight: 'Inter Tight', Inter, system-ui, sans-serif;
   --testo: Inter, system-ui, sans-serif;
-  --schermi: 7.5;
+  --schermi: 8.6;
   --margine: clamp(20px, 6vw, 96px);
 }
 
@@ -64,14 +64,14 @@ a { color: inherit; text-decoration: none; }
   font-size: clamp(56px, 9vw, 150px);
   color: var(--nero);
   opacity: 0; visibility: hidden;
-  transition: opacity 0.5s ease, visibility 0s linear 0.5s;
+  transition: opacity 0.22s ease, visibility 0s linear 0.22s; /* esce in fretta: la camera parte subito dopo (momenti.js, CODA_TESTI) */
 }
 .titolo-grande.attivo { opacity: 1; visibility: visible; transition: opacity 0.3s ease, visibility 0s; }
 /* le lettere entrano salendo appena, una dopo l'altra; escono solo sfumando, senza scendere verso la macchina */
 .titolo-grande .l {
   display: inline-block; white-space: pre;
   opacity: 0;
-  transition: opacity 0.5s ease calc(var(--i) * 20ms);
+  transition: opacity 0.2s ease;
 }
 .titolo-grande.attivo .l { opacity: 1; animation: lettera 0.8s cubic-bezier(.2,.7,.2,1) calc(var(--i) * 20ms) both; }
 @keyframes lettera { from { transform: translateY(0.25em); } to { transform: none; } }
@@ -84,8 +84,7 @@ a { color: inherit; text-decoration: none; }
 @media (orientation: landscape) and (min-width: 761px), (orientation: landscape) and (max-height: 480px) {
   /* nei momenti delle macchine e nei contatti il titolo è più compatto: la macchina ha una fascia larga tutta per sé */
   .titolo-grande:not([data-m="0"]) { font-size: clamp(44px, 5.6vw, 96px); }
-  /* momento idro: titolo una riga più in alto, cartellino più in basso, iter più basso e più stretto: la fila delle turbine è grande e libera */
-  .titolo-grande[data-m="3"] { top: clamp(84px, 10vh, 108px); }
+  /* momento idro: cartellino più in basso, iter più basso e più stretto: la fila delle turbine è grande e libera */
   .momento[data-m="3"] .cartellino { bottom: 34px; }
   .momento[data-m="3"] .iter { bottom: 18px; width: 250px; right: calc(var(--margine) - 40px); }
   .momento[data-m="3"] .iter li { margin-top: 5px; }
@@ -141,7 +140,7 @@ a { color: inherit; text-decoration: none; }
 .momento {
   position: absolute; inset: 0;
   opacity: 0; visibility: hidden;
-  transition: opacity 0.6s ease, visibility 0s linear 0.6s;
+  transition: opacity 0.25s ease, visibility 0s linear 0.25s;
 }
 .momento.attivo { opacity: 1; visibility: visible; transition: opacity 0.8s ease 0.1s, visibility 0s; }
 
@@ -185,6 +184,7 @@ a { color: inherit; text-decoration: none; }
   opacity: 0; pointer-events: none; white-space: nowrap;
 }
 .fase.mostra { animation: fase 1.5s ease forwards; }
+.fase.spenta { display: none; } /* dove finirebbe sulla colonna dell'iter (main.js) */
 @keyframes fase { 0% { opacity: 0; transform: translate(-10%, 6px); } 18% { opacity: 0.3; transform: translate(-10%, 0); } 70% { opacity: 0.3; } 100% { opacity: 0; } }
 
 /* apertura */
@@ -223,6 +223,18 @@ a { color: inherit; text-decoration: none; }
 .etichetta b { font-weight: 500; }
 .etichetta i { display: block; width: 1px; height: 24px; margin: 0 auto 10px; background: var(--nero); opacity: 0.35; }
 
+/* ---------- servizi: un elenco da catalogo di museo, in due colonne sotto il titolo (nessuna macchina in scena) ---------- */
+.servizi {
+  position: absolute; left: var(--margine); right: var(--margine);
+  top: calc(clamp(96px, 13vh, 140px) + 1.9 * clamp(44px, 5.6vw, 96px) + 36px); /* sotto il titolo compatto */
+  pointer-events: auto;
+}
+.servizi .sotto { margin-top: 10px; max-width: 64ch; }
+.elenco-servizi { list-style: none; margin: 26px 0 0; padding: 0; columns: 2; column-gap: clamp(32px, 5vw, 96px); }
+.elenco-servizi li { break-inside: avoid; display: flex; gap: 16px; align-items: baseline; padding: 11px 0; border-top: 1px solid var(--linea); }
+.elenco-servizi .n { flex: none; width: 22px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; color: var(--rame); }
+.elenco-servizi .v { font-size: clamp(15px, 1.15vw, 18px); line-height: 1.35; color: var(--nero); }
+
 /* ---------- contatti ---------- */
 .scheda {
   position: absolute; right: var(--margine); top: 50%; transform: translateY(-50%);
@@ -258,7 +270,7 @@ a { color: inherit; text-decoration: none; }
   /* la fascia dei testi parte 32 px sotto il logo (che finisce a 76 px): la rubrica stacca dalla scritta ITALIA */
   .titolo-grande { top: 142px; width: calc(100vw - 40px); font-size: clamp(36px, 10.5vw, 44px); line-height: 1.0; letter-spacing: -0.025em; }
   .titolo-grande[data-m="0"] { top: auto; bottom: 34vh; width: calc(100vw - 40px); font-size: clamp(38px, 11vw, 46px); }
-  .titolo-grande[data-m="4"] { top: 134px; }
+  .titolo-grande[data-m="5"] { top: 134px; }
 
   .cartellino { left: var(--margine); bottom: auto; top: 108px; width: calc(100vw - 40px); transform: none; }
   .cartellino p { display: none; }
@@ -274,10 +286,17 @@ a { color: inherit; text-decoration: none; }
   .etichetta { font-size: 10px; letter-spacing: 0.16em; }
   .etichetta i { height: 14px; margin-bottom: 6px; }
 
+  /* servizi: l'elenco in una colonna sotto il titolo; se non entra, la sezione scorre al suo interno */
+  .momento-servizi { overflow-y: auto; pointer-events: auto; }
+  .servizi { position: relative; left: auto; right: auto; top: auto; margin: 236px 0 40px; padding: 0 var(--margine); }
+  .elenco-servizi { columns: 1; margin-top: 18px; }
+  .elenco-servizi li { padding: 9px 0; }
+  .elenco-servizi .v { font-size: 15px; }
+
   .momento-contatti { overflow-y: auto; pointer-events: auto; }
-  /* contatti: la vetrata con le tre sculture sta in alto, il modulo sotto (la sezione scorre al suo interno) */
+  /* contatti: la vetrata con le tre sculture sta in alto, il modulo sotto; se la sezione scorre, la scena sfuma (main.js) */
   .scheda { position: relative; right: auto; top: auto; transform: none; width: 100%; margin: 47vh 0 40px; padding: 0 var(--margine); background: transparent; }
-  .modulo textarea { rows: 2; }
+  .modulo textarea { height: calc(2 * 1.5em + 16px); }
 }
 
 /* ---------- finestre desktop basse (portatili piccoli, finestre ridotte): l'apertura e la scheda dei contatti restano in pagina ---------- */
@@ -287,6 +306,18 @@ a { color: inherit; text-decoration: none; }
   .scheda .sotto { margin-top: 8px; }
   .modulo { margin-top: 14px; gap: 10px; }
   .recapiti { margin-top: 16px; }
+}
+
+/* ---------- desktop non molto alti (portatili, finestre ridotte): cartellino e iter più compatti, la macchina ha più spazio ---------- */
+@media (orientation: landscape) and (min-width: 761px) and (max-height: 700px) {
+  .cartellino p { display: none; }
+  .momento-tech .iter li, .momento[data-m="3"] .iter li { margin-top: 4px; }
+  .momento-tech .iter .n, .momento[data-m="3"] .iter .n { font-size: 26px; width: 40px; }
+  .momento-tech .iter .d, .momento[data-m="3"] .iter .d { margin-left: 56px; font-size: 13px; line-height: 18px; }
+  .fase { display: none; }
+  .servizi .sotto { display: none; }
+  .elenco-servizi { margin-top: 16px; }
+  .elenco-servizi li { padding: 8px 0; }
 }
 
 /* ---------- schermi orizzontali molto bassi (un telefono girato): testi compatti in alto e in basso, la macchina in mezzo ---------- */
@@ -300,6 +331,25 @@ a { color: inherit; text-decoration: none; }
   .barra { display: flex; left: auto; right: var(--margine); bottom: 40px; width: min(360px, 40vw); }
   .barra-testo { top: 10px; font-size: 10px; }
   .fase { display: none; }
+  /* apertura: titolo in alto, frase e bottone in basso, a sinistra del logo */
+  .titolo-grande[data-m="0"] { top: 72px; bottom: auto; font-size: clamp(30px, 5.5vw, 44px); }
+  .momento-apertura .blocco { bottom: 24px; width: min(440px, 52vw); }
+  .momento-apertura .sotto { font-size: 14px; line-height: 1.45; }
+  .momento-apertura .bottone { margin-top: 12px; }
+  .invito { display: none; }
+  /* servizi: elenco più fitto, senza la frase */
+  .servizi { top: 146px; }
+  .servizi .sotto { display: none; }
+  .elenco-servizi { margin-top: 10px; }
+  .elenco-servizi li { padding: 5px 0; }
+  .elenco-servizi .v { font-size: 13px; }
+  /* contatti: modulo compatto, nome ed email affiancati */
+  .scheda { top: 64px; }
+  .scheda .sotto { display: none; }
+  .modulo { grid-template-columns: 1fr 1fr; column-gap: 16px; }
+  .modulo .campo-messaggio, .modulo .riga-invio, .modulo .conferma { grid-column: 1 / -1; }
+  .modulo textarea { height: calc(1.5em + 16px); }
+  .riga-invio small { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

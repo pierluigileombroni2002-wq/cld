@@ -20,15 +20,22 @@ const decoro = (o) => o.material && !Array.isArray(o.material) && o.material.dep
 export function impronta(radice, { passo = 1.5, minimo = 0.2 } = {}) {
   radice.updateWorldMatrix(true, true);
   const punti = [];
-  radice.traverse((o) => {
-    if (!o.isMesh || !o.visible || !o.geometry || decoro(o)) return;
+  // solo i rami visibili (la radice può essere nascosta: conta lo stato dei pezzi, non quello della scena)
+  const visita = (o) => {
+    if (o !== radice && !o.visible) return;
+    misura(o);
+    for (const c of o.children) visita(c);
+  };
+  const misura = (o) => {
+    if (!o.isMesh || !o.geometry || decoro(o)) return;
     const g = o.geometry;
     if (!g.boundingBox) g.computeBoundingBox();
     if (g.boundingBox.isEmpty()) return;
     if (o.isInstancedMesh) {
       for (let i = 0; i < o.count; i++) { o.getMatrixAt(i, _mi); _mw.multiplyMatrices(o.matrixWorld, _mi); scatola(punti, g.boundingBox, _mw, passo, minimo); }
     } else scatola(punti, g.boundingBox, o.matrixWorld, passo, minimo);
-  });
+  };
+  visita(radice);
   return new Float32Array(punti);
 }
 
@@ -42,15 +49,22 @@ function scatola(punti, bb, mw, passo, minimo) {
   const iLungo = l[0] >= l[1] && l[0] >= l[2] ? 0 : l[1] >= l[2] ? 1 : 2;
   const lungo = _assi[iLungo], a = _assi[(iLungo + 1) % 3], b = _assi[(iLungo + 2) % 3];
   const n = Math.max(1, Math.ceil(l[iLungo] / passo));
+  // sotto il pavimento (opaco, disegnato per primo) non si vede nulla: i pezzi che salgono da terra contano solo
+  // per la parte già sopra quota zero
+  const tratto = new Array(24);
   for (let s = 0; s < n; s++) {
+    let sopra = false;
     for (let k = 0; k < 8; k++) {
       _q.copy(_c0).addScaledVector(lungo, (s + (k & 1)) / n);
       if (k & 2) _q.add(a);
       if (k & 4) _q.add(b);
-      punti.push(_q.x, _q.y, _q.z);
+      if (_q.y > 0) sopra = true;
+      tratto[k * 3] = _q.x; tratto[k * 3 + 1] = Math.max(0, _q.y); tratto[k * 3 + 2] = _q.z;
     }
+    if (sopra) punti.push(...tratto);
   }
 }
+const SOTTO_PAVIMENTO = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
 
 // ---------- proiezione sullo schermo (px CSS) ----------
 const _pv = new THREE.Matrix4();
@@ -91,19 +105,19 @@ export function tocca(buf, n, zone) {
 // ---------- zone dei testi (px CSS), come saranno a testo fermo ----------
 // Per ogni momento: logo in testata, menu, righe del titolo, cartellino, iter (alla sua altezza massima), nome della fase,
 // modulo dei contatti. Tutto è letto dalla pagina, quindi vale per ogni schermo e per l'impaginazione del telefono.
-export function misuraZone({ logo, margine }) {
+export function misuraZone({ logo, margine, quanti, faseLunga }) {
   const gonfia = (r) => ({ nome: r.nome, x0: r.x0 - margine, y0: r.y0 - margine, x1: r.x1 + margine, y1: r.y1 + margine });
   const comuni = [];
   if (logo) comuni.push({ nome: 'logo', ...logo });
   const nav = document.querySelector('.nav');
   if (nav) { const r = nav.getBoundingClientRect(); comuni.push({ nome: 'menu', x0: r.left, y0: r.top, x1: r.right, y1: r.bottom }); }
 
-  // il nome della fase compare al centro, sotto la macchina: lo misuro con la scritta più lunga
+  // il nome della fase compare al centro, sotto la macchina: lo misuro con la scritta più lunga (faseLunga)
   let fase = null;
   const elFase = document.querySelector('.fase');
   if (elFase && getComputedStyle(elFase).display !== 'none') {
     const copia = elFase.cloneNode();
-    copia.classList.remove('mostra'); copia.textContent = '02 · Autorizzazioni';
+    copia.classList.remove('mostra'); copia.textContent = faseLunga;
     elFase.after(copia);
     const r = copia.getBoundingClientRect();
     copia.remove();
@@ -111,7 +125,7 @@ export function misuraZone({ logo, margine }) {
   }
 
   const zone = [];
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < quanti; i++) {
     const z = [...comuni];
     const titolo = document.querySelector(`.titolo-grande[data-m="${i}"]`);
     if (titolo) z.push(...righeTitolo(titolo));
@@ -194,7 +208,10 @@ export function mascheraMacchine(renderer, scena, camera, radici, scala = 0.5) {
   const spenti = [];
   for (const o of scena.children) if (!radici.includes(o) && o.visible) { spenti.push(o); o.visible = false; }
   for (const r of radici) r.traverse((o) => { if (o.isMesh && o.visible && decoro(o)) { spenti.push(o); o.visible = false; } });
-  const bianco = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  // (come nella scena vera, dove il pavimento opaco copre tutto ciò che sta sotto quota zero)
+  const bianco = new THREE.MeshBasicMaterial({ color: 0xffffff, clippingPlanes: [SOTTO_PAVIMENTO] });
+  const locale = renderer.localClippingEnabled;
+  renderer.localClippingEnabled = true;
   const override = scena.overrideMaterial, sfondo = scena.background;
   const coloreFondo = renderer.getClearColor(new THREE.Color()), alfaFondo = renderer.getClearAlpha();
   scena.overrideMaterial = bianco; scena.background = null;
@@ -206,6 +223,7 @@ export function mascheraMacchine(renderer, scena, camera, radici, scala = 0.5) {
   const dati = new Uint8Array(W * H * 4);
   renderer.readRenderTargetPixels(bersaglio, 0, 0, W, H, dati);
   scena.overrideMaterial = override; scena.background = sfondo;
+  renderer.localClippingEnabled = locale;
   renderer.setClearColor(coloreFondo, alfaFondo);
   for (const o of spenti) o.visible = true;
   bianco.dispose(); bersaglio.dispose();

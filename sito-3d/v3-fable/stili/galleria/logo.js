@@ -58,7 +58,7 @@ export async function creaLogo(contenitore, urlSvg) {
     // p di scorrimento: fino a 0.07 è grande al centro; da 0.07 a 0.13 viaggia in testata
     // Desktop: composizione da rivista, il logo grande sta a centro-destra, il titolo a sinistra. Telefono: in alto al centro.
     posiziona(p, larghezza, altezza) {
-      const t = testata(larghezza, altezza);
+      const t = testata(larghezza);
       const grande = t.stretto ? Math.min(210, larghezza * 0.54, altezza * 0.28) : Math.min(470, larghezza * 0.3, altezza * 0.52);
       const v = Math.min(1, Math.max(0, (p - 0.07) / 0.06));
       const e = v < 0.5 ? 2 * v * v : 1 - Math.pow(-2 * v + 2, 2) / 2;
@@ -72,15 +72,16 @@ export async function creaLogo(contenitore, urlSvg) {
     },
     // dove sta il logo quando è in testata (px CSS): la regia tiene le macchine lontane anche da lì
     rettangoloTestata(larghezza, altezza) {
-      const t = testata(larghezza, altezza);
+      const t = testata(larghezza);
       return { x0: t.x, y0: t.y, x1: t.x + t.w, y1: t.y + t.w * 0.867 };
     },
   };
 }
 
-function testata(larghezza, altezza) {
-  const stretto = altezza > larghezza || (larghezza <= 760 && altezza > 480); // come stretto() in main.js
-  const basso = !stretto && altezza <= 480;
+// (le stesse media query di style.css e di main.js: telefono, telefono girato)
+function testata(larghezza) {
+  const stretto = matchMedia('(orientation: portrait), (max-width: 760px) and (min-height: 481px)').matches;
+  const basso = !stretto && matchMedia('(orientation: landscape) and (max-height: 480px)').matches;
   return {
     stretto,
     w: stretto ? 74 : basso ? 56 : 92,

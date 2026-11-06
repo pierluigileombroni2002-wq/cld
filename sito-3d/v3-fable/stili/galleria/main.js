@@ -1,14 +1,16 @@
 // ERI · Galleria Bianca · le macchine come sculture in una sala bianca, alla luce di una finestra alta.
 // Motore e macchine sono quelli di v3-fable; cambiano ambiente, luce, materiali, testi e impaginazione.
+// Le scritte del sito stanno tutte in contenuti.js.
 import * as THREE from 'three';
 import { creaAmbiente } from './ambiente.js';
 import { creaMacchine } from './macchine-galleria.js';
 import { POSA } from './bess-galleria.js';
 import { DIST } from './turbine-galleria.js';
 import { creaLogo } from './logo.js';
-import { MOMENTI, assemblaggioDi, momentoDeiTesti, macchinaInScena, finaleDi } from './momenti.js';
+import { MOMENTI, MACCHINE, CONTATTI, MARGINE_TESTI, CODA_TESTI, assemblaggioDi, momentoDeiTesti, macchinaInScena, finaleDi, puntoDelMomento } from './momenti.js';
 import { creaRegia, inquadra, campioniMomento } from './regia.js';
 import { impronta, misuraZone, rettangoliSchermo, mascheraMacchine, testiDeiMomenti, pixelSotto } from './ingombri.js';
+import { riempiPagina, FASI } from './pagina.js';
 import { rivestiMateriali, rivestiScena, setFaseVetro, setTintaVetro, vetroModulo } from './materiali-galleria.js';
 import { creaOmbre, creaDisegno } from './ombre.js';
 import { creaCollezione } from './collezione.js';
@@ -19,6 +21,20 @@ const stato = { p: 0, pMira: 0, tempo: 0, qualita: 'alta', ms: 0, msPeggio: 0, p
 window.__eri = stato;
 window.addEventListener('error', (e) => stato.errori.push(String(e.message)));
 window.addEventListener('unhandledrejection', (e) => stato.errori.push('promessa: ' + String(e.reason && e.reason.message || e.reason)));
+
+// prima di tutto le scritte (contenuti.js): servono già per misurare dove stanno i testi
+riempiPagina();
+
+// ---------- impaginazioni: le stesse condizioni delle media query di style.css ----------
+const DISPOSIZIONI = {
+  telefono: '(orientation: portrait), (max-width: 760px) and (min-height: 481px)', // testi in alto, macchina sotto
+  orizzontaleBasso: '(orientation: landscape) and (max-height: 480px)',             // un telefono girato
+  desktopBasso: '(orientation: landscape) and (min-width: 761px) and (max-height: 700px)',
+  desktopMoltoBasso: '(orientation: landscape) and (min-width: 761px) and (max-height: 640px)',
+};
+const vale = (nome) => matchMedia(DISPOSIZIONI[nome]).matches;
+function stretto() { return vale('telefono'); }
+const disposizione = () => Object.keys(DISPOSIZIONI).map((n) => (vale(n) ? 1 : 0)).join('');
 
 // ---------- qualità: tre livelli, si scende da soli se i fotogrammi sono lenti ----------
 const telefono = /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent) || (matchMedia('(pointer: coarse)').matches && innerWidth < 900);
@@ -56,15 +72,15 @@ rivestiScena(scena);
 
 // ---------- ingombri delle macchine (una volta sola): la regia li tiene lontani dai testi ----------
 // Per ogni punto in cui la regia controlla un momento, la macchina com'è lì: montata in parte, con i pezzi ancora in volo.
-const impronte = [null, null, null, null, null];
+const impronte = MOMENTI.map(() => null);
 const t0Impronte = performance.now();
-for (let i = 1; i <= 4; i++) {
+for (const i of [...MACCHINE, CONTATTI]) {
   const campioni = campioniMomento(i), punti = [];
   for (const p of campioni) {
-    if (i <= 3) punti.push(impronta(macchine.monta(i, assemblaggioDi(p, MOMENTI[i]), camera)));
-    else { collezione.aggiorna(finaleDi(p), 0); punti.push(impronta(collezione.gruppo)); }
+    if (i === CONTATTI) { collezione.aggiorna(finaleDi(p), 0); punti.push(impronta(collezione.gruppo)); }
+    else punti.push(impronta(macchine.monta(i, assemblaggioDi(p, MOMENTI[i]), camera)));
   }
-  const montata = campioni.map((p) => (i <= 3 ? assemblaggioDi(p, MOMENTI[i]) >= 0.999 : finaleDi(p) >= 0.5));
+  const montata = campioni.map((p) => (i === CONTATTI ? finaleDi(p) >= 0.5 : assemblaggioDi(p, MOMENTI[i]) >= 0.999));
   impronte[i] = { campioni, punti, montata, buf: new Float32Array(Math.max(0, ...punti.map((q) => q.length)) / 6) };
 }
 stato.msImpronte = +(performance.now() - t0Impronte).toFixed(1);
@@ -106,10 +122,10 @@ const terra = [
 function aggiornaTerra(p) {
   for (const t of terra) {
     const m = MOMENTI[t.i];
-    const fine = MOMENTI[t.i + 1].da - 0.016; // quando la macchina esce di scena
-    if (p < m.da - 0.1 || p > fine) { t.ombre.set(0); t.disegno.set(0); continue; }
+    const fine = MOMENTI[t.i + 1].da - MARGINE_TESTI - 0.001; // quando la macchina esce di scena
+    if (p < m.da - 0.06 || p > fine) { t.ombre.set(0); t.disegno.set(0); continue; }
     const a = assemblaggioDi(p, m);
-    const entra = Math.min(1, Math.max(0, (p - (m.da - 0.1)) / 0.04)); // prima del momento il disegno affiora piano
+    const entra = Math.min(1, Math.max(0, (p - (m.da - 0.06)) / 0.04)); // mentre la camera arriva, il disegno affiora piano
     const sfuma = 1 - Math.min(1, Math.max(0, (p - m.a) / (fine - m.a))); // dopo il momento il disegno svanisce con la macchina
     t.ombre.set(Math.min(1, Math.max(0, (a - 0.25) / 0.5)) * sfuma * entra);
     t.disegno.set((1 - Math.min(1, Math.max(0, (a - 0.2) / 0.5))) * sfuma * entra);
@@ -122,11 +138,13 @@ function leggiScroll() {
   stato.pMira = Math.min(1, Math.max(0, scrollY / max));
 }
 addEventListener('scroll', leggiScroll, { passive: true });
-for (const a of document.querySelectorAll('[data-vai]')) {
+// menu e bottoni: portano al punto giusto di ogni momento (momenti.js)
+for (const a of document.querySelectorAll('[data-va]')) {
   a.addEventListener('click', (e) => {
     e.preventDefault();
+    const i = MOMENTI.findIndex((m) => m.nome === a.dataset.va);
     const max = document.documentElement.scrollHeight - innerHeight;
-    scrollTo({ top: parseFloat(a.dataset.vai) * max, behavior: 'smooth' });
+    scrollTo({ top: puntoDelMomento(i) * max, behavior: 'smooth' });
   });
 }
 document.getElementById('logo').addEventListener('click', (e) => { e.preventDefault(); scrollTo({ top: 0, behavior: 'smooth' }); });
@@ -141,11 +159,8 @@ modulo.addEventListener('submit', (e) => {
 });
 
 // ---------- regia della camera (regia.js): un percorso che va sempre avanti, e macchine sempre lontane dai testi ----------
-// stretto = impaginazione da telefono (testi in alto, macchina sotto): schermi verticali e schermi stretti non troppo bassi.
-// Un telefono girato (orizzontale e basso) usa invece l'impaginazione compatta da desktop (vedi style.css).
-function stretto() { return innerHeight > innerWidth || (innerWidth <= 760 && innerHeight > 480); }
 const regia = creaRegia(camera);
-let zone = [[], [], [], [], []];
+let zone = MOMENTI.map(() => []);
 function posaCamera(p) {
   if (stato.prova) { // posa forzata, solo per le prove di inquadratura (strumenti)
     const q = stato.prova;
@@ -155,38 +170,42 @@ function posaCamera(p) {
   regia.posa(p, stato.tempo, stretto(), innerWidth, innerHeight);
 }
 // Le zone dei testi si leggono dalla pagina e la regia sceglie, momento per momento, dove comporre la macchina e quanto
-// arretrare la camera. Si rifà a ogni cambio di misura vero, non per la barra del browser del telefono che compare e scompare
-// mentre si scorre (cambia l'altezza di poco).
-const adattata = { w: 0, h: 0, stretto: null };
+// arretrare la camera. Si rifà a ogni ridimensionamento; sul telefono non per la barra del browser che compare e
+// scompare mentre si scorre (cambia l'altezza di poco e l'impaginazione resta la stessa).
+const adattata = { w: 0, h: 0, disposizione: '' };
 function adattaRegia(forza = false) {
-  const w = innerWidth, h = innerHeight;
-  if (!forza && w === adattata.w && stretto() === adattata.stretto && Math.abs(h - adattata.h) < h * 0.2) return;
-  Object.assign(adattata, { w, h, stretto: stretto() });
-  zone = misuraZone({ logo: logo ? logo.rettangoloTestata(w, h) : null, margine: stretto() ? 12 : 20 });
+  const w = innerWidth, h = innerHeight, d = disposizione();
+  const tolleranza = telefono ? h * 0.2 : 0;
+  if (!forza && w === adattata.w && d === adattata.disposizione && Math.abs(h - adattata.h) <= tolleranza) return;
+  Object.assign(adattata, { w, h, disposizione: d });
+  faseEl.classList.remove('spenta');
+  const faseLunga = FASI.map((f, i) => `0${i + 1} · ${f.nome}`).reduce((a, b) => (b.length > a.length ? b : a));
+  zone = misuraZone({ logo: logo ? logo.rettangoloTestata(w, h) : null, margine: stretto() ? 12 : 20, quanti: MOMENTI.length, faseLunga });
+  // il nome della fase compare al centro in basso: dove finirebbe sulla colonna dell'iter (desktop stretti) resta spento
+  const zf = zone[1].find((z) => z.nome === 'fase'), zi = zone[1].find((z) => z.nome === 'iter');
+  if (zf && zi && zf.x0 < zi.x1 && zf.x1 > zi.x0 && zf.y0 < zi.y1 && zf.y1 > zi.y0) {
+    faseEl.classList.add('spenta');
+    zone = zone.map((z) => z.filter((r) => r.nome !== 'fase'));
+  }
   misuraEtichette();
   // su desktop, nei momenti fotovoltaico e BESS, la scena sfuma verso destra (aggiornaMaschera): lì non si compone
   const sfumata = sfumaADestra() ? [{ nome: 'sfumatura', x0: w - 400, y0: 0, x1: w, y1: h }] : [];
-  const riservate = [[], sfumata, sfumata, [], []];
+  const riservate = MOMENTI.map((_, i) => (i === 1 || i === 2 ? sfumata : []));
   stato.regia = regia.adatta({ stretto: stretto(), zone, riservate, impronte, larghezza: w, altezza: h });
 }
 let attesaAdatta = 0;
 function programmaAdatta() { clearTimeout(attesaAdatta); attesaAdatta = setTimeout(() => adattaRegia(), 150); }
 
 // ---------- testi: titoli, cartellini e iter sopra la tela; le macchine non li toccano mai (regia.js) ----------
-const NOMI_FASI = ['Sviluppo', 'Autorizzazioni', 'Ready to Build', 'Costruzione', 'Gestione'];
-const DESCR_FASI = ['Terreno, studio e progetto', 'Permessi e connessione alla rete', 'Pronto per il cantiere', 'Cantiere e collaudo', 'Esercizio e manutenzione'];
 const titoli = [...document.querySelectorAll('.titolo-grande')];
 const sezioni = [...document.querySelectorAll('.momento')];
-const iter = sezioni.map((s) => s.querySelector('.iter'));
-const barre = sezioni.map((s) => s.querySelector('.barra'));
 const faseEl = document.querySelector('.fase');
 const vetrata = document.querySelector('.vetrata');
 const finestra = document.querySelector('.finestra');
 // il titolo entra lettera per lettera
 for (const t of titoli) {
   let i = 0;
-  const nodi = [...t.childNodes];
-  for (const n of nodi) {
+  for (const n of [...t.childNodes]) {
     if (n.nodeType !== 3) continue;
     const frag = document.createDocumentFragment();
     for (const ch of n.textContent) {
@@ -196,6 +215,11 @@ for (const t of titoli) {
     t.replaceChild(frag, n);
   }
 }
+// sul telefono il modulo dei contatti scorre dentro la sua sezione: quando sale, la collezione sfuma (mai testo sulle macchine)
+const sezioneContatti = document.querySelector('.momento-contatti');
+let scorsoContatti = 0, opacitaTela = '';
+sezioneContatti.addEventListener('scroll', () => { scorsoContatti = sezioneContatti.scrollTop; }, { passive: true });
+
 let momentoAttivo = -1, faseAttiva = -1;
 function aggiornaTesti(p) {
   const idx = momentoDeiTesti(p);
@@ -205,28 +229,24 @@ function aggiornaTesti(p) {
     document.body.dataset.momento = idx;
     momentoAttivo = idx; faseAttiva = -1;
   }
-  if (idx >= 1 && idx <= 3) {
+  if (MACCHINE.includes(idx)) {
     const a = assemblaggioDi(p, MOMENTI[idx]);
     const passi = Math.min(5, Math.floor(a * 5 + 0.0001) + (a >= 0.999 ? 0 : 1));
-    const accesi = a <= 0 ? 0 : passi;
+    const accesi = a <= 0 ? 0 : passi, k = accesi - 1;
     const sez = sezioni.find((s) => +s.dataset.m === idx);
-    if (sez && iter[sezioni.indexOf(sez)]) {
-      const li = iter[sezioni.indexOf(sez)].querySelectorAll('li');
-      li.forEach((el, i) => { el.classList.toggle('acceso', i < accesi); el.classList.toggle('corrente', i === accesi - 1); });
-      const b = barre[sezioni.indexOf(sez)];
-      if (b) {
-        b.querySelectorAll('i').forEach((el, i) => { el.classList.toggle('acceso', i < accesi); el.classList.toggle('corrente', i === accesi - 1); });
-        const k = accesi - 1;
-        if (k >= 0 && k !== faseAttiva) b.querySelector('.barra-testo').innerHTML = `<b>0${k + 1}</b> · ${NOMI_FASI[k]} — ${DESCR_FASI[k]}`;
-      }
-    }
-    const k = accesi - 1;
+    sez.querySelectorAll('.iter li').forEach((el, i) => { el.classList.toggle('acceso', i < accesi); el.classList.toggle('corrente', i === k); });
+    sez.querySelectorAll('.barra i').forEach((el, i) => { el.classList.toggle('acceso', i < accesi); el.classList.toggle('corrente', i === k); });
     if (k >= 0 && k !== faseAttiva) {
       faseAttiva = k;
-      faseEl.textContent = `0${k + 1} · ${NOMI_FASI[k]}`;
+      const testo = sez.querySelector('.barra-testo');
+      testo.innerHTML = '';
+      testo.append(Object.assign(document.createElement('b'), { textContent: `0${k + 1}` }), ` · ${FASI[k].nome}`);
+      faseEl.textContent = `0${k + 1} · ${FASI[k].nome}`;
       faseEl.classList.remove('mostra'); void faseEl.offsetWidth; faseEl.classList.add('mostra');
     }
   }
+  const velo = stretto() && idx === CONTATTI ? Math.max(0, 1 - scorsoContatti / 48).toFixed(2) : '';
+  if (velo !== opacitaTela) { opacitaTela = velo; tela.style.opacity = velo; }
   aggiornaMaschera(p);
   // la finestra gira piano nella sala con lo scorrimento; nel finale la parete diventa vetrata
   finestra.style.transform = `rotate(${28 - p * 10}deg) translateX(${p * 30}vw)`;
@@ -236,7 +256,7 @@ function aggiornaTesti(p) {
 // Su desktop, nei momenti fotovoltaico e BESS, la scena sfuma nella luce della parete a destra (la colonna dell'iter ha la sua
 // fascia libera). La maschera entra e esce con p, in modo continuo: niente scatti tra un momento e l'altro.
 // Solo dove c'è la colonna dell'iter: non sul telefono e non sugli schermi orizzontali bassi.
-function sfumaADestra() { return !stretto() && innerHeight > 480; }
+function sfumaADestra() { return !stretto() && !vale('orizzontaleBasso'); }
 const liscia = (x) => { x = Math.min(1, Math.max(0, x)); return x * x * (3 - 2 * x); };
 let mascheraUltima = '';
 function aggiornaMaschera(p) {
@@ -275,7 +295,7 @@ function etichetteTurbine(p) {
     const r = { x0: q.x - e.w / 2 - 12, x1: q.x + e.w / 2 + 12, y0: y, y1: y + e.h };
     const libera = q.z < 1 && r.x0 > Math.max(0, bordoDestro) && r.x1 < innerWidth && r.y1 < innerHeight - 8
       && y > innerHeight * (s ? 0.5 : 0.4)
-      && !zone[3].some((z) => z.nome !== 'fase' && r.x0 < z.x1 && r.x1 > z.x0 && r.y0 < z.y1 && r.y1 > z.y0);
+      && !zone[3].some((z) => r.x0 < z.x1 && r.x1 > z.x0 && r.y0 < z.y1 && r.y1 > z.y0);
     e.el.classList.toggle('visibile', libera);
     if (libera) bordoDestro = r.x1;
     e.el.style.transform = `translate(${q.x.toFixed(0)}px, ${y.toFixed(0)}px) translate(-50%, 0)`;
@@ -392,7 +412,7 @@ stato.info = () => ({
   triangoli: renderer.info.render.triangles, chiamate: renderer.info.render.calls,
   qualita: stato.qualita, dpr: renderer.getPixelRatio(), p: +stato.p.toFixed(3),
   cam: camera.position.toArray().map((v) => +v.toFixed(2)), fov: camera.fov, aspect: +camera.aspect.toFixed(3), stretto: stretto(),
-  fattori: regia.fattori, spostamenti: regia.spostamenti,
+  disposizione: disposizione(), fattori: regia.fattori, spostamenti: regia.spostamenti,
 });
 stato.azzeraMisure = () => { stato.msPeggio = 0; campioni = []; };
 stato.proietta = (x, y, z) => { const v = new THREE.Vector3(x, y, z).project(camera); return [+((v.x * 0.5 + 0.5) * innerWidth).toFixed(0), +((-v.y * 0.5 + 0.5) * innerHeight).toFixed(0), +v.z.toFixed(3)]; };
@@ -418,24 +438,28 @@ stato.percorso = (passo = 0.002) => {
   return out;
 };
 // Controllo vero delle sovrapposizioni: la GPU disegna le macchine e si contano i pixel sotto le righe di testo.
-// `ritardo` allunga la vita dei testi di un momento (le dissolvenze CSS durano qualche decimo di secondo).
+// `ritardo` allunga la vita dei testi di un momento (le dissolvenze d'uscita durano un attimo).
 const radiciMacchine = [...Object.values(macchine.gruppi), collezione.gruppo];
 function controllaOra(p, ritardo, scala) {
   const maschera = mascheraMacchine(renderer, scena, camera, radiciMacchine, scala);
-  const indici = MOMENTI.map((m, i) => (p >= m.da - 0.015 - ritardo && p <= m.a + 0.015 + ritardo ? i : -1)).filter((i) => i >= 0);
+  const indici = MOMENTI.map((m, i) => (p >= m.da - MARGINE_TESTI - ritardo && p <= m.a + MARGINE_TESTI + ritardo ? i : -1)).filter((i) => i >= 0);
   const out = [];
   for (const r of testiDeiMomenti(indici)) { const n = pixelSotto(maschera, r); if (n > 0) out.push({ testo: r.nome, pixel: n, rett: [r.x0, r.y0, r.x1, r.y1].map(Math.round) }); }
   return out;
 }
 stato.controlla = (ritardo = 0, scala = 0.5) => controllaOra(stato.p, ritardo, scala);
-stato.spazza = async ({ da = 0, a = 1, passo = 0.0025, ritardo = 0.006, scala = 0.5 } = {}) => {
+stato.spazza = async ({ da = 0, a = 1, passo = 0.0025, ritardo = CODA_TESTI, scala = 0.5 } = {}) => {
   const ferma = document.createElement('style');
   ferma.textContent = '*, *::before, *::after { transition: none !important; animation: none !important; }';
   document.head.appendChild(ferma);
   apertura.k = 1;
   const problemi = [];
-  for (let p = da; p <= a + 1e-9; p += passo) {
-    stato.pMira = stato.p = Math.min(1, p);
+  // il passo regolare, più tutti i punti in cui la regia controlla i momenti
+  const punti = new Set();
+  for (let p = da; p <= a + 1e-9; p += passo) punti.add(+Math.min(1, p).toFixed(4));
+  for (const imp of impronte) if (imp) for (const p of imp.campioni) if (p >= da && p <= a) punti.add(p);
+  for (const p of [...punti].sort((x, y) => x - y)) {
+    stato.pMira = stato.p = p;
     await dueFotogrammi();
     for (const x of controllaOra(stato.p, ritardo, scala)) problemi.push({ p: +stato.p.toFixed(4), ...x });
   }
@@ -465,8 +489,8 @@ stato.diagnosi = async (p) => {
 // quanto si vede ancora di ogni macchina quando esce di scena (deve essere 0: esce già fuori dall'inquadratura)
 stato.uscite = async () => {
   const out = [];
-  for (let i = 1; i <= 3; i++) {
-    const fine = MOMENTI[i + 1].da - 0.0165;
+  for (const i of MACCHINE) {
+    const fine = MOMENTI[i + 1].da - MARGINE_TESTI - 0.0015;
     stato.pMira = stato.p = fine;
     await dueFotogrammi();
     const maschera = mascheraMacchine(renderer, scena, camera, [Object.values(macchine.gruppi)[i - 1]], 0.25);

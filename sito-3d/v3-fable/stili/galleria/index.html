@@ -17,6 +17,7 @@
 </script>
 </head>
 <body>
+<!-- Struttura della pagina. Le scritte NON si cambiano qui: stanno tutte in contenuti.js (pagina.js le inserisce). -->
 
 <!-- La sala: parete avorio che si curva nel pavimento; la finestra alta si vede solo come striscia di luce -->
 <div class="sala" aria-hidden="true"></div>
@@ -25,10 +26,11 @@
 
 <!-- I titoli grandi: sopra la tela 3D, e la regia tiene le macchine sempre lontane da loro -->
 <div id="titoli" aria-hidden="true">
-  <h2 class="titolo-grande" data-m="1">Seguire il sole,<br>ogni giorno.</h2>
-  <h2 class="titolo-grande" data-m="2">L'energia che<br>aspetta.</h2>
-  <h2 class="titolo-grande" data-m="3">L'acqua, con la<br>turbina giusta.</h2>
-  <h2 class="titolo-grande" data-m="4">Parliamo<br>del progetto.</h2>
+  <h2 class="titolo-grande" data-m="1"></h2>
+  <h2 class="titolo-grande" data-m="2"></h2>
+  <h2 class="titolo-grande" data-m="3"></h2>
+  <h2 class="titolo-grande" data-m="4"></h2>
+  <h2 class="titolo-grande" data-m="5"></h2>
 </div>
 
 <canvas id="scena" aria-hidden="true"></canvas>
@@ -39,10 +41,11 @@
 
 <header class="testata">
   <nav class="nav" aria-label="Sezioni">
-    <a href="#" data-vai="0.27">Fotovoltaico</a>
-    <a href="#" data-vai="0.54">Accumulo</a>
-    <a href="#" data-vai="0.79">Idroelettrico</a>
-    <a href="#" data-vai="1" class="nav-contatti">Contatti</a>
+    <a href="#" data-va="fotovoltaico"></a>
+    <a href="#" data-va="bess"></a>
+    <a href="#" data-va="idroelettrico"></a>
+    <a href="#" data-va="servizi"></a>
+    <a href="#" data-va="contatti" class="nav-contatti"></a>
   </nav>
 </header>
 
@@ -50,79 +53,56 @@
 
   <section class="momento momento-apertura" data-m="0">
     <!-- nell'apertura nessuna macchina copre il titolo: sta sopra la tela, come il resto dei testi -->
-    <h1 class="titolo-grande" data-m="0">Dal disegno<br>alla rete.</h1>
+    <h1 class="titolo-grande" data-m="0"></h1>
     <div class="blocco">
-      <p class="sotto">Fotovoltaico, accumulo e idroelettrico. Di ogni impianto seguiamo tutto l'iter: dallo sviluppo alla gestione.</p>
-      <a href="#" class="bottone" data-vai="1">Parliamo del progetto</a>
+      <p class="sotto"></p>
+      <a href="#" class="bottone" data-va="contatti"></a>
     </div>
-    <p class="invito">Scorri</p>
+    <p class="invito"></p>
   </section>
 
   <section class="momento momento-tech" data-m="1">
-    <div class="cartellino">
-      <div class="mono">01 · Fotovoltaico e agrivoltaico</div>
-      <p>Tracker a terra e filari agrivoltaici alti,<br>progettati e costruiti da ERI fino alla rete.</p>
-    </div>
-    <ol class="iter" aria-label="L'iter che seguiamo">
-      <li><span class="n">01</span><span class="w">Sviluppo</span><span class="d">Terreno, studio e progetto.</span></li>
-      <li><span class="n">02</span><span class="w">Autorizzazioni</span><span class="d">Permessi e connessione alla rete.</span></li>
-      <li><span class="n">03</span><span class="w">Ready to Build</span><span class="d">Pronto per il cantiere.</span></li>
-      <li><span class="n">04</span><span class="w">Costruzione</span><span class="d">Cantiere e collaudo.</span></li>
-      <li><span class="n">05</span><span class="w">Gestione</span><span class="d">Esercizio e manutenzione, per tutta la vita dell'impianto.</span></li>
-    </ol>
-    <div class="barra" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><span class="barra-testo"></span></div>
+    <div class="cartellino"><div class="mono"></div><p></p></div>
+    <ol class="iter" aria-label="L'iter che seguiamo"></ol>
+    <div class="barra" aria-hidden="true"></div>
   </section>
 
   <section class="momento momento-tech" data-m="2">
-    <div class="cartellino">
-      <div class="mono">02 · Accumulo BESS</div>
-      <p>Batterie che conservano l'energia<br>e la restituiscono alla rete quando serve.</p>
-    </div>
-    <ol class="iter" aria-label="L'iter che seguiamo">
-      <li><span class="n">01</span><span class="w">Sviluppo</span><span class="d">Terreno, studio e progetto.</span></li>
-      <li><span class="n">02</span><span class="w">Autorizzazioni</span><span class="d">Permessi e connessione alla rete.</span></li>
-      <li><span class="n">03</span><span class="w">Ready to Build</span><span class="d">Pronto per il cantiere.</span></li>
-      <li><span class="n">04</span><span class="w">Costruzione</span><span class="d">Cantiere e collaudo.</span></li>
-      <li><span class="n">05</span><span class="w">Gestione</span><span class="d">Esercizio e manutenzione, per tutta la vita dell'impianto.</span></li>
-    </ol>
-    <div class="barra" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><span class="barra-testo"></span></div>
+    <div class="cartellino"><div class="mono"></div><p></p></div>
+    <ol class="iter" aria-label="L'iter che seguiamo"></ol>
+    <div class="barra" aria-hidden="true"></div>
   </section>
 
   <section class="momento momento-tech" data-m="3">
-    <div class="cartellino">
-      <div class="mono">03 · Idroelettrico</div>
-      <p>Pelton per i salti alti, Francis per quelli medi,<br>Kaplan per i salti bassi.</p>
-    </div>
-    <ol class="iter" aria-label="L'iter che seguiamo">
-      <li><span class="n">01</span><span class="w">Sviluppo</span><span class="d">Terreno, studio e progetto.</span></li>
-      <li><span class="n">02</span><span class="w">Autorizzazioni</span><span class="d">Permessi e connessione alla rete.</span></li>
-      <li><span class="n">03</span><span class="w">Ready to Build</span><span class="d">Pronto per il cantiere.</span></li>
-      <li><span class="n">04</span><span class="w">Costruzione</span><span class="d">Cantiere e collaudo.</span></li>
-      <li><span class="n">05</span><span class="w">Gestione</span><span class="d">Esercizio e manutenzione, per tutta la vita dell'impianto.</span></li>
-    </ol>
-    <div class="barra" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><span class="barra-testo"></span></div>
-    <div class="etichette" aria-hidden="true">
-      <div class="etichetta" data-turbina="pelton"><i></i><b>Pelton</b> · Salto alto</div>
-      <div class="etichetta" data-turbina="francis"><i></i><b>Francis</b> · Salto medio</div>
-      <div class="etichetta" data-turbina="kaplan"><i></i><b>Kaplan</b> · Salto basso</div>
+    <div class="cartellino"><div class="mono"></div><p></p></div>
+    <ol class="iter" aria-label="L'iter che seguiamo"></ol>
+    <div class="barra" aria-hidden="true"></div>
+    <div class="etichette" aria-hidden="true"></div>
+  </section>
+
+  <section class="momento momento-servizi" data-m="4">
+    <div class="servizi">
+      <div class="mono"></div>
+      <p class="sotto"></p>
+      <ol class="elenco-servizi"></ol>
     </div>
   </section>
 
-  <section class="momento momento-contatti" data-m="4">
+  <section class="momento momento-contatti" data-m="5">
     <div class="scheda">
-      <div class="mono">05 · Contatti</div>
-      <p class="sotto">Un terreno, un'idea, un impianto da far crescere: raccontaci da dove parti.</p>
+      <div class="mono"></div>
+      <p class="sotto"></p>
       <form class="modulo" novalidate>
-        <label><span>Nome</span><input type="text" name="nome" autocomplete="name" required></label>
-        <label><span>Email</span><input type="email" name="email" autocomplete="email" required></label>
-        <label><span>Messaggio</span><textarea name="messaggio" rows="3" required></textarea></label>
+        <label><span data-campo="nome"></span><input type="text" name="nome" autocomplete="name" required></label>
+        <label><span data-campo="email"></span><input type="email" name="email" autocomplete="email" required></label>
+        <label class="campo-messaggio"><span data-campo="messaggio"></span><textarea name="messaggio" rows="3" required></textarea></label>
         <div class="riga-invio">
-          <button type="submit" class="bottone">Invia</button>
-          <small>Pagina di prova: il modulo non invia dati.</small>
+          <button type="submit" class="bottone"></button>
+          <small></small>
         </div>
-        <p class="conferma" hidden>Grazie, ti scriviamo entro due giorni.</p>
+        <p class="conferma" hidden></p>
       </form>
-      <p class="recapiti"><a href="mailto:info@eri-esempio.it">info@eri-esempio.it</a><span>·</span><a href="tel:+39000000000">+39 000 000 0000</a></p>
+      <p class="recapiti"></p>
     </div>
   </section>
 
